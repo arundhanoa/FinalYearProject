@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+</head>
+<body>
+    {% include 'main/navbar.html' %}
+    <main>
+        <h1>Help</h1>
+        <section>
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq">
+                <h3>1. How do I register for an event?</h3>
+                <p>You can register for an event by visiting the event page and clicking on the "Sign Up" button.</p>
+            </div>
+            <div class="faq">
+                <h3>2. How can I view the events I have signed up for?</h3>
+                <p>Your registered events can be viewed on the "My Events" page, accessible from the main navigation menu.</p>
+            </div>
+            <div class="faq">
+                <h3>3. What should I do if I encounter issues?</h3>
+                <p>If you encounter any issues, please contact our support team via the contact form on the "Contact Us" page.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Contact Support</h2>
+            <p>If you need further assistance, please contact your career coach or another senior member from your team:</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+</body>
+</html>

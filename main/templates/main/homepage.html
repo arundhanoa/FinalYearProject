@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet"> <!-- Import Inter Bold -->
+    <style>
+        /* ===========================
+           Homepage Page Styles
+        ============================ */
+        .top-section {
+            background-color: #e0301e; /* Red background */
+            color: #ffffff; /* Gold text color */
+            text-align: center; /* Center text */
+            font-size: 2em; /* Font size converted from 4rem */
+            padding: 1.125em 1.25em; /* Padding remains in em */
+            font-family: 'Inter', sans-serif; /* Apply Inter font */
+        }
+    
+        .top-section h1 {
+            font-size: 2.5em; /* Font size converted from 2.5rem */
+            margin-bottom: 0.25em; /* Space below the title (20px -> 1.25em) */
+        }
+    
+        .search-container {
+            margin-top: 1m; /* Space above the search container (20px -> 1.25em) */
+        }
+    
+        .search-container input[type="text"] {
+            width: 28.75em; /* Width of the search bar (300px -> 18.75em) */
+            padding: 0.5em 0.9375em; /* Match padding with the button (13px -> 0.8125em and 15px -> 0.9375em) */
+            font-size: 0.875em; /* Keep font size normal */
+            line-height: normal; /* Adjust line-height to normal */
+            border: none; /* Optional: Remove border */
+            border-radius: 0.25em; /* Optional: Add rounded corners (4px -> 0.25em) */
+        }
+    
+        .search-container button {
+            padding: 0.5em 0.9375em; /* Reduced padding for the button (13px -> 0.8125em and 15px -> 0.9375em) */
+            font-size: 0.875em; /* Keep font size normal */
+            margin-left: 0.625em; /* Space between search bar and button (10px -> 0.625em) */
+        }
+    
+        .event-grid {
+            display: flex; /* Use flexbox for horizontal layout */
+            justify-content: space-between; /* Space out event cards */
+            margin-top: 1.25em; /* Space above the event grid (20px -> 1.25em) */
+        }
+    
+        .event-card {
+            background-color: lightgrey; /* Background for event cards */
+            padding: 1.25em; /* Padding for event cards (20px -> 1.25em) */
+            border-radius: 0.5em; /* Rounded corners (8px -> 0.5em) */
+            flex: 1; /* Allow cards to grow equally */
+            margin: 0 0.625em; /* Space between cards (10px -> 0.625em) */
+            text-align: center; /* Center text in cards */
+        }
+    
+        .event-card:first-child {
+            margin-left: 0; /* No margin for the first card */
+        }
+    
+        .event-card:last-child {
+            margin-right: 0; /* No margin for the last card */
+        }
+
+        .button-style {
+            background-color: #dc6900; /* Button background color */
+            color: #ffffff; /* Button text color */
+            outline: #dc6900; /* Button outline color */
+            box-shadow: #dc6900; /* Button shadow color */
+            border-radius: 0.25em;
+        }
+    </style>
+</head>
+<body>
+    {% include 'main/navbar.html' %}
+    <main>
+        <!-- Top Section -->
+        <section class="top-section">
+            <h1>Discover the Latest PwC Events</h1>
+            <h4>Discover events, connect with people, and join activities!</h4>
+            <div class="search-container">
+                <input type="text" placeholder="Search events...">
+                <button class ="button-style">Create Event</button>
+            </div>
+        </section>
+
+        <!-- Popular Events Section -->
+        <section class="popular-section main-section">
+            <h2>Popular</h2>
+            <div class="event-grid">
+                <!-- Display 4 popular events here -->
+                <div class="event-card">Popular Event 1</div>
+                <div class="event-card">Popular Event 2</div>
+                <div class="event-card">Popular Event 3</div>
+                <div class="event-card">Popular Event 4</div>
+            </div>
+        </section>
+
+        <!-- Discover Section -->
+        <section class="discover-section main-section">
+            <h2>Discover</h2>
+            <div class="event-grid">
+                <!-- Display 4 recommended events here -->
+                <div class="event-card">Recommended Event 1</div>
+                <div class="event-card">Recommended Event 2</div>
+                <div class="event-card">Recommended Event 3</div>
+                <div class="event-card">Recommended Event 4</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+</body>
+</html>

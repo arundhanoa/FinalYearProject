@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+</head>
+<body>
+    {% include 'main/navbar.html' %}
+    <header>
+        <h1>{{ event.name }}</h1>
+    </header>
+
+    <main>
+        <p>Date: {{ event.date }}</p>
+        <p>Category: {{ event.category }}</p>
+        <p>Description: {{ event.description }}</p>
+
+        <form action="{% url 'event_signup' event.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Sign Up for Event</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+</body>
+</html>

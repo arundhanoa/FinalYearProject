@@ -1,0 +1,72 @@
+/* ===========================
+   Navbar Styles
+=========================== */
+.navbar {
+    background-color: #f0f0f0; /* Light grey background */
+    display: flex; /* Use flexbox for layout */
+    justify-content: space-between; /* Space out navbar items */
+    align-items: center; /* Center items vertically */
+    padding: 0.625rem 1.25rem; /* 10px 20px */
+}
+
+/* Navbar Links and Button Styles */
+.navbar a {
+    text-decoration: none; /* Remove underline */
+    color: black; /* Default text color */
+    padding: 0.875rem 1.25rem; /* Padding for links */
+    font-size: 1rem; /* Font size */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+/* Hover Effects for Navbar Links */
+.navbar a:hover {
+    background-color: darkgrey; /* Dark grey on hover */
+}
+
+/* Active Link Styles */
+.navbar a.active {
+    font-weight: bold; /* Bold for active links */
+    color: black; /* Active link color */
+}
+
+/* ===========================
+   Dropdown Styles
+=========================== */
+.dropdown {
+    position: relative; /* Position for dropdown */
+}
+
+/* Dropdown Content Styles */
+.dropdown-content {
+    display: none; /* Hide dropdown by default */
+    position: absolute; /* Absolute positioning */
+    background-color: white; /* Background for dropdown */
+    min-width: 10rem; /* Minimum width */
+    z-index: 1; /* Ensure it appears above other elements */
+}
+
+/* Show Dropdown on Hover */
+.dropdown:hover .dropdown-content {
+    display: block; /* Show dropdown on hover */
+}
+
+/* Dropdown Button Styles */
+.dropbtn {
+    border: none; /* Remove border */
+    cursor: pointer; /* Pointer cursor for button */
+    padding: 0.875rem 1.25rem; /* Same padding as other buttons */
+    font-size: 1rem; /* Match font size */
+}
+
+/* Optional: Ensure Dropdown Item Styles */
+.dropdown-content a {
+    color: black; /* Color for dropdown items */
+    padding: 0.75rem 1rem; /* Padding for dropdown items */
+    text-decoration: none; /* Remove underline */
+    display: block; /* Block display */
+}
+
+/* Hover Effect for Dropdown Items */
+.dropdown-content a:hover {
+    background-color: lightgrey; /* Hover effect for dropdown items */
+}

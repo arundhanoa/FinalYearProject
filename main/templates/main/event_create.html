@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event</title>
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <style>
+        /* Basic styling for layout */
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+        }
+        /* Left form container */
+        .form-container {
+            flex: 1;
+            background-color: #f8f8f8;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        /* Right preview container */
+        .preview-container {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .preview-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .button-group button {
+            padding: 0.75rem 1.5rem;
+            margin-right: 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+        }
+        .button-group button.selected {
+            background-color: #e0301e;
+            color: #ffffff;
+        }
+        .hidden {
+            display: none;
+        }
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #event-image {
+            border: 2px solid #000;
+            padding: 1rem;
+            background-color: #f3f3f3;
+            border-radius: 4px;
+        }
+        /* Map styling */
+        #map {
+            width: 100%;
+            height: 250px;
+            margin-top: 1rem;
+        }
+        /* Event preview styling */
+        .event-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .preview-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .preview-image-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        /* Image slider indicators */
+        .image-indicators {
+            position: absolute;
+            bottom: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        .indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+        .indicator.active {
+            opacity: 1;
+        }
+        .preview-section {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-top: 1px solid #ccc;
+        }
+        .preview-item {
+            font-size: 1rem;
+            padding: 0.25rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'main/navbar.html' %}
+
+    <main>
+        <div class="container">
+            <!-- Left side: form inputs for creating an event -->
+            <div class="form-container">
+                <h1>Create Event</h1>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label for="event-image">Upload Event Images</label>
+                        <input type="file" id="event-image" name="event-image" multiple>
+                    </div>
+
+                    <!-- Price Options -->
+                    <div class="form-group">
+                        <label>Price</label>
+                        <div class="button-group">
+                            <button type="button" class="price-btn" data-price="free">Free</button>
+                            <button type="button" class="price-btn" data-price="self-funded">Self-funded</button>
+                            <button type="button" class="price-btn" data-price="paid">Paid for</button>
+                        </div>
+                        <div id="cost-input" class="hidden">
+                            <label for="cost">Approximate Cost</label>
+                            <input type="text" id="cost" name="cost" placeholder="Enter rough cost">
+                        </div>
+                    </div>
+
+                    <!-- Event Capacity -->
+                    <div class="form-group">
+                        <label for="capacity">Event Capacity</label>
+                        <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity">
+                    </div>
+
+                    <!-- Location Options -->
+                    <div class="form-group">
+                        <label>Location</label>
+                        <div class="button-group">
+                            <button type="button" class="location-btn" data-location="virtual">Virtual</button>
+                            <button type="button" class="location-btn" data-location="in-person">In-person</button>
+                            <button type="button" class="location-btn" data-location="hybrid">Hybrid</button>
+                        </div>
+                        <div id="meeting-link" class="hidden">
+                            <label for="link">Meeting Link</label>
+                            <input type="text" id="link" name="link" placeholder="Enter virtual meeting link">
+                        </div>
+                        <div id="address-input" class="hidden">
+                            <label for="address">Address</label>
+                            <input type="text" id="address" name="address" placeholder="Enter address">
+                            <div id="map"></div>
+                        </div>
+                    </div>
+
+                    <!-- Event Title, Date, Time, and Description would go here -->
+
+                </form>
+            </div>
+
+            <!-- Right side: Live preview of the event card -->
+            <div class="preview-container">
+                <h2 class="preview-title">Event Preview</h2>
+                <div class="event-preview">
+                    <div class="preview-image-container">
+                        <img id="preview-image" src="" alt="Event Image">
+                        <div class="image-indicators">
+                            <span class="indicator active"></span>
+                            <span class="indicator"></span>
+                            <!-- Additional indicators for each image -->
+                        </div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-item" id="preview-price">Price: Free</div>
+                        <div class="preview-item" id="preview-capacity">Capacity: 0</div>
+                    </div>
+                    <div class="preview-section" id="preview-line-service">Line of Service: N/A</div>
+                    <div class="preview-section" id="preview-title">Title: Event Title</div>
+                    <div class="preview-section" id="preview-date-time">Date & Time: N/A</div>
+                    <div class="preview-section" id="preview-location">Location: N/A</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Price selection handling
+        document.querySelectorAll('.price-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                const isSelfFunded = btn.dataset.price === 'self-funded';
+                document.getElementById('cost-input').classList.toggle('hidden', !isSelfFunded);
+            });
+        });
+
+        // Location handling
+        document.querySelectorAll('.location-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                const locationType = btn.dataset.location;
+                document.getElementById('meeting-link').classList.toggle('hidden', locationType !== 'virtual' && locationType !== 'hybrid');
+                document.getElementById('address-input').classList.toggle('hidden', locationType !== 'in-person' && locationType !== 'hybrid');
+            });
+        });
+
+        // Event capacity and details update
+        document.getElementById('capacity').addEventListener('input', () => {
+            document.getElementById('preview-capacity').innerText = 'Capacity: ' + document.getElementById('capacity').value;
+        });
+        // Map script goes here
+
+    </script>
+
+</body>
+</html>

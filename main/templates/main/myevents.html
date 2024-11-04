@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Events</title>
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet"> <!-- Import Inter Bold -->
+    <style>
+        /* Similar styling as teambuilding, adapted for myevents */
+        .top-section {
+            background-color: #e0301e;
+            color: #ffffff;
+            text-align: center;
+            font-size: 2rem;
+            padding: 3.125rem 1.25rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.25rem;
+        }
+
+        .tab {
+            padding: 0.625rem 1.25rem;
+            cursor: pointer;
+            background-color: lightgrey;
+            border-radius: 0.5rem;
+            margin: 0 0.5rem;
+            width: 50%;
+            font-weight: bold;
+        }
+
+        .tab.active {
+            background-color: darkgrey;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-section {
+            margin-top: 1.25rem;
+            text-align: center;
+        }
+
+        .event-grid {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.25rem;
+        }
+
+        .event-card {
+            background-color: lightgrey;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            flex: 1;
+            margin: 0 0.625rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    {% include 'main/navbar.html' %}
+    <main>
+        <!-- Top Section -->
+        <section class="top-section">
+            <h1>My Events</h1>
+        </section>
+
+        <!-- Tab Section -->
+        <div class="tab-container">
+            <div class="tab active" onclick="showTabContent('signed-up')">Signed Up For</div>
+            <div class="tab" onclick="showTabContent('created')">Created</div>
+        </div>
+
+        <!-- Tab Content: Signed up for -->
+        <section id="signed-up" class="tab-content active">
+            <section class="popular-section main-section">
+                <h2>Popular</h2>
+                <div class="event-grid">
+                    <!-- Display 4 signed-up popular events here -->
+                    <div class="event-card">Signed-up Popular Event 1</div>
+                    <div class="event-card">Signed-up Popular Event 2</div>
+                    <div class="event-card">Signed-up Popular Event 3</div>
+                    <div class="event-card">Signed-up Popular Event 4</div>
+                </div>
+            </section>
+
+            <section class="discover-section main-section">
+                <h2>Discover</h2>
+                <div class="event-grid">
+                    <!-- Display 4 signed-up recommended events here -->
+                    <div class="event-card">Signed-up Recommended Event 1</div>
+                    <div class="event-card">Signed-up Recommended Event 2</div>
+                    <div class="event-card">Signed-up Recommended Event 3</div>
+                    <div class="event-card">Signed-up Recommended Event 4</div>
+                </div>
+            </section>
+        </section>
+
+        <!-- Tab Content: Created -->
+        <section id="created" class="tab-content">
+            <section class="popular-section main-section">
+                <h2>Popular</h2>
+                <div class="event-grid">
+                    <!-- Display 4 created popular events here -->
+                    <div class="event-card">Created Popular Event 1</div>
+                    <div class="event-card">Created Popular Event 2</div>
+                    <div class="event-card">Created Popular Event 3</div>
+                    <div class="event-card">Created Popular Event 4</div>
+                </div>
+            </section>
+
+            <section class="discover-section main-section">
+                <h2>Discover</h2>
+                <div class="event-grid">
+                    <!-- Display 4 created recommended events here -->
+                    <div class="event-card">Created Recommended Event 1</div>
+                    <div class="event-card">Created Recommended Event 2</div>
+                    <div class="event-card">Created Recommended Event 3</div>
+                    <div class="event-card">Created Recommended Event 4</div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+
+    <script>
+        function showTabContent(tabId) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove 'active' class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+
+            // Add 'active' class to the selected tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

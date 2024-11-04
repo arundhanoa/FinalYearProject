@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'login' %}">Login</a></li>
+                <li><a href="{% url 'register' %}">Register</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Welcome to the Event Management System</h1>
+        <p>Get started by logging in or registering.</p>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+</body>
+</html>
