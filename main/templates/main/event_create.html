@@ -135,119 +135,334 @@
 <body>
 
     {% include 'main/navbar.html' %}
-
     <main>
-        <div class="container">
+        <div class="container" style="display: flex; justify-content: space-between;">
             <!-- Left side: form inputs for creating an event -->
-            <div class="form-container">
+            <div class="form-container" style="flex: 1; margin-right: 20px;">
                 <h1>Create Event</h1>
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" action="{% url 'event_create' %}" enctype="multipart/form-data">
                     {% csrf_token %}
-
+    
+                    <!-- Add these hidden inputs -->
+                    <input type="hidden" id="price_type" name="price_type" value="free">
+                    <input type="hidden" id="location_type" name="location_type" value="">
+    
                     <!-- Image Upload -->
                     <div class="form-group">
                         <label for="event-image">Upload Event Images</label>
-                        <input type="file" id="event-image" name="event-image" multiple>
+                        <input type="file" id="event-image" name="images" multiple onchange="updateImagePreview()">
                     </div>
-
+    
                     <!-- Price Options -->
                     <div class="form-group">
                         <label>Price</label>
                         <div class="button-group">
-                            <button type="button" class="price-btn" data-price="free">Free</button>
-                            <button type="button" class="price-btn" data-price="self-funded">Self-funded</button>
-                            <button type="button" class="price-btn" data-price="paid">Paid for</button>
+                            <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
+                            <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
+                            <button type="button" class="price-btn" data-price="paid" onclick="selectPrice('Paid for')">Paid for</button>
                         </div>
-                        <div id="cost-input" class="hidden">
+                        <div id="cost-input" class="form-group hidden">
                             <label for="cost">Approximate Cost</label>
-                            <input type="text" id="cost" name="cost" placeholder="Enter rough cost">
+                            <input type="text" id="cost" name="cost" placeholder="Enter rough cost" oninput="updatePreviewPrice()">
                         </div>
                     </div>
-
+    
                     <!-- Event Capacity -->
                     <div class="form-group">
                         <label for="capacity">Event Capacity</label>
-                        <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity">
+                        <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
                     </div>
-
+    
+                    <!-- Line of Service -->
+                    <div class="form-group">
+                        <label for="line-service">Line of Service</label>
+                        <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
+                            <option value="" disabled selected>Select line of service</option>
+                            <option value="Audit">Audit</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Tax">Tax</option>
+                            <option value="Advisory">Advisory</option>
+                            <option value="Assurance">Assurance</option>
+                            <!-- Add other options as needed -->
+                        </select>
+                    </div>
+                    
+                    <!-- Event Title -->
+                    <div class="form-group">
+                        <label for="event-title">Event Title</label>
+                        <input type="text" id="event-title" name="title" placeholder="Enter event title" required oninput="updatePreviewTitle()">
+                    </div>
+    
+                    <!-- Date and Time -->
+                    <div class="form-group">
+                        <label for="event-date">Date</label>
+                        <input type="date" id="event-date" name="date" required onchange="updatePreviewDate()">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-time">Time</label>
+                        <input type="time" id="event-time" name="time" required onchange="updatePreviewDate()">
+                    </div>
+    
                     <!-- Location Options -->
                     <div class="form-group">
                         <label>Location</label>
                         <div class="button-group">
-                            <button type="button" class="location-btn" data-location="virtual">Virtual</button>
-                            <button type="button" class="location-btn" data-location="in-person">In-person</button>
-                            <button type="button" class="location-btn" data-location="hybrid">Hybrid</button>
+                            <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('Virtual')">Virtual</button>
+                            <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('In-person')">In-person</button>
+                            <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('Hybrid')">Hybrid</button>
                         </div>
-                        <div id="meeting-link" class="hidden">
+                        <div id="meeting-link" class="form-group hidden">
                             <label for="link">Meeting Link</label>
-                            <input type="text" id="link" name="link" placeholder="Enter virtual meeting link">
+                            <input type="text" id="link" name="virtual_link" placeholder="Enter virtual meeting link" oninput="updatePreviewLocation()">
                         </div>
-                        <div id="address-input" class="hidden">
+                        <div id="address-input" class="form-group hidden">
                             <label for="address">Address</label>
-                            <input type="text" id="address" name="address" placeholder="Enter address">
+                            <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
                             <div id="map"></div>
                         </div>
                     </div>
+    
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="event-description">Description</label>
+                        <textarea id="event-description" name="description" placeholder="Enter event description" required oninput="updatePreviewDescription()"></textarea>
+                    </div>
 
-                    <!-- Event Title, Date, Time, and Description would go here -->
-
+                    <!-- Add submit button -->
+                    <div class="form-group">
+                        <button type="submit" class="submit-btn" style="background-color: #ff7f00; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                            Create Event
+                        </button>
+                    </div>
                 </form>
             </div>
-
+    
             <!-- Right side: Live preview of the event card -->
-            <div class="preview-container">
+            <div class="preview-container" style="flex: 0.7;">
                 <h2 class="preview-title">Event Preview</h2>
-                <div class="event-preview">
-                    <div class="preview-image-container">
-                        <img id="preview-image" src="" alt="Event Image">
-                        <div class="image-indicators">
+                <div class="event-preview" style="border: 2px solid #ccc; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">
+                    <div class="preview-image-container" style="text-align: center; background-color: white; padding: 10px; border-radius: 5px;">
+                        <img id="preview-image" src="" alt="Event Image" style="max-width: 100%; height: auto; border-radius: 5px;">
+                        <div class="image-indicators" style="text-align: center; margin-top: 10px;">
                             <span class="indicator active"></span>
                             <span class="indicator"></span>
-                            <!-- Additional indicators for each image -->
+                            <!-- Additional indicators for each image will be generated dynamically -->
                         </div>
                     </div>
                     <div class="preview-section">
-                        <div class="preview-item" id="preview-price">Price: Free</div>
-                        <div class="preview-item" id="preview-capacity">Capacity: 0</div>
+                        <!-- First Row: Line of Service and Capacity -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-line-service">Line of Service: N/A</span>
+                            <span id="preview-capacity">Capacity: 0</span>
+                        </div>
+            
+                        <!-- Second Row: Event Title -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
+            
+                        <!-- Third Row: Price -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-price">Price: Free</div>
+
+                        <!-- Fourth Row: Date and Time -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-date">Date: N/A</span>
+                            <span id="preview-time">Time: N/A</span>
+                        </div>
+            
+                        <!-- Fifth Row: Location -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-location">Location: N/A</div>
+            +
+                        <!-- Description -->
+                        <div class="preview-row" style="padding: 10px 0;" id="preview-description">Description: N/A</div>
                     </div>
-                    <div class="preview-section" id="preview-line-service">Line of Service: N/A</div>
-                    <div class="preview-section" id="preview-title">Title: Event Title</div>
-                    <div class="preview-section" id="preview-date-time">Date & Time: N/A</div>
-                    <div class="preview-section" id="preview-location">Location: N/A</div>
                 </div>
             </div>
+            
         </div>
     </main>
-
+    
     <script>
-        // Price selection handling
-        document.querySelectorAll('.price-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                const isSelfFunded = btn.dataset.price === 'self-funded';
-                document.getElementById('cost-input').classList.toggle('hidden', !isSelfFunded);
+        let currentImageIndex = 0;
+        const images = [];
+
+    
+        function updateImagePreview() {
+            const fileInput = document.getElementById("event-image");
+            const indicatorContainer = document.querySelector(".image-indicators");
+            const previewImage = document.getElementById("preview-image");
+    
+            images.length = 0;
+            indicatorContainer.innerHTML = '';
+    
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                images.push(URL.createObjectURL(file));
+    
+                const indicator = document.createElement("span");
+                indicator.classList.add("indicator");
+                indicator.onclick = () => {
+                    currentImageIndex = i;
+                    updatePreviewImage();
+                };
+                indicatorContainer.appendChild(indicator);
+            }
+    
+            if (images.length > 0) {
+                currentImageIndex = 0;
+                updatePreviewImage();
+            }
+        }
+    
+        function updatePreviewImage() {
+            const previewImage = document.getElementById("preview-image");
+            previewImage.src = images[currentImageIndex];
+            document.querySelectorAll(".indicator").forEach((indicator, index) => {
+                indicator.classList.toggle("active", index === currentImageIndex);
             });
-        });
-
-        // Location handling
-        document.querySelectorAll('.location-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                const locationType = btn.dataset.location;
-                document.getElementById('meeting-link').classList.toggle('hidden', locationType !== 'virtual' && locationType !== 'hybrid');
-                document.getElementById('address-input').classList.toggle('hidden', locationType !== 'in-person' && locationType !== 'hybrid');
-            });
-        });
-
-        // Event capacity and details update
-        document.getElementById('capacity').addEventListener('input', () => {
-            document.getElementById('preview-capacity').innerText = 'Capacity: ' + document.getElementById('capacity').value;
-        });
-        // Map script goes here
-
+        }
+    
+        function selectPrice(price) {
+            const priceType = price.toLowerCase();
+            document.getElementById("preview-price").innerText = `Price: ${price}`;
+            document.querySelectorAll('.price-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.price-btn[data-price="${priceType}"]`).classList.add('selected');
+    
+            const costInput = document.getElementById("cost-input");
+            costInput.classList.toggle('hidden', price !== 'Self-funded');
+    
+            // Set the hidden input value
+            document.getElementById("price_type").value = priceType;
+        }
+    
+        function selectLocation(location) {
+            const locationType = location.toLowerCase();
+            document.getElementById("preview-location").innerText = `Location: ${location}`;
+            document.querySelectorAll('.location-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`.location-btn[data-location="${locationType}"]`).classList.add('selected');
+    
+            const meetingLink = document.getElementById("meeting-link");
+            const addressInput = document.getElementById("address-input");
+    
+            meetingLink.classList.add("hidden");
+            addressInput.classList.add("hidden");
+    
+            if (location === "Virtual") {
+                meetingLink.classList.remove("hidden");
+            } else if (location === "In-person") {
+                addressInput.classList.remove("hidden");
+            } else if (location === "Hybrid") {
+                meetingLink.classList.remove("hidden");
+                addressInput.classList.remove("hidden");
+            }
+    
+            // Set the hidden input value
+            document.getElementById("location_type").value = locationType;
+        }
+    
+        function updatePreviewPrice() {
+            document.getElementById("preview-price").innerText = `Approximate Cost: ${document.getElementById("cost").value}`;
+        }
+    
+        function updatePreviewCapacity() {
+            document.getElementById("preview-capacity").innerText = `Capacity: ${document.getElementById("capacity").value}`;
+        }
+    
+        function updatePreviewLineService() {
+            document.getElementById("preview-line-service").innerText = `Line of Service: ${document.getElementById("line-service").value}`;
+        }
+    
+        function updatePreviewTitle() {
+            document.getElementById("preview-title").innerText = `Title: ${document.getElementById("event-title").value}`;
+        }
+    
+        function updatePreviewDate() {
+            document.getElementById("preview-date").innerText = `Date: ${document.getElementById("event-date").value}`;
+            document.getElementById("preview-time").innerText = `Time: ${document.getElementById("event-time").value}`;
+        }
+    
+        function updatePreviewLocation() {
+            const link = document.getElementById("link").value;
+            const address = document.getElementById("address").value;
+            document.getElementById("preview-location").innerText = link || address ? `Location: ${link || address}` : 'Location: N/A';
+        }
+    
+        function updatePreviewDescription() {
+            document.getElementById("preview-description").innerText = `Description: ${document.getElementById("event-description").value}`;
+        }
     </script>
+    
+    <style>
+        .hidden {
+            display: none;
+        }
+    
+        .price-btn.selected,
+        .location-btn.selected {
+            background-color: #ff7f00;
+            color: white;
+        }
+    
+        .indicator.active {
+            background-color: #ff7f00;
+        }
+    
+        .indicator {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: pointer;
+        }
+    
+        .preview-row {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
 
-</body>
-</html>
+        .row-flex {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Ensures the preview section is displayed in a column format */
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+    
+    <!-- Add this right after your navbar include -->
+    {% if messages %}
+    <div class="messages" style="padding: 10px; margin: 10px;">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" 
+             style="padding: 10px; margin: 5px; 
+                    {% if message.tags == 'error' %}background-color: #ffebee; color: #c62828;{% endif %}
+                    {% if message.tags == 'success' %}background-color: #e8f5e9; color: #2e7d32;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Add this at the top of your template -->
+    {% if request.method == 'POST' %}
+        <div style="background-color: #f8d7da; padding: 15px; margin: 10px;">
+            <h3>Debug: POST Data Received</h3>
+            <pre>
+Form Method: {{ request.method }}
+CSRF Present: {{ request.POST.csrfmiddlewaretoken|yesno:"Yes,No" }}
+Title: {{ request.POST.title }}
+Description: {{ request.POST.description }}
+Date: {{ request.POST.date }}
+Time: {{ request.POST.time }}
+Location Type: {{ request.POST.location_type }}
+Price Type: {{ request.POST.price_type }}
+Capacity: {{ request.POST.capacity }}
+Line of Service: {{ request.POST.line_of_service }}
+            </pre>
+        </div>
+    {% endif %}
+    
