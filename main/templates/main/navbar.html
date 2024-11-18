@@ -1,9 +1,6 @@
 {% load static %}
 <div class="navbar">
     <a href="{% url 'homepage' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a>
-    <a href="{% url 'teambuilding' %}" class="{% if request.path == '/teambuilding/' %}active{% endif %}">Teambuilding</a>
-    <a href="{% url 'networking' %}" class="{% if request.path == '/networking/' %}active{% endif %}">Networking</a>
-    <a href="{% url 'volunteering' %}" class="{% if request.path == '/volunteering/' %}active{% endif %}">Volunteering</a>
     <a href="{% url 'event_create' %}" class="{% if request.path == '/event_create/' %}active{% endif %}">Create Event</a>
     <a href="{% url 'myevents' %}" class="{% if request.path == '/myevents/' %}active{% endif %}">My Events</a>
     <a href="{% url 'about' %}" class="{% if request.path == '/about/' %}active{% endif %}">About</a>

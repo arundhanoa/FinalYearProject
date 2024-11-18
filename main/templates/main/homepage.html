@@ -74,6 +74,22 @@
             box-shadow: #dc6900; /* Button shadow color */
             border-radius: 0.25em;
         }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+
+        .view-all-btn {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 0.5em 1em;
+            border-radius: 0.25em;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -91,7 +107,10 @@
 
         <!-- Popular Events Section -->
         <section class="popular-section main-section">
-            <h2>Popular</h2>
+            <div class="section-header">
+                <h2>Popular</h2>
+                <a href="#" class="view-all-btn">View All</a>
+            </div>
             <div class="event-grid">
                 {% for event in popular_events %}
                 <div class="event-card">
@@ -106,7 +125,10 @@
 
         <!-- Discover Section -->
         <section class="discover-section main-section">
-            <h2>Discover</h2>
+            <div class="section-header">
+                <h2>Discover</h2>
+                <a href="#" class="view-all-btn">View All</a>
+            </div>
             <div class="event-grid">
                 {% for event in recommended_events %}
                 <div class="event-card">

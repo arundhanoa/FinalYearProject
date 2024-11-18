@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Event</title>
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         /* Basic styling for layout */
         .container {
@@ -130,6 +133,60 @@
             font-size: 1rem;
             padding: 0.25rem 0;
         }
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+        }
+
+        /* Tag Input Styling */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0.5rem;
+            min-height: 45px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #ff7f00;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin: 3px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+            margin-right: 5px;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #ff7f00;
+        }
+
+        .select2-dropdown {
+            border: 1px solid #ccc;
+        }
+
+        .select2-search__field {
+            padding: 6px !important;
+        }
     </style>
 </head>
 <body>
@@ -162,8 +219,15 @@
                             <button type="button" class="price-btn" data-price="paid" onclick="selectPrice('Paid for')">Paid for</button>
                         </div>
                         <div id="cost-input" class="form-group hidden">
-                            <label for="cost">Approximate Cost</label>
-                            <input type="text" id="cost" name="cost" placeholder="Enter rough cost" oninput="updatePreviewPrice()">
+                            <label for="cost">Cost (numbers only)</label>
+                            <input type="number" 
+                                   step="0.01" 
+                                   class="form-control" 
+                                   id="cost" 
+                                   name="cost" 
+                                   placeholder="8.00"
+                                   pattern="[0-9]*\.?[0-9]*">
+                            <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                         </div>
                     </div>
     
@@ -185,6 +249,31 @@
                             <option value="Assurance">Assurance</option>
                             <!-- Add other options as needed -->
                         </select>
+                    </div>
+                    
+                    <!-- Event Type -->
+                    <div class="form-group">
+                        <label>Event Type</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="type-general" name="event_type" value="General" onchange="handleEventTypeChange(this)">
+                                <label for="type-general">General</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="type-teambuilding" name="event_type" value="Teambuilding" onchange="handleEventTypeChange(this)">
+                                <label for="type-teambuilding">Teambuilding</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="type-volunteering" name="event_type" value="Volunteering" onchange="handleEventTypeChange(this)">
+                                <label for="type-volunteering">Volunteering</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="type-networking" name="event_type" value="Networking" onchange="handleEventTypeChange(this)">
+                                <label for="type-networking">Networking</label>
+                            </div>
+                        </div>
+                        <!-- Hidden input to store the combined values -->
+                        <input type="hidden" id="event-types" name="event_types" value="">
                     </div>
                     
                     <!-- Event Title -->
@@ -226,6 +315,20 @@
                     <div class="form-group">
                         <label for="event-description">Description</label>
                         <textarea id="event-description" name="description" placeholder="Enter event description" required oninput="updatePreviewDescription()"></textarea>
+                    </div>
+
+                    <!-- Tags Input -->
+                    <div class="form-group">
+                        <label for="event-tags">Tags</label>
+                        <select id="event-tags" name="tags[]" class="tags-select" multiple="multiple">
+                            <!-- Pre-existing tags -->
+                            <option value="networking">Networking</option>
+                            <option value="professional-development">Professional Development</option>
+                            <option value="social">Social</option>
+                            <option value="training">Training</option>
+                            <option value="workshop">Workshop</option>
+                        </select>
+                        <small class="form-text text-muted">Type to search existing tags or create new ones</small>
                     </div>
 
                     <!-- Add submit button -->
@@ -388,6 +491,66 @@
         function updatePreviewDescription() {
             document.getElementById("preview-description").innerText = `Description: ${document.getElementById("event-description").value}`;
         }
+    
+        function handleEventTypeChange(checkbox) {
+            const generalCheckbox = document.getElementById('type-general');
+            const teambuilding = document.getElementById('type-teambuilding');
+            const volunteering = document.getElementById('type-volunteering');
+            const networking = document.getElementById('type-networking');
+            const eventTypesInput = document.getElementById('event-types');
+            
+            if (checkbox.id === 'type-general' && checkbox.checked) {
+                // If General is checked, uncheck all others
+                teambuilding.checked = false;
+                volunteering.checked = false;
+                networking.checked = false;
+            } else if (checkbox.id !== 'type-general') {
+                // If any other checkbox is checked, uncheck General
+                generalCheckbox.checked = false;
+                
+                // Check if all three non-general types are checked
+                if (teambuilding.checked && volunteering.checked && networking.checked) {
+                    // Uncheck all and check General
+                    teambuilding.checked = false;
+                    volunteering.checked = false;
+                    networking.checked = false;
+                    generalCheckbox.checked = true;
+                }
+            }
+
+            // Update hidden input with selected values
+            const selectedTypes = [];
+            if (generalCheckbox.checked) {
+                selectedTypes.push('General');
+            } else {
+                if (teambuilding.checked) selectedTypes.push('Teambuilding');
+                if (volunteering.checked) selectedTypes.push('Volunteering');
+                if (networking.checked) selectedTypes.push('Networking');
+            }
+            eventTypesInput.value = selectedTypes.join(',');
+        }
+
+        $(document).ready(function() {
+            $('.tags-select').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                placeholder: 'Select or create tags',
+                allowClear: true,
+                createTag: function(params) {
+                    const term = $.trim(params.term);
+
+                    if (term === '') {
+                        return null;
+                    }
+
+                    return {
+                        id: term,
+                        text: term,
+                        newTag: true
+                    };
+                }
+            });
+        });
     </script>
     
     <style>
@@ -437,7 +600,7 @@
     {% if messages %}
     <div class="messages" style="padding: 10px; margin: 10px;">
         {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" 
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" 
              style="padding: 10px; margin: 5px; 
                     {% if message.tags == 'error' %}background-color: #ffebee; color: #c62828;{% endif %}
                     {% if message.tags == 'success' %}background-color: #e8f5e9; color: #2e7d32;{% endif %}">
@@ -465,4 +628,53 @@ Line of Service: {{ request.POST.line_of_service }}
             </pre>
         </div>
     {% endif %}
+    
+    <!-- Add this near the top of your form -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Add this JavaScript to clear the form on success -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    // Clear the form
+                    document.querySelector('form').reset();
+                    
+                    // Reset any preview elements
+                    document.getElementById('preview-title').innerText = 'Title: Event Title';
+                    document.getElementById('preview-description').innerText = 'Description: N/A';
+                    document.getElementById('preview-date').innerText = 'Date: N/A';
+                    document.getElementById('preview-time').innerText = 'Time: N/A';
+                    document.getElementById('preview-location').innerText = 'Location: N/A';
+                    document.getElementById('preview-capacity').innerText = 'Capacity: 0';
+                    document.getElementById('preview-line-service').innerText = 'Line of Service: N/A';
+                    document.getElementById('preview-price').innerText = 'Price: Free';
+                    
+                    // Reset image preview
+                    document.getElementById('preview-image').src = '';
+                    
+                    // Reset any selected buttons
+                    document.querySelectorAll('.price-btn, .location-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Hide any conditional inputs
+                    document.getElementById('cost-input').classList.add('hidden');
+                    document.getElementById('meeting-link').classList.add('hidden');
+                    document.getElementById('address-input').classList.add('hidden');
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+    </script>
     
