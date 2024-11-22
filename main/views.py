@@ -1,16 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Event
+from .models import Event, Tag
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 # Create your views here.
 
 
 def all_events(request):
-    events = Event.objects.all()
-    print(f"Number of events found: {len(events)}")  # Debug print
-    print(f"Events: {events}")  # Debug print
+    events = Event.objects.prefetch_related('tags').all()
+    
+    print("\n=== DEBUG: All Events Tags ===")
+    for event in events:
+        tags = list(event.tags.all())
+        print(f"Event '{event.title}' has tags: {[t.name for t in tags]}")
+    print("===========================\n")
+    
     return render(request, 'main/all_events.html', {'events': events})
 
 
@@ -35,31 +41,18 @@ def about(request):
     return render(request, 'main/about.html')
 
 def login_view(request):
-    print("DEBUG: Login view accessed")
-    
-    if request.user.is_authenticated:
-        print("DEBUG: User already authenticated:", request.user)
-        return redirect('homepage')
-        
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        print("DEBUG: Login attempt for username:", username)
-        
         user = authenticate(request, username=username, password=password)
-        
         if user is not None:
             login(request, user)
-            print("DEBUG: Login successful for user:", user)
-            next_url = request.POST.get('next') or request.GET.get('next', '/')
+            # Redirect to the page they were trying to access
+            next_url = request.GET.get('next', '/')
             return redirect(next_url)
         else:
-            print("DEBUG: Login failed for username:", username)
-            messages.error(request, 'Invalid username or password.')
-    
-    # Get the 'next' parameter to pass to the template
-    next_url = request.GET.get('next', '')
-    return render(request, 'main/login.html', {'next': next_url})
+            messages.error(request, 'Invalid username or password')
+    return render(request, 'main/login.html')
 
 def event_view(request):
     return render(request, 'main/event_view.html')
@@ -103,59 +96,43 @@ def home(request):
 
 @login_required
 def event_create(request):
-    # First, check if user is authenticated
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to create an event.')
-        return redirect('login')
-
     if request.method == 'POST':
-        print("=============== DEBUG INFO ===============")
-        print("POST data received:", request.POST)
-        print("FILES received:", request.FILES)
-        print("User:", request.user)  # Add this debug line
-        print("Is authenticated:", request.user.is_authenticated)  # Add this debug line
+        print("\n=== DEBUG: Creating Event ===")
         
-        try:
-            # Create event object but don't save yet
-            event = Event(
-                title=request.POST['title'],
-                description=request.POST['description'],
-                date=request.POST['date'],
-                time=request.POST['time'],
-                location_type=request.POST['location_type'],
-                location=request.POST.get('location', ''),
-                virtual_link=request.POST.get('virtual_link', ''),
-                capacity=request.POST['capacity'],
-                line_of_service=request.POST['line_of_service'],
-                price_type=request.POST['price_type'],
-                creator=request.user  # This should now be a valid User instance
-            )
+        # Create event
+        event = Event(
+            title=request.POST['title'],
+            description=request.POST['description'],
+            date=request.POST['date'],
+            time=request.POST['time'],
+            location_type=request.POST['location_type'],
+            location=request.POST['location'],
+            virtual_link=request.POST['virtual_link'],
+            capacity=request.POST['capacity'],
+            line_of_service=request.POST['line_of_service'],
+            price_type=request.POST['price_type'],
+            cost=request.POST['cost'] if request.POST['cost'] else None,
+            creator=request.user
+        )
+        event.save()
+        print(f"Event created: {event.title}")
 
-            # Handle cost field
-            if request.POST['price_type'] == 'self-funded' and 'cost' in request.POST:
-                event.cost = request.POST['cost']
+        # Save tags
+        tags = request.POST.getlist('tags[]')
+        print(f"Processing tags: {tags}")
+        for tag_name in tags:
+            tag, created = Tag.objects.get_or_create(name=tag_name.strip())
+            event.tags.add(tag)
+            print(f"Added tag: {tag_name}")
 
-            print("About to save event...")
-            event.save()
-            print(f"Event saved successfully with ID: {event.id}")
-
-            # Handle images
-            if 'images' in request.FILES:
-                for image in request.FILES.getlist('images'):
-                    event.images.create(image=image)
-                print(f"Saved {len(request.FILES.getlist('images'))} images")
-
-            messages.success(request, 'Event created successfully!')
-            return redirect('event_detail', event_id=event.id)
-
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            messages.error(request, f'Error creating event: {str(e)}')
-            return render(request, 'main/event_create.html')
-
+        # Handle images
+        images = request.FILES.getlist('images')
+        for image in images:
+            EventImage.objects.create(event=event, image=image)
+        
+        print("=== Event Creation Complete ===\n")
+        return redirect('event_detail', event_id=event.id)
+    
     return render(request, 'main/event_create.html')
 
 def event_detail(request, event_id):

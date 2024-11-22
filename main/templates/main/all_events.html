@@ -22,6 +22,12 @@
                     <p><strong>Time:</strong> {{ event.time }}</p>
                     <p><strong>Location:</strong> {{ event.location }}</p>
                     <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                    
+                    <p><strong>Tags:</strong> 
+                        {% for tag in event.tags.all %}
+                            <span class="tag">{{ tag.name }}</span>
+                        {% endfor %}
+                    </p>
                 </div>
             {% empty %}
                 <p>No events found in the database.</p>
@@ -83,6 +89,15 @@
 
         .event-card strong {
             color: #444;
+        }
+
+        .tag {
+            background: #ff7f00;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin: 0 3px;
+            font-size: 0.9em;
         }
     </style>
 </body>

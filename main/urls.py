@@ -1,5 +1,6 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.contrib.auth.decorators import login_required
 from . import views
 
 urlpatterns = [
@@ -8,7 +9,7 @@ urlpatterns = [
     path('landing/', views.landing, name='landing'),  # Added path for home
     path('login/', views.login_view, name='login'),  # Added path for login
     path('logout/', views.logout_view, name='logout'),
-    path('event_create/', views.event_create, name='event_create'),  # Changed from create_event to event_create
+    path('event_create/', login_required(views.event_create), name='event_create'),  # Ensure login_required is here
     path('event_view/', views.event_view, name='event_view'),
     path('myevents/', views.myevents, name='myevents'),
     path('networking/', views.networking, name='networking'),

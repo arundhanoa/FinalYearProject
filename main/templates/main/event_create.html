@@ -321,12 +321,9 @@
                     <div class="form-group">
                         <label for="event-tags">Tags</label>
                         <select id="event-tags" name="tags[]" class="tags-select" multiple="multiple">
-                            <!-- Pre-existing tags -->
-                            <option value="networking">Networking</option>
-                            <option value="professional-development">Professional Development</option>
-                            <option value="social">Social</option>
-                            <option value="training">Training</option>
-                            <option value="workshop">Workshop</option>
+                            {% for tag in existing_tags %}
+                                <option value="{{ tag }}">{{ tag }}</option>
+                            {% endfor %}
                         </select>
                         <small class="form-text text-muted">Type to search existing tags or create new ones</small>
                     </div>
