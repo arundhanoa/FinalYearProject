@@ -14,15 +14,134 @@
     </header>
 
     <main>
-        <p>Date: {{ event.date }}</p>
-        <p>Category: {{ event.category }}</p>
-        <p>Description: {{ event.description }}</p>
+        <div class="event-details">
+            <h1>{{ event.title }}</h1>
 
-        <form action="{% url 'event_signup' event.id %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Sign Up for Event</button>
-        </form>
+            <!-- Slideshow container -->
+            <div class="slideshow-container">
+                {% for image in event.event_images.all %}
+                    <div class="slide">
+                        <img src="{{ image.image.url }}" alt="Event image">
+                    </div>
+                {% endfor %}
+
+                <!-- Navigation arrows -->
+                <a class="prev" onclick="changeSlide(-1)">❮</a>
+                <a class="next" onclick="changeSlide(1)">❯</a>
+
+                <!-- Navigation dots -->
+                <div class="dots-container">
+                    {% for image in event.event_images.all %}
+                        <span class="dot" onclick="currentSlide({{ forloop.counter }})"></span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Rest of event details -->
+            <p><strong>Date:</strong> {{ event.date }}</p>
+            <p><strong>Description:</strong> {{ event.description }}</p>
+            
+            <form action="{% url 'event_signup' event.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="signup-button">Sign Up for Event</button>
+            </form>
+        </div>
     </main>
+
+    <style>
+        .slideshow-container {
+            max-width: 1000px;
+            position: relative;
+            margin: 20px auto;
+        }
+
+        .slide {
+            display: none;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -22px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            background-color: rgba(0,0,0,0.3);
+        }
+
+        .next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .prev:hover, .next:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .dots-container {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .dot {
+            cursor: pointer;
+            height: 12px;
+            width: 12px;
+            margin: 0 4px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+            transition: background-color 0.6s ease;
+        }
+
+        .active, .dot:hover {
+            background-color: #717171;
+        }
+    </style>
+
+    <script>
+        let slideIndex = 1;
+        showSlides(slideIndex);
+
+        function changeSlide(n) {
+            showSlides(slideIndex += n);
+        }
+
+        function currentSlide(n) {
+            showSlides(slideIndex = n);
+        }
+
+        function showSlides(n) {
+            let slides = document.getElementsByClassName("slide");
+            let dots = document.getElementsByClassName("dot");
+            
+            if (n > slides.length) {slideIndex = 1}
+            if (n < 1) {slideIndex = slides.length}
+            
+            for (let i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";
+            }
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].className = dots[i].className.replace(" active", "");
+            }
+            
+            slides[slideIndex-1].style.display = "block";
+            dots[slideIndex-1].className += " active";
+        }
+    </script>
 
     <footer>
         <p>&copy; 2024 Event Management System</p>

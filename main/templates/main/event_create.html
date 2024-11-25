@@ -196,145 +196,155 @@
         <div class="container" style="display: flex; justify-content: space-between;">
             <!-- Left side: form inputs for creating an event -->
             <div class="form-container" style="flex: 1; margin-right: 20px;">
-                <h1>Create Event</h1>
-                <form method="POST" action="{% url 'event_create' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-    
-                    <!-- Add these hidden inputs -->
-                    <input type="hidden" id="price_type" name="price_type" value="free">
-                    <input type="hidden" id="location_type" name="location_type" value="">
-    
-                    <!-- Image Upload -->
-                    <div class="form-group">
-                        <label for="event-image">Upload Event Images</label>
-                        <input type="file" id="event-image" name="images" multiple onchange="updateImagePreview()">
-                    </div>
-    
-                    <!-- Price Options -->
-                    <div class="form-group">
-                        <label>Price</label>
-                        <div class="button-group">
-                            <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
-                            <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
-                            <button type="button" class="price-btn" data-price="paid" onclick="selectPrice('Paid for')">Paid for</button>
-                        </div>
-                        <div id="cost-input" class="form-group hidden">
-                            <label for="cost">Cost (numbers only)</label>
-                            <input type="number" 
-                                   step="0.01" 
-                                   class="form-control" 
-                                   id="cost" 
-                                   name="cost" 
-                                   placeholder="8.00"
-                                   pattern="[0-9]*\.?[0-9]*">
-                            <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
-                        </div>
-                    </div>
-    
-                    <!-- Event Capacity -->
-                    <div class="form-group">
-                        <label for="capacity">Event Capacity</label>
-                        <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
-                    </div>
-    
-                    <!-- Line of Service -->
-                    <div class="form-group">
-                        <label for="line-service">Line of Service</label>
-                        <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
-                            <option value="" disabled selected>Select line of service</option>
-                            <option value="Audit">Audit</option>
-                            <option value="Consulting">Consulting</option>
-                            <option value="Tax">Tax</option>
-                            <option value="Advisory">Advisory</option>
-                            <option value="Assurance">Assurance</option>
-                            <!-- Add other options as needed -->
-                        </select>
-                    </div>
+                <div class="form-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                     
-                    <!-- Event Type -->
-                    <div class="form-group">
-                        <label>Event Type</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="type-general" name="event_type" value="General" onchange="handleEventTypeChange(this)">
-                                <label for="type-general">General</label>
+                    <h1>Create Event</h1>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+        
+                        <!-- Add these hidden inputs -->
+                        <input type="hidden" id="price_type" name="price_type" value="free">
+                        <input type="hidden" id="location_type" name="location_type" value="">
+        
+                        <!-- Image Upload -->
+                        <div class="form-group">
+                            <label for="event-image">Upload Event Images</label>
+                            <input type="file" id="event-image" name="images" multiple onchange="updateImagePreview()">
+                        </div>
+        
+                        <!-- Price Options -->
+                        <div class="form-group">
+                            <label>Price</label>
+                            <div class="button-group">
+                                <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
+                                <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
+                                <button type="button" class="price-btn" data-price="paid" onclick="selectPrice('Paid for')">Paid for</button>
                             </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="type-teambuilding" name="event_type" value="Teambuilding" onchange="handleEventTypeChange(this)">
-                                <label for="type-teambuilding">Teambuilding</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="type-volunteering" name="event_type" value="Volunteering" onchange="handleEventTypeChange(this)">
-                                <label for="type-volunteering">Volunteering</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="type-networking" name="event_type" value="Networking" onchange="handleEventTypeChange(this)">
-                                <label for="type-networking">Networking</label>
+                            <div id="cost-input" class="form-group hidden">
+                                <label for="cost">Cost (numbers only)</label>
+                                <input type="number" 
+                                       step="0.01" 
+                                       class="form-control" 
+                                       id="cost" 
+                                       name="cost" 
+                                       placeholder="8.00"
+                                       pattern="[0-9]*\.?[0-9]*">
+                                <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
                         </div>
-                        <!-- Hidden input to store the combined values -->
-                        <input type="hidden" id="event-types" name="event_types" value="">
-                    </div>
-                    
-                    <!-- Event Title -->
-                    <div class="form-group">
-                        <label for="event-title">Event Title</label>
-                        <input type="text" id="event-title" name="title" placeholder="Enter event title" required oninput="updatePreviewTitle()">
-                    </div>
-    
-                    <!-- Date and Time -->
-                    <div class="form-group">
-                        <label for="event-date">Date</label>
-                        <input type="date" id="event-date" name="date" required onchange="updatePreviewDate()">
-                    </div>
-                    <div class="form-group">
-                        <label for="event-time">Time</label>
-                        <input type="time" id="event-time" name="time" required onchange="updatePreviewDate()">
-                    </div>
-    
-                    <!-- Location Options -->
-                    <div class="form-group">
-                        <label>Location</label>
-                        <div class="button-group">
-                            <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('Virtual')">Virtual</button>
-                            <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('In-person')">In-person</button>
-                            <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('Hybrid')">Hybrid</button>
+        
+                        <!-- Event Capacity -->
+                        <div class="form-group">
+                            <label for="capacity">Event Capacity</label>
+                            <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
                         </div>
-                        <div id="meeting-link" class="form-group hidden">
-                            <label for="link">Meeting Link</label>
-                            <input type="text" id="link" name="virtual_link" placeholder="Enter virtual meeting link" oninput="updatePreviewLocation()">
+        
+                        <!-- Line of Service -->
+                        <div class="form-group">
+                            <label for="line-service">Line of Service</label>
+                            <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
+                                <option value="" disabled selected>Select line of service</option>
+                                <option value="Audit">Audit</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Tax">Tax</option>
+                                <option value="Advisory">Advisory</option>
+                                <option value="Assurance">Assurance</option>
+                                <!-- Add other options as needed -->
+                            </select>
                         </div>
-                        <div id="address-input" class="form-group hidden">
-                            <label for="address">Address</label>
-                            <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
-                            <div id="map"></div>
+                        
+                        <!-- Event Type -->
+                        <div class="form-group">
+                            <label>Event Type</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-general" name="event_type" value="General" onchange="handleEventTypeChange(this)">
+                                    <label for="type-general">General</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-teambuilding" name="event_type" value="Teambuilding" onchange="handleEventTypeChange(this)">
+                                    <label for="type-teambuilding">Teambuilding</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-volunteering" name="event_type" value="Volunteering" onchange="handleEventTypeChange(this)">
+                                    <label for="type-volunteering">Volunteering</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-networking" name="event_type" value="Networking" onchange="handleEventTypeChange(this)">
+                                    <label for="type-networking">Networking</label>
+                                </div>
+                            </div>
+                            <!-- Hidden input to store the combined values -->
+                            <input type="hidden" id="event-types" name="event_types" value="">
                         </div>
-                    </div>
-    
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label for="event-description">Description</label>
-                        <textarea id="event-description" name="description" placeholder="Enter event description" required oninput="updatePreviewDescription()"></textarea>
-                    </div>
+                        
+                        <!-- Event Title -->
+                        <div class="form-group">
+                            <label for="event-title">Event Title</label>
+                            <input type="text" id="event-title" name="title" placeholder="Enter event title" required oninput="updatePreviewTitle()">
+                        </div>
+        
+                        <!-- Date and Time -->
+                        <div class="form-group">
+                            <label for="event-date">Date</label>
+                            <input type="date" id="event-date" name="date" required onchange="updatePreviewDate()">
+                        </div>
+                        <div class="form-group">
+                            <label for="event-time">Time</label>
+                            <input type="time" id="event-time" name="time" required onchange="updatePreviewDate()">
+                        </div>
+        
+                        <!-- Location Options -->
+                        <div class="form-group">
+                            <label>Location</label>
+                            <div class="button-group">
+                                <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('Virtual')">Virtual</button>
+                                <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('In-person')">In-person</button>
+                                <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('Hybrid')">Hybrid</button>
+                            </div>
+                            <div id="meeting-link" class="form-group hidden">
+                                <label for="link">Meeting Link</label>
+                                <input type="text" id="link" name="virtual_link" placeholder="Enter virtual meeting link" oninput="updatePreviewLocation()">
+                            </div>
+                            <div id="address-input" class="form-group hidden">
+                                <label for="address">Address</label>
+                                <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
+                                <div id="map"></div>
+                            </div>
+                        </div>
+        
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="event-description">Description</label>
+                            <textarea id="event-description" name="description" placeholder="Enter event description" required oninput="updatePreviewDescription()"></textarea>
+                        </div>
 
-                    <!-- Tags Input -->
-                    <div class="form-group">
-                        <label for="event-tags">Tags</label>
-                        <select id="event-tags" name="tags[]" class="tags-select" multiple="multiple">
-                            {% for tag in existing_tags %}
-                                <option value="{{ tag }}">{{ tag }}</option>
-                            {% endfor %}
-                        </select>
-                        <small class="form-text text-muted">Type to search existing tags or create new ones</small>
-                    </div>
+                        <!-- Tags Input -->
+                        <div class="form-group">
+                            <label for="event-tags">Tags</label>
+                            <select name="tags[]" id="tags" multiple="multiple" class="select2-tags" style="width: 100%">
+                                {% for tag in existing_tags %}
+                                    <option value="{{ tag.name }}">{{ tag.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Type to search existing tags or create new ones</small>
+                        </div>
 
-                    <!-- Add submit button -->
-                    <div class="form-group">
-                        <button type="submit" class="submit-btn" style="background-color: #ff7f00; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-                            Create Event
-                        </button>
-                    </div>
-                </form>
+                        <!-- Add submit button -->
+                        <div class="form-group">
+                            <button type="submit" class="submit-btn" style="background-color: #ff7f00; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                                Create Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
     
             <!-- Right side: Live preview of the event card -->
@@ -528,23 +538,24 @@
         }
 
         $(document).ready(function() {
-            $('.tags-select').select2({
+            $('.select2-tags').select2({
                 tags: true,
                 tokenSeparators: [',', ' '],
-                placeholder: 'Select or create tags',
-                allowClear: true,
-                createTag: function(params) {
-                    const term = $.trim(params.term);
-
-                    if (term === '') {
-                        return null;
-                    }
-
-                    return {
-                        id: term,
-                        text: term,
-                        newTag: true
-                    };
+                ajax: {
+                    url: '{% url "get_tags" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function(item) {
+                                return {
+                                    id: item,
+                                    text: item
+                                };
+                            })
+                        };
+                    },
+                    cache: true
                 }
             });
         });
@@ -674,4 +685,49 @@ Line of Service: {{ request.POST.line_of_service }}
         {% endif %}
     });
     </script>
+    
+    <script>
+    $(document).ready(function() {
+        $('#id_tags').select2({
+            tags: true,
+            tokenSeparators: [','],
+            ajax: {
+                url: '{% url "get_tags" %}',  // Create this URL
+                dataType: 'json',
+                delay: 250,
+                processResults: function (data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item,
+                                text: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+    </script>
+    
+    <style>
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+    </style>
     

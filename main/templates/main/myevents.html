@@ -87,22 +87,44 @@
             <section class="popular-section main-section">
                 <h2>Popular</h2>
                 <div class="event-grid">
-                    <!-- Display 4 signed-up popular events here -->
-                    <div class="event-card">Signed-up Popular Event 1</div>
-                    <div class="event-card">Signed-up Popular Event 2</div>
-                    <div class="event-card">Signed-up Popular Event 3</div>
-                    <div class="event-card">Signed-up Popular Event 4</div>
+                    {% if signed_up_popular %}
+                        {% for event in signed_up_popular %}
+                            <div class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No events found</div>
+                    {% endif %}
                 </div>
             </section>
 
             <section class="discover-section main-section">
                 <h2>Discover</h2>
                 <div class="event-grid">
-                    <!-- Display 4 signed-up recommended events here -->
-                    <div class="event-card">Signed-up Recommended Event 1</div>
-                    <div class="event-card">Signed-up Recommended Event 2</div>
-                    <div class="event-card">Signed-up Recommended Event 3</div>
-                    <div class="event-card">Signed-up Recommended Event 4</div>
+                    {% if signed_up_recommended %}
+                        {% for event in signed_up_recommended %}
+                            <div class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No events found</div>
+                    {% endif %}
                 </div>
             </section>
         </section>

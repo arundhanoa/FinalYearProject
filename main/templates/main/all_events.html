@@ -13,22 +13,74 @@
     <div class="container">
         <h1>All Events</h1>
         
+        <!-- Filter Panel -->
+        <div class="filter-panel">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select name="sort_by">
+                        <option value="-date" {% if current_filters.sort_by == '-date' %}selected{% endif %}>Date</option>
+                        <option value="title" {% if current_filters.sort_by == 'title' %}selected{% endif %}>Title</option>
+                        <option value="location" {% if current_filters.sort_by == 'location' %}selected{% endif %}>Location</option>
+                        <option value="price_type" {% if current_filters.sort_by == 'price_type' %}selected{% endif %}>Price Type</option>
+                    </select>
+                    
+                    <select name="direction">
+                        <option value="desc" {% if current_filters.direction == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" {% if current_filters.direction == 'asc' %}selected{% endif %}>Ascending</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <input type="text" name="title" placeholder="Filter by title" value="{{ current_filters.title }}">
+                    <input type="date" name="date" value="{{ current_filters.date }}">
+                    <input type="text" name="location" placeholder="Filter by location" value="{{ current_filters.location }}">
+                    
+                    <select name="price_type">
+                        <option value="">All Price Types</option>
+                        {% for price_type in price_types %}
+                            <option value="{{ price_type }}" {% if current_filters.price_type == price_type %}selected{% endif %}>
+                                {{ price_type }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="tag">
+                        <option value="">All Tags</option>
+                        {% for tag in all_tags %}
+                            <option value="{{ tag.name }}" {% if current_filters.tag == tag.name %}selected{% endif %}>
+                                {{ tag.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
         <div class="events-list">
             {% for event in events %}
-                <div class="event-card">
-                    <h3>{{ event.title }}</h3>
-                    <p><strong>Description:</strong> {{ event.description }}</p>
-                    <p><strong>Date:</strong> {{ event.date }}</p>
-                    <p><strong>Time:</strong> {{ event.time }}</p>
-                    <p><strong>Location:</strong> {{ event.location }}</p>
-                    <p><strong>Price Type:</strong> {{ event.price_type }}</p>
-                    
-                    <p><strong>Tags:</strong> 
-                        {% for tag in event.tags.all %}
-                            <span class="tag">{{ tag.name }}</span>
-                        {% endfor %}
-                    </p>
-                </div>
+                <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                    <div class="event-card">
+                        {% with first_image=event.event_images.first %}
+                            {% if first_image %}
+                                <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <h3>{{ event.title }}</h3>
+                        <p><strong>Description:</strong> {{ event.description }}</p>
+                        <p><strong>Date:</strong> {{ event.date }}</p>
+                        <p><strong>Time:</strong> {{ event.time }}</p>
+                        <p><strong>Location:</strong> {{ event.location }}</p>
+                        <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                        
+                        <p><strong>Tags:</strong> 
+                            {% for tag in event.tags.all %}
+                                <span class="tag">{{ tag.name }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </a>
             {% empty %}
                 <p>No events found in the database.</p>
             {% endfor %}
@@ -99,6 +151,69 @@
             margin: 0 3px;
             font-size: 0.9em;
         }
+
+        .event-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .event-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .event-card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .event-card-link:hover {
+            text-decoration: none;
+        }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tagInput = document.querySelector('#id_tags');  // Adjust selector as needed
+            
+            // Fetch existing tags from backend
+            fetch('/api/tags/')  // You'll need to create this endpoint
+                .then(response => response.json())
+                .then(tags => {
+                    // Add autocomplete functionality
+                    // Implementation depends on your chosen library
+                });
+        });
+
+        // Get all filter inputs and selects
+        const filterInputs = document.querySelectorAll('.filter-form select, .filter-form input');
+        
+        // Add change event listener to each filter
+        filterInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                // Submit the form when any filter changes
+                document.querySelector('.filter-form').submit();
+            });
+        });
+    </script>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 </body>
 </html>
