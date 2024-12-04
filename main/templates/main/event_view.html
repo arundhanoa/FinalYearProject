@@ -37,14 +37,69 @@
                 </div>
             </div>
 
-            <!-- Rest of event details -->
-            <p><strong>Date:</strong> {{ event.date }}</p>
-            <p><strong>Description:</strong> {{ event.description }}</p>
-            
-            <form action="{% url 'event_signup' event.id %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="signup-button">Sign Up for Event</button>
-            </form>
+            <!-- Event Information Grid -->
+            <div class="info-grid">
+                <div class="info-section">
+                    <h3>Event Details</h3>
+                    <p><strong>Date:</strong> {{ event.date }}</p>
+                    <p><strong>Time:</strong> {{ event.time }}</p>
+                    <p><strong>Capacity:</strong> {{ event.capacity }} people</p>
+                    <p><strong>Line of Service:</strong> {{ event.line_of_service }}</p>
+                    <p><strong>Event Type:</strong> {{ event.event_types }}</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>Location</h3>
+                    <p><strong>Type:</strong> {{ event.location_type }}</p>
+                    {% if event.location_type == 'virtual' %}
+                        <p><strong>Meeting Link:</strong> <a href="{{ event.virtual_link }}" target="_blank">Join Meeting</a></p>
+                    {% elif event.location_type == 'in-person' %}
+                        <p><strong>Address:</strong> {{ event.location }}</p>
+                    {% else %}
+                        <p><strong>Address:</strong> {{ event.location }}</p>
+                        <p><strong>Meeting Link:</strong> <a href="{{ event.virtual_link }}" target="_blank">Join Meeting</a></p>
+                    {% endif %}
+                </div>
+
+                <div class="info-section">
+                    <h3>Price Information</h3>
+                    <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                    {% if event.price_type != 'free' %}
+                        <p><strong>Cost:</strong> £{{ event.cost }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="info-section">
+                    <h3>Description</h3>
+                    <p>{{ event.description }}</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>Tags</h3>
+                    <div class="tags-container">
+                        {% for tag in event.tags.all %}
+                            <span class="tag">{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Event Status</h3>
+                    <p><strong>Created by:</strong> {{ event.creator.username }}</p>
+                    <p><strong>Participants:</strong> {{ event.participants.count }} signed up</p>
+                    
+                    {% if user.is_authenticated %}
+                        <form action="{% url 'event_signup' event.id %}" method="post">
+                            {% csrf_token %}
+                            {% if user in event.participants.all %}
+                                <button type="submit" class="signup-button signed-up" disabled>Already Signed Up</button>
+                            {% else %}
+                                <button type="submit" class="signup-button">Sign Up for Event</button>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </main>
 
@@ -109,6 +164,61 @@
 
         .active, .dot:hover {
             background-color: #717171;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .info-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0301e;
+            padding-bottom: 5px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #ff7f00;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .signup-button {
+            background: #e0301e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .signup-button.signed-up {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .signup-button:hover:not(.signed-up) {
+            background: #c62828;
         }
     </style>
 

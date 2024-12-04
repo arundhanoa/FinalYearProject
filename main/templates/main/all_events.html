@@ -14,47 +14,110 @@
         <h1>All Events</h1>
         
         <!-- Filter Panel -->
-        <div class="filter-panel">
-            <form method="get" class="filter-form">
-                <div class="filter-group">
-                    <label>Sort By:</label>
-                    <select name="sort_by">
-                        <option value="-date" {% if current_filters.sort_by == '-date' %}selected{% endif %}>Date</option>
-                        <option value="title" {% if current_filters.sort_by == 'title' %}selected{% endif %}>Title</option>
-                        <option value="location" {% if current_filters.sort_by == 'location' %}selected{% endif %}>Location</option>
-                        <option value="price_type" {% if current_filters.sort_by == 'price_type' %}selected{% endif %}>Price Type</option>
-                    </select>
-                    
-                    <select name="direction">
-                        <option value="desc" {% if current_filters.direction == 'desc' %}selected{% endif %}>Descending</option>
-                        <option value="asc" {% if current_filters.direction == 'asc' %}selected{% endif %}>Ascending</option>
-                    </select>
-                </div>
+        <div class="filter-container">
+            <button class="filter-header" onclick="toggleFilters()">
+                <span>Filters</span>
+                <i class="arrow-icon">▼</i>
+            </button>
+            
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <form method="get" class="filter-form">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Sort By</label>
+                            <select name="sort_by">
+                                <option value="-date" {% if current_filters.sort_by == '-date' %}selected{% endif %}>Date</option>
+                                <option value="title" {% if current_filters.sort_by == 'title' %}selected{% endif %}>Title</option>
+                                <option value="location" {% if current_filters.sort_by == 'location' %}selected{% endif %}>Location</option>
+                                <option value="capacity" {% if current_filters.sort_by == 'capacity' %}selected{% endif %}>Capacity</option>
+                            </select>
+                        </div>
 
-                <div class="filter-group">
-                    <input type="text" name="title" placeholder="Filter by title" value="{{ current_filters.title }}">
-                    <input type="date" name="date" value="{{ current_filters.date }}">
-                    <input type="text" name="location" placeholder="Filter by location" value="{{ current_filters.location }}">
-                    
-                    <select name="price_type">
-                        <option value="">All Price Types</option>
-                        {% for price_type in price_types %}
-                            <option value="{{ price_type }}" {% if current_filters.price_type == price_type %}selected{% endif %}>
-                                {{ price_type }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    
-                    <select name="tag">
-                        <option value="">All Tags</option>
-                        {% for tag in all_tags %}
-                            <option value="{{ tag.name }}" {% if current_filters.tag == tag.name %}selected{% endif %}>
-                                {{ tag.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
+                        <div class="filter-group">
+                            <label>Capacity</label>
+                            <select name="direction">
+                                <option value="desc" {% if current_filters.direction == 'desc' %}selected{% endif %}>Descending</option>
+                                <option value="asc" {% if current_filters.direction == 'asc' %}selected{% endif %}>Ascending</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Title</label>
+                            <input type="text" name="title" placeholder="Search by title" value="{{ current_filters.title }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Date</label>
+                            <input type="date" name="date" value="{{ current_filters.date }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Time Range</label>
+                            <div class="time-range-container">
+                                <div class="time-input-group">
+                                    <input 
+                                        type="time" 
+                                        name="time_start" 
+                                        value="{{ current_filters.time_start }}"
+                                        class="time-input"
+                                        placeholder="Start Time"
+                                    >
+                                    <span class="time-separator">to</span>
+                                    <input 
+                                        type="time" 
+                                        name="time_end" 
+                                        value="{{ current_filters.time_end }}"
+                                        class="time-input"
+                                        placeholder="End Time"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Location</label>
+                            <select name="location_type">
+                                <option value="">All Locations</option>
+                                <option value="virtual" {% if current_filters.location_type == 'virtual' %}selected{% endif %}>Virtual</option>
+                                <option value="in-person" {% if current_filters.location_type == 'in-person' %}selected{% endif %}>In-Person</option>
+                                <option value="hybrid" {% if current_filters.location_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Price Type</label>
+                            <select name="price_type">
+                                <option value="">All Price Types</option>
+                                <option value="free" {% if current_filters.price_type == 'free' %}selected{% endif %}>Free</option>
+                                <option value="self-funded" {% if current_filters.price_type == 'self-funded' %}selected{% endif %}>Self-funded</option>
+                                <option value="paid-for" {% if current_filters.price_type == 'paid-for' %}selected{% endif %}>Paid for</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Tag</label>
+                            <select name="tag">
+                                <option value="">All Tags</option>
+                                {% for tag in all_tags %}
+                                    <option value="{{ tag.name }}" {% if current_filters.tag == tag.name %}selected{% endif %}>
+                                        {{ tag.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <div class="button-group">
+                                <button type="submit" class="filter-button">Apply Filters</button>
+                                <a href="{% url 'all_events' %}" class="reset-button">Reset</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="events-list">
@@ -181,6 +244,113 @@
         .event-card-link:hover {
             text-decoration: none;
         }
+
+        .filter-container {
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .filter-header {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border: none;
+            text-align: left;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .filter-panel {
+            background: white;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .filter-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .filter-form input,
+        .filter-form select {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .reset-button {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .filter-button:hover,
+        .reset-button:hover {
+            opacity: 0.9;
+        }
+
+        .time-range-container {
+            width: 100%;
+        }
+
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .time-separator {
+            color: #495057;
+            font-weight: bold;
+        }
     </style>
 
     <script>
@@ -206,6 +376,28 @@
                 document.querySelector('.filter-form').submit();
             });
         });
+
+        function toggleFilters() {
+            const filterPanel = document.getElementById('filterPanel');
+            const arrowIcon = document.querySelector('.arrow-icon');
+            
+            if (filterPanel.style.display === 'none') {
+                filterPanel.style.display = 'block';
+                arrowIcon.textContent = '▲';
+            } else {
+                filterPanel.style.display = 'none';
+                arrowIcon.textContent = '▼';
+            }
+        }
+
+        // Show filter panel if there are active filters
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.toString()) {
+                document.getElementById('filterPanel').style.display = 'block';
+                document.querySelector('.arrow-icon').textContent = '▲';
+            }
+        }
     </script>
 
     {% if messages %}

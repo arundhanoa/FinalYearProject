@@ -225,7 +225,7 @@
                             <div class="button-group">
                                 <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
                                 <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
-                                <button type="button" class="price-btn" data-price="paid" onclick="selectPrice('Paid for')">Paid for</button>
+                                <button type="button" class="price-btn" data-price="paid-for" onclick="selectPrice('Paid for')">Paid for</button>
                             </div>
                             <div id="cost-input" class="form-group hidden">
                                 <label for="cost">Cost (numbers only)</label>
@@ -235,7 +235,8 @@
                                        id="cost" 
                                        name="cost" 
                                        placeholder="8.00"
-                                       pattern="[0-9]*\.?[0-9]*">
+                                       pattern="[0-9]*\.?[0-9]*"
+                                       oninput="updatePreviewPrice()">
                                 <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
                         </div>
@@ -431,14 +432,21 @@
         }
     
         function selectPrice(price) {
-            const priceType = price.toLowerCase();
+            const priceType = price.toLowerCase().replace(/ /g, '-');  // Convert "Paid for" to "paid-for"
             document.getElementById("preview-price").innerText = `Price: ${price}`;
+            
+            // Remove selected class from all buttons
             document.querySelectorAll('.price-btn').forEach(btn => btn.classList.remove('selected'));
-            document.querySelector(`.price-btn[data-price="${priceType}"]`).classList.add('selected');
-    
+            
+            // Add selected class to the clicked button
+            const selectedButton = document.querySelector(`.price-btn[data-price="${priceType}"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+
             const costInput = document.getElementById("cost-input");
-            costInput.classList.toggle('hidden', price !== 'Self-funded');
-    
+            costInput.classList.toggle('hidden', price === 'Free');
+
             // Set the hidden input value
             document.getElementById("price_type").value = priceType;
         }

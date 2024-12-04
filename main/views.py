@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from django.utils import timezone
+from datetime import datetime
 
 # Create your views here.
 
@@ -17,53 +19,52 @@ def all_events(request):
     sort_direction = request.GET.get('direction', 'desc')
     title_filter = request.GET.get('title', '')
     date_filter = request.GET.get('date', '')
-    location_filter = request.GET.get('location', '')
+    time_start = request.GET.get('time_start', '')
+    time_end = request.GET.get('time_end', '')
+    location_type_filter = request.GET.get('location_type', '')
     price_type_filter = request.GET.get('price_type', '')
     tag_filter = request.GET.get('tag', '')
 
     # Apply filters
     if title_filter:
         events = events.filter(title__icontains=title_filter)
-    
     if date_filter:
-        try:
-            events = events.filter(date=date_filter)
-        except ValueError:
-            pass  # Handle invalid date format
-    
-    if location_filter:
-        events = events.filter(location__icontains=location_filter)
-    
+        events = events.filter(date=date_filter)
+    if time_start and time_end:
+        events = events.filter(time__gte=time_start, time__lte=time_end)
+    elif time_start:
+        events = events.filter(time__gte=time_start)
+    elif time_end:
+        events = events.filter(time__lte=time_end)
+    if location_type_filter:
+        events = events.filter(location_type=location_type_filter)
     if price_type_filter:
         events = events.filter(price_type=price_type_filter)
-    
     if tag_filter:
         events = events.filter(tags__name=tag_filter)
-        
+
     # Apply sorting
     if sort_direction == 'asc':
         events = events.order_by(sort_by.replace('-', ''))
     else:
-        events = events.order_by(sort_by)
-        
-    # Get unique values for dropdowns
-    all_tags = Tag.objects.all()
-    price_types = Event.objects.values_list('price_type', flat=True).distinct()
-    
+        events = events.order_by(f"-{sort_by.replace('-', '')}")
+
     context = {
         'events': events,
-        'all_tags': all_tags,
-        'price_types': price_types,
+        'all_tags': Tag.objects.all(),
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
             'title': title_filter,
             'date': date_filter,
-            'location': location_filter,
+            'time_start': time_start,
+            'time_end': time_end,
+            'location_type': location_type_filter,
             'price_type': price_type_filter,
-            'tag': tag_filter
+            'tag': tag_filter,
         }
     }
+    
     return render(request, 'main/all_events.html', context)
 
 
@@ -107,29 +108,29 @@ def event_view(request, event_id):
 
 @login_required
 def myevents(request):
+    today = timezone.now().date()
+    
     # Get events created by the user
-    created_events = Event.objects.filter(creator=request.user).order_by('-date')
+    created_events = Event.objects.filter(creator=request.user)
+    created_past = created_events.filter(date__lt=today).order_by('-date')[:4]
+    created_upcoming = created_events.filter(date__gte=today).order_by('date')[:4]
     
     # Get events the user has signed up for
-    signed_up_events = Event.objects.filter(participants=request.user).order_by('-date')
+    signed_up_events = Event.objects.filter(participants=request.user)
+    signed_up_past = signed_up_events.filter(date__lt=today).order_by('-date')[:4]
+    signed_up_upcoming = signed_up_events.filter(date__gte=today).order_by('date')[:4]
     
-    # Split each category into popular and recommended
-    # For this example, we'll consider newer events as "popular" and older as "recommended"
-    created_popular = created_events[:4]
-    created_recommended = created_events[4:8]
-    
-    signed_up_popular = signed_up_events[:4]
-    signed_up_recommended = signed_up_events[4:8]
-    
-    # Add some debug prints
-    print(f"Created events count: {created_events.count()}")
-    print(f"Signed up events count: {signed_up_events.count()}")
+    # Debug prints
+    print(f"Created past events: {created_past.count()}")
+    print(f"Created upcoming events: {created_upcoming.count()}")
+    print(f"Signed up past events: {signed_up_past.count()}")
+    print(f"Signed up upcoming events: {signed_up_upcoming.count()}")
     
     context = {
-        'created_popular': created_popular,
-        'created_recommended': created_recommended,
-        'signed_up_popular': signed_up_popular,
-        'signed_up_recommended': signed_up_recommended,
+        'created_past': created_past,
+        'created_upcoming': created_upcoming,
+        'signed_up_past': signed_up_past,
+        'signed_up_upcoming': signed_up_upcoming,
     }
     
     return render(request, 'main/myevents.html', context)

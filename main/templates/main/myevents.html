@@ -53,18 +53,26 @@
         }
 
         .event-grid {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1.25rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
         }
 
         .event-card {
-            background-color: lightgrey;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background-color: #f5f5f5;
             padding: 1.25rem;
             border-radius: 0.5rem;
-            flex: 1;
-            margin: 0 0.625rem;
-            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -85,11 +93,11 @@
         <!-- Tab Content: Signed up for -->
         <section id="signed-up" class="tab-content active">
             <section class="popular-section main-section">
-                <h2>Popular</h2>
+                <h2>Past</h2>
                 <div class="event-grid">
-                    {% if signed_up_popular %}
-                        {% for event in signed_up_popular %}
-                            <div class="event-card">
+                    {% if signed_up_past %}
+                        {% for event in signed_up_past %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
                                         <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
@@ -98,20 +106,20 @@
                                 <h3>{{ event.title }}</h3>
                                 <p>Date: {{ event.date }}</p>
                                 <p>{{ event.description|truncatechars:100 }}</p>
-                            </div>
+                            </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No events found</div>
+                        <div class="event-card">No past events found</div>
                     {% endif %}
                 </div>
             </section>
 
             <section class="discover-section main-section">
-                <h2>Discover</h2>
+                <h2>Current and Upcoming</h2>
                 <div class="event-grid">
-                    {% if signed_up_recommended %}
-                        {% for event in signed_up_recommended %}
-                            <div class="event-card">
+                    {% if signed_up_upcoming %}
+                        {% for event in signed_up_upcoming %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
                                         <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
@@ -120,10 +128,10 @@
                                 <h3>{{ event.title }}</h3>
                                 <p>Date: {{ event.date }}</p>
                                 <p>{{ event.description|truncatechars:100 }}</p>
-                            </div>
+                            </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No events found</div>
+                        <div class="event-card">No upcoming events found</div>
                     {% endif %}
                 </div>
             </section>
@@ -132,24 +140,46 @@
         <!-- Tab Content: Created -->
         <section id="created" class="tab-content">
             <section class="popular-section main-section">
-                <h2>Popular</h2>
+                <h2>Past</h2>
                 <div class="event-grid">
-                    <!-- Display 4 created popular events here -->
-                    <div class="event-card">Created Popular Event 1</div>
-                    <div class="event-card">Created Popular Event 2</div>
-                    <div class="event-card">Created Popular Event 3</div>
-                    <div class="event-card">Created Popular Event 4</div>
+                    {% if created_past %}
+                        {% for event in created_past %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No past events found</div>
+                    {% endif %}
                 </div>
             </section>
 
             <section class="discover-section main-section">
-                <h2>Discover</h2>
+                <h2>Current and Upcoming</h2>
                 <div class="event-grid">
-                    <!-- Display 4 created recommended events here -->
-                    <div class="event-card">Created Recommended Event 1</div>
-                    <div class="event-card">Created Recommended Event 2</div>
-                    <div class="event-card">Created Recommended Event 3</div>
-                    <div class="event-card">Created Recommended Event 4</div>
+                    {% if created_upcoming %}
+                        {% for event in created_upcoming %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No upcoming events found</div>
+                    {% endif %}
                 </div>
             </section>
         </section>
