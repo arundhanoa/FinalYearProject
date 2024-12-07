@@ -1,13 +1,54 @@
+{% extends "main/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+
+{% block title %}Help{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-</head>
-<body>
+    <style>
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #444;
+            border-bottom: 2px solid #e0301e;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .faq {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .faq h3 {
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .faq p {
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
     {% include 'main/navbar.html' %}
     <main>
         <h1>Help</h1>
@@ -36,5 +77,4 @@
     <footer>
         <p>&copy; 2024 Event Management System</p>
     </footer>
-</body>
-</html>
+{% endblock %}

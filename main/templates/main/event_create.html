@@ -1,16 +1,74 @@
+{% extends "main/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Event</title>
+
+{% block title %}Create Event{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         /* Basic styling for layout */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    
+        .price-btn.selected,
+        .location-btn.selected {
+            background-color: #ff7f00;
+            color: white;
+        }
+    
+        .indicator.active {
+            background-color: #ff7f00;
+        }
+    
+        .indicator {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: pointer;
+        }
+    
+        .preview-row {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .row-flex {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Ensures the preview section is displayed in a column format */
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
         .container {
             display: flex;
             max-width: 1200px;
@@ -188,10 +246,41 @@
             padding: 6px !important;
         }
     </style>
-</head>
-<body>
+{% endblock extra_head %}
 
+{% block content %}
     {% include 'main/navbar.html' %}
+
+    {% if messages %}
+    <div class="messages" style="padding: 10px; margin: 10px;">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if request.method == 'POST' %}
+        <div style="background-color: #f8d7da; padding: 15px; margin: 10px;">
+            <h3>Debug: POST Data Received</h3>
+            <pre>
+                Form Method: {{ request.method }}
+                CSRF Present: {{ request.POST.csrfmiddlewaretoken|yesno:"Yes,No" }}
+                Title: {{ request.POST.title }}
+                Description: {{ request.POST.description }}
+                Date: {{ request.POST.date }}
+                Time: {{ request.POST.time }}
+                Location Type: {{ request.POST.location_type }}
+                Price Type: {{ request.POST.price_type }}
+                Capacity: {{ request.POST.capacity }}
+                Line of Service: {{ request.POST.line_of_service }}
+            </pre>
+        </div>
+    {% endif %}
+
+    
     <main>
         <div class="container" style="display: flex; justify-content: space-between;">
             <!-- Left side: form inputs for creating an event -->
@@ -390,8 +479,11 @@
             
         </div>
     </main>
-    
+{% endblock content %}
+
+{% block extra_scripts %}
     <script>
+        // Image Preview
         let currentImageIndex = 0;
         const images = [];
 
@@ -545,6 +637,7 @@
             eventTypesInput.value = selectedTypes.join(',');
         }
 
+        // Document Ready Handlers
         $(document).ready(function() {
             $('.select2-tags').select2({
                 tags: true,
@@ -567,98 +660,7 @@
                 }
             });
         });
-    </script>
-    
-    <style>
-        .hidden {
-            display: none;
-        }
-    
-        .price-btn.selected,
-        .location-btn.selected {
-            background-color: #ff7f00;
-            color: white;
-        }
-    
-        .indicator.active {
-            background-color: #ff7f00;
-        }
-    
-        .indicator {
-            width: 10px;
-            height: 10px;
-            margin: 0 5px;
-            border-radius: 50%;
-            background-color: #ccc;
-            cursor: pointer;
-        }
-    
-        .preview-row {
-            display: block;
-            margin-bottom: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .row-flex {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Ensures the preview section is displayed in a column format */
-        .preview-section {
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
-    
-    <!-- Add this right after your navbar include -->
-    {% if messages %}
-    <div class="messages" style="padding: 10px; margin: 10px;">
-        {% for message in messages %}
-        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" 
-             style="padding: 10px; margin: 5px; 
-                    {% if message.tags == 'error' %}background-color: #ffebee; color: #c62828;{% endif %}
-                    {% if message.tags == 'success' %}background-color: #e8f5e9; color: #2e7d32;{% endif %}">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    <!-- Add this at the top of your template -->
-    {% if request.method == 'POST' %}
-        <div style="background-color: #f8d7da; padding: 15px; margin: 10px;">
-            <h3>Debug: POST Data Received</h3>
-            <pre>
-Form Method: {{ request.method }}
-CSRF Present: {{ request.POST.csrfmiddlewaretoken|yesno:"Yes,No" }}
-Title: {{ request.POST.title }}
-Description: {{ request.POST.description }}
-Date: {{ request.POST.date }}
-Time: {{ request.POST.time }}
-Location Type: {{ request.POST.location_type }}
-Price Type: {{ request.POST.price_type }}
-Capacity: {{ request.POST.capacity }}
-Line of Service: {{ request.POST.line_of_service }}
-            </pre>
-        </div>
-    {% endif %}
-    
-    <!-- Add this near the top of your form -->
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    <!-- Add this JavaScript to clear the form on success -->
-    <script>
+    // Form Reset Handler
     document.addEventListener('DOMContentLoaded', function() {
         {% if messages %}
             {% for message in messages %}
@@ -692,9 +694,7 @@ Line of Service: {{ request.POST.line_of_service }}
             {% endfor %}
         {% endif %}
     });
-    </script>
-    
-    <script>
+   
     $(document).ready(function() {
         $('#id_tags').select2({
             tags: true,
@@ -718,24 +718,4 @@ Line of Service: {{ request.POST.line_of_service }}
         });
     });
     </script>
-    
-    <style>
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        
-        .alert-success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-        
-        .alert-error {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-    </style>
-    
+    {% endblock extra_scripts %}

@@ -1,0 +1,69 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}
+    Homepage
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* Your CSS styles here */
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% include 'main/navbar.html' %}
+    <main>
+        <!-- Top Section -->
+        <section class="top-section">
+            <h1>Discover the Latest PwC Events</h1>
+            <h4>Discover events, connect with people, and join activities!</h4>
+            <div class="search-container">
+                <input type="text" placeholder="Search events...">
+                <button class="button-style">Create Event</button>
+            </div>
+        </section>
+
+        <!-- Popular Events Section -->
+        <section class="popular-section main-section">
+            <div class="section-header">
+                <h2>Popular</h2>
+                <a href="{% url 'all_events' %}?sort_by=capacity&direction=desc" class="view-all-btn">View All</a>
+            </div>
+            <div class="event-grid">
+                {% for event in popular_events %}
+                <div class="event-card">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.description }}</p>
+                    <p>Date: {{ event.date }}</p>
+                    <p>Time: {{ event.time }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Discover Section -->
+        <section class="discover-section main-section">
+            <div class="section-header">
+                <h2>Discover</h2>
+                <a href="#" class="view-all-btn">View All</a>
+            </div>
+            <div class="event-grid">
+                {% for event in recommended_events %}
+                <div class="event-card">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.description }}</p>
+                    <p>Date: {{ event.date }}</p>
+                    <p>Time: {{ event.time }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+{% endblock %}

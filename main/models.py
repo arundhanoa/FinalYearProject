@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 
 # Tag Model
 class Tag(models.Model):
@@ -27,19 +28,10 @@ class Event(models.Model):
     description = models.TextField()
     date = models.DateField()
     time = models.TimeField()
-    location_type = models.CharField(max_length=20)  # virtual, in-person, hybrid
-    location = models.CharField(max_length=200, blank=True, null=True)
-    virtual_link = models.URLField(blank=True, null=True)
-    capacity = models.IntegerField()
-    line_of_service = models.CharField(max_length=50)
-    price_type = models.CharField(max_length=20)  # free, self-funded, paid
-    cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
-    created_at = models.DateTimeField(auto_now_add=True)
-    tags = models.ManyToManyField(Tag, blank=True)
-    images = models.ManyToManyField('EventImage', blank=True, related_name='events')
-    participants = models.ManyToManyField(User, related_name='participated_events', blank=True)
-
+    location = models.CharField(max_length=200, default='TBD')
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
+    attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events_attending', blank=True)
+    
     def __str__(self):
         return self.title
 
@@ -54,7 +46,11 @@ class EventImage(models.Model):
 # Recommendation Model (for Discover and Popular events)
 class Recommendation(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recommendations'
+    )
     score = models.DecimalField(max_digits=5, decimal_places=2)  # recommendation score
     
     def __str__(self):
@@ -62,7 +58,11 @@ class Recommendation(models.Model):
 
 # Registration or Sign-Up for an Event
 class EventSignUp(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='event_signups'
+    )
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     signup_date = models.DateTimeField(auto_now_add=True)
     
@@ -72,3 +72,63 @@ class EventSignUp(models.Model):
     
     def __str__(self):
         return f"{self.user.username} signed up for {self.event.title}"
+    
+class CustomUser(AbstractUser):
+    # Optional fields from AbstractUser we'll use:
+    # username (comes from AbstractUser)
+    # password (comes from AbstractUser)
+    # first_name (comes from AbstractUser)
+    # last_name (comes from AbstractUser)
+    
+    # Additional fields
+    other_names = models.CharField(max_length=100, blank=True, default='')
+    work_email = models.EmailField(unique=True)
+    workday_id = models.CharField(max_length=50, unique=True)
+    line_of_service = models.CharField(max_length=100)
+    team = models.CharField(max_length=100, blank=True, default='')
+    job_title = models.CharField(max_length=100)
+    line_manager = models.CharField(max_length=100)
+    career_coach = models.CharField(max_length=100)
+    
+    OFFICE_CHOICES = [
+        ('London', 'London'),
+        ('Birmingham', 'Birmingham'),
+        ('Manchester', 'Manchester'),
+        ('Leeds', 'Leeds'),
+        ('Bristol', 'Bristol'),
+        # Add more offices as needed
+    ]
+    
+    home_office = models.CharField(
+        max_length=50,
+        choices=OFFICE_CHOICES
+    )
+    
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Add related_name to avoid clashes
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_user_set',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_set',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['username']),
+            models.Index(fields=['email']),
+            models.Index(fields=['first_name']),
+            models.Index(fields=['last_name']),
+        ]

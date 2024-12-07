@@ -1,0 +1,210 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}My Events{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+    <style>
+        .top-section {
+            background-color: #e0301e;
+            color: #ffffff;
+            text-align: center;
+            font-size: 2rem;
+            padding: 3.125rem 1.25rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.25rem;
+        }
+
+        .tab {
+            padding: 0.625rem 1.25rem;
+            cursor: pointer;
+            background-color: lightgrey;
+            border-radius: 0.5rem;
+            margin: 0 0.5rem;
+            width: 50%;
+            font-weight: bold;
+        }
+
+        .tab.active {
+            background-color: darkgrey;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-section {
+            margin-top: 1.25rem;
+            text-align: center;
+        }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .event-card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background-color: #f5f5f5;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% include 'main/navbar.html' %}
+    <main>
+        <!-- Top Section -->
+        <section class="top-section">
+            <h1>My Events</h1>
+        </section>
+
+        <!-- Tab Section -->
+        <div class="tab-container">
+            <div class="tab active" onclick="showTabContent('signed-up')">Signed Up For</div>
+            <div class="tab" onclick="showTabContent('created')">Created</div>
+        </div>
+
+        <!-- Tab Content: Signed up for -->
+        <section id="signed-up" class="tab-content active">
+            <section class="popular-section main-section">
+                <h2>Past</h2>
+                <div class="event-grid">
+                    {% if signed_up_past %}
+                        {% for event in signed_up_past %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No past events found</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="discover-section main-section">
+                <h2>Current and Upcoming</h2>
+                <div class="event-grid">
+                    {% if signed_up_upcoming %}
+                        {% for event in signed_up_upcoming %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No upcoming events found</div>
+                    {% endif %}
+                </div>
+            </section>
+        </section>
+
+        <!-- Tab Content: Created -->
+        <section id="created" class="tab-content">
+            <section class="popular-section main-section">
+                <h2>Past</h2>
+                <div class="event-grid">
+                    {% if created_past %}
+                        {% for event in created_past %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No past events found</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="discover-section main-section">
+                <h2>Current and Upcoming</h2>
+                <div class="event-grid">
+                    {% if created_upcoming %}
+                        {% for event in created_upcoming %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                <h3>{{ event.title }}</h3>
+                                <p>Date: {{ event.date }}</p>
+                                <p>{{ event.description|truncatechars:100 }}</p>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="event-card">No upcoming events found</div>
+                    {% endif %}
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Event Management System</p>
+    </footer>
+
+    <script>
+        function showTabContent(tabId) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove 'active' class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+
+            // Add 'active' class to the selected tab
+            event.target.classList.add('active');
+        }
+    </script>
+{% endblock %}

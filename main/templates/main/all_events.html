@@ -1,155 +1,10 @@
+{% extends "main/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Events</title>
+
+{% block title %}All Events{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-</head>
-<body>
-    {% include 'main/navbar.html' %}
-
-    <div class="container">
-        <h1>All Events</h1>
-        
-        <!-- Filter Panel -->
-        <div class="filter-container">
-            <button class="filter-header" onclick="toggleFilters()">
-                <span>Filters</span>
-                <i class="arrow-icon">▼</i>
-            </button>
-            
-            <div class="filter-panel" id="filterPanel" style="display: none;">
-                <form method="get" class="filter-form">
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label>Sort By</label>
-                            <select name="sort_by">
-                                <option value="-date" {% if current_filters.sort_by == '-date' %}selected{% endif %}>Date</option>
-                                <option value="title" {% if current_filters.sort_by == 'title' %}selected{% endif %}>Title</option>
-                                <option value="location" {% if current_filters.sort_by == 'location' %}selected{% endif %}>Location</option>
-                                <option value="capacity" {% if current_filters.sort_by == 'capacity' %}selected{% endif %}>Capacity</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Capacity</label>
-                            <select name="direction">
-                                <option value="desc" {% if current_filters.direction == 'desc' %}selected{% endif %}>Descending</option>
-                                <option value="asc" {% if current_filters.direction == 'asc' %}selected{% endif %}>Ascending</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Title</label>
-                            <input type="text" name="title" placeholder="Search by title" value="{{ current_filters.title }}">
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Date</label>
-                            <input type="date" name="date" value="{{ current_filters.date }}">
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Time Range</label>
-                            <div class="time-range-container">
-                                <div class="time-input-group">
-                                    <input 
-                                        type="time" 
-                                        name="time_start" 
-                                        value="{{ current_filters.time_start }}"
-                                        class="time-input"
-                                        placeholder="Start Time"
-                                    >
-                                    <span class="time-separator">to</span>
-                                    <input 
-                                        type="time" 
-                                        name="time_end" 
-                                        value="{{ current_filters.time_end }}"
-                                        class="time-input"
-                                        placeholder="End Time"
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="filter-row">
-                        <div class="filter-group">
-                            <label>Location</label>
-                            <select name="location_type">
-                                <option value="">All Locations</option>
-                                <option value="virtual" {% if current_filters.location_type == 'virtual' %}selected{% endif %}>Virtual</option>
-                                <option value="in-person" {% if current_filters.location_type == 'in-person' %}selected{% endif %}>In-Person</option>
-                                <option value="hybrid" {% if current_filters.location_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Price Type</label>
-                            <select name="price_type">
-                                <option value="">All Price Types</option>
-                                <option value="free" {% if current_filters.price_type == 'free' %}selected{% endif %}>Free</option>
-                                <option value="self-funded" {% if current_filters.price_type == 'self-funded' %}selected{% endif %}>Self-funded</option>
-                                <option value="paid-for" {% if current_filters.price_type == 'paid-for' %}selected{% endif %}>Paid for</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Tag</label>
-                            <select name="tag">
-                                <option value="">All Tags</option>
-                                {% for tag in all_tags %}
-                                    <option value="{{ tag.name }}" {% if current_filters.tag == tag.name %}selected{% endif %}>
-                                        {{ tag.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>&nbsp;</label>
-                            <div class="button-group">
-                                <button type="submit" class="filter-button">Apply Filters</button>
-                                <a href="{% url 'all_events' %}" class="reset-button">Reset</a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="events-list">
-            {% for event in events %}
-                <a href="{% url 'event_view' event.id %}" class="event-card-link">
-                    <div class="event-card">
-                        {% with first_image=event.event_images.first %}
-                            {% if first_image %}
-                                <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
-                            {% endif %}
-                        {% endwith %}
-                        
-                        <h3>{{ event.title }}</h3>
-                        <p><strong>Description:</strong> {{ event.description }}</p>
-                        <p><strong>Date:</strong> {{ event.date }}</p>
-                        <p><strong>Time:</strong> {{ event.time }}</p>
-                        <p><strong>Location:</strong> {{ event.location }}</p>
-                        <p><strong>Price Type:</strong> {{ event.price_type }}</p>
-                        
-                        <p><strong>Tags:</strong> 
-                            {% for tag in event.tags.all %}
-                                <span class="tag">{{ tag.name }}</span>
-                            {% endfor %}
-                        </p>
-                    </div>
-                </a>
-            {% empty %}
-                <p>No events found in the database.</p>
-            {% endfor %}
-        </div>
-    </div>
-
     <style>
         body {
             margin: 0;
@@ -352,7 +207,152 @@
             font-weight: bold;
         }
     </style>
+{% endblock %}
 
+{% block content %}
+    {% include 'main/navbar.html' %}
+    <div class="container">
+        <h1>All Events</h1>
+        
+        <!-- Filter Panel -->
+        <div class="filter-container">
+            <button class="filter-header" onclick="toggleFilters()">
+                <span>Filters</span>
+                <i class="arrow-icon">▼</i>
+            </button>
+            
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <form method="get" class="filter-form">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Sort By</label>
+                            <select name="sort_by">
+                                <option value="-date" {% if current_filters.sort_by == '-date' %}selected{% endif %}>Date</option>
+                                <option value="title" {% if current_filters.sort_by == 'title' %}selected{% endif %}>Title</option>
+                                <option value="location" {% if current_filters.sort_by == 'location' %}selected{% endif %}>Location</option>
+                                <option value="capacity" {% if current_filters.sort_by == 'capacity' %}selected{% endif %}>Capacity</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Capacity</label>
+                            <select name="direction">
+                                <option value="desc" {% if current_filters.direction == 'desc' %}selected{% endif %}>Descending</option>
+                                <option value="asc" {% if current_filters.direction == 'asc' %}selected{% endif %}>Ascending</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Title</label>
+                            <input type="text" name="title" placeholder="Search by title" value="{{ current_filters.title }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Date</label>
+                            <input type="date" name="date" value="{{ current_filters.date }}">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Time Range</label>
+                            <div class="time-range-container">
+                                <div class="time-input-group">
+                                    <input 
+                                        type="time" 
+                                        name="time_start" 
+                                        value="{{ current_filters.time_start }}"
+                                        class="time-input"
+                                        placeholder="Start Time"
+                                    >
+                                    <span class="time-separator">to</span>
+                                    <input 
+                                        type="time" 
+                                        name="time_end" 
+                                        value="{{ current_filters.time_end }}"
+                                        class="time-input"
+                                        placeholder="End Time"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Location</label>
+                            <select name="location_type">
+                                <option value="">All Locations</option>
+                                <option value="virtual" {% if current_filters.location_type == 'virtual' %}selected{% endif %}>Virtual</option>
+                                <option value="in-person" {% if current_filters.location_type == 'in-person' %}selected{% endif %}>In-Person</option>
+                                <option value="hybrid" {% if current_filters.location_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Price Type</label>
+                            <select name="price_type">
+                                <option value="">All Price Types</option>
+                                <option value="free" {% if current_filters.price_type == 'free' %}selected{% endif %}>Free</option>
+                                <option value="self-funded" {% if current_filters.price_type == 'self-funded' %}selected{% endif %}>Self-funded</option>
+                                <option value="paid-for" {% if current_filters.price_type == 'paid-for' %}selected{% endif %}>Paid for</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Tag</label>
+                            <select name="tag">
+                                <option value="">All Tags</option>
+                                {% for tag in all_tags %}
+                                    <option value="{{ tag.name }}" {% if current_filters.tag == tag.name %}selected{% endif %}>
+                                        {{ tag.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <div class="button-group">
+                                <button type="submit" class="filter-button">Apply Filters</button>
+                                <a href="{% url 'all_events' %}" class="reset-button">Reset</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="events-list">
+            {% for event in events %}
+                <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                    <div class="event-card">
+                        {% with first_image=event.event_images.first %}
+                            {% if first_image %}
+                                <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <h3>{{ event.title }}</h3>
+                        <p><strong>Description:</strong> {{ event.description }}</p>
+                        <p><strong>Date:</strong> {{ event.date }}</p>
+                        <p><strong>Time:</strong> {{ event.time }}</p>
+                        <p><strong>Location:</strong> {{ event.location }}</p>
+                        <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                        
+                        <p><strong>Tags:</strong> 
+                            {% for tag in event.tags.all %}
+                                <span class="tag">{{ tag.name }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </a>
+            {% empty %}
+                <p>No events found in the database.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tagInput = document.querySelector('#id_tags');  // Adjust selector as needed
@@ -399,13 +399,4 @@
             }
         }
     </script>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-</body>
-</html>
+{% endblock %}

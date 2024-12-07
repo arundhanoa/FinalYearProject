@@ -1,13 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Event, Tag, EventImage
+from .models import Event, Tag, EventImage, EventSignUp
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime
-
+from .forms import CustomUserCreationForm
+from django.db import transaction
+from django.views.decorators.cache import cache_page
+from django.db.models import Prefetch
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.middleware.csrf import rotate_token
+from .models import CustomUser
+from django.views.decorators.cache import never_cache
+from django.db import IntegrityError
 # Create your views here.
 
 
@@ -68,63 +76,135 @@ def all_events(request):
     return render(request, 'main/all_events.html', context)
 
 
+@login_required
 def homepage(request):
-    popular_events = Event.objects.all()[:4]  # Get first 4 events for now
-    recommended_events = Event.objects.all()[4:8]  # Get next 4 events
+    # Get the user directly since we don't have a profile relationship
+    user = request.user
     
-    print(f"Number of popular events: {len(popular_events)}")  # Debug print
-    print(f"Number of recommended events: {len(recommended_events)}")  # Debug print
-    
-
     context = {
-        'popular_events': popular_events,
-        'recommended_events': recommended_events,
+        'user': user,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'other_names': user.other_names,
+        'work_email': user.work_email,
+        'workday_id': user.workday_id,
+        'line_of_service': user.line_of_service,
+        'team': user.team,
+        'job_title': user.job_title,
+        'line_manager': user.line_manager,
+        'career_coach': user.career_coach,
+        'home_office': user.home_office,
+        'phone_number': user.phone_number,
     }
+    
     return render(request, 'main/homepage.html', context)
 
+@cache_page(60 * 15)
 def landing(request):
-    return render(request, 'main/landing.html')  # Adjust template path as necessary
+    return render(request, 'main/landing.html')
 
 def about(request):
     return render(request, 'main/about.html')
 
+@ensure_csrf_cookie
+@csrf_protect
+@never_cache
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('homepage')
+    
+    # Ensure CSRF cookie is set
+    if not request.COOKIES.get('csrftoken'):
+        rotate_token(request)
+        
     if request.method == 'POST':
-        username = request.POST.get('username')
+        first_name = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            # Redirect to the page they were trying to access
-            next_url = request.GET.get('next', '/')
-            return redirect(next_url)
+        
+        if first_name and password:
+            try:
+                user = authenticate(request, username=first_name, password=password)
+                if user is not None:
+                    login(request, user)
+                    return redirect('homepage')
+                else:
+                    messages.error(request, 'Invalid credentials.')
+            except Exception as e:
+                messages.error(request, 'An error occurred. Please try again.')
         else:
-            messages.error(request, 'Invalid username or password')
-    return render(request, 'main/login.html')
+            messages.error(request, 'Please enter both first name and password.')
 
-def event_view(request, event_id):
-    event = get_object_or_404(Event.objects.prefetch_related('event_images'), id=event_id)
-    return render(request, 'main/event_view.html', {'event': event})
+    response = render(request, 'registration/login.html')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
+      
 
 @login_required
-def myevents(request):
+def event_view(request, event_id):
+    event = get_object_or_404(
+        Event.objects.prefetch_related('event_images').select_related('creator'),
+        id=event_id
+    )
+    
+    # Get all attendees through EventSignUp with a single query
+    attendees = CustomUser.objects.filter(
+        event_signups__event=event
+    ).distinct().order_by('username')
+    
+    is_registered = EventSignUp.objects.filter(
+        user=request.user,
+        event=event
+    ).exists()
+    
+    print(f"\nEvent View Debug:")
+    print(f"User: {request.user.username}")
+    print(f"Event: {event.title}")
+    print(f"All attendees: {[a.username for a in attendees]}")
+    print(f"Is registered: {is_registered}")
+    print(f"EventSignUp exists: {is_registered}")
+    print(f"Total attendee count: {attendees.count()}")
+    
+    context = {
+        'event': event,
+        'is_registered': is_registered,
+        'attendee_count': attendees.count(),
+        'current_user': request.user,
+        'attendees': attendees,
+    }
+    
+    # Force cache refresh
+    response = render(request, 'main/event_view.html', context)
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
+@login_required
+def my_events(request):
     today = timezone.now().date()
+    user = request.user
     
-    # Get events created by the user
-    created_events = Event.objects.filter(creator=request.user)
-    created_past = created_events.filter(date__lt=today).order_by('-date')[:4]
-    created_upcoming = created_events.filter(date__gte=today).order_by('date')[:4]
+    print(f"\nCurrent user accessing my_events: {user.username}")
     
-    # Get events the user has signed up for
-    signed_up_events = Event.objects.filter(participants=request.user)
-    signed_up_past = signed_up_events.filter(date__lt=today).order_by('-date')[:4]
-    signed_up_upcoming = signed_up_events.filter(date__gte=today).order_by('date')[:4]
+    # Get events created by this user
+    created_events = Event.objects.filter(creator=user)
     
-    # Debug prints
-    print(f"Created past events: {created_past.count()}")
-    print(f"Created upcoming events: {created_upcoming.count()}")
-    print(f"Signed up past events: {signed_up_past.count()}")
-    print(f"Signed up upcoming events: {signed_up_upcoming.count()}")
+    # Get events where user is registered through EventSignUp
+    signed_up_events = Event.objects.filter(
+        eventsignup__user=user
+    ).distinct()
+    
+    print(f"User ID: {user.id}")
+    print(f"Created events count: {created_events.count()}")
+    print(f"Created events: {[e.title for e in created_events]}")
+    print(f"Signed up events count: {signed_up_events.count()}")
+    print(f"Signed up events: {[e.title for e in signed_up_events]}")
+    
+    # Split into past and upcoming
+    created_past = created_events.filter(date__lt=today).order_by('-date')
+    created_upcoming = created_events.filter(date__gte=today).order_by('date')
+    signed_up_past = signed_up_events.filter(date__lt=today).order_by('-date')
+    signed_up_upcoming = signed_up_events.filter(date__gte=today).order_by('date')
     
     context = {
         'created_past': created_past,
@@ -133,7 +213,7 @@ def myevents(request):
         'signed_up_upcoming': signed_up_upcoming,
     }
     
-    return render(request, 'main/myevents.html', context)
+    return render(request, 'main/my_events.html', context)
 
 def networking(request):
     return render(request, 'main/networking.html')
@@ -142,7 +222,12 @@ def profile(request):
     return render(request, 'main/profile.html')
 
 def register(request):
-    return render(request, 'main/register.html')
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    return render(request, 'main/register.html', {'form': form})
 
 def settings(request):
     return render(request, 'main/settings.html')
@@ -212,13 +297,32 @@ def event_create(request):
     existing_tags = Tag.objects.all()
     return render(request, 'main/event_create.html', {'existing_tags': existing_tags})
 
+@login_required
+@ensure_csrf_cookie
 def event_detail(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    return render(request, 'main/event_detail.html', {'event': event})
+    is_registered = event.attendees.filter(id=request.user.id).exists()
+    
+    context = {
+        'event': event,
+        'is_registered': is_registered,
+    }
+    
+    return render(request, 'main/event_view.html', context)
 
+@never_cache
+@csrf_protect
 def logout_view(request):
-    logout(request)
-    return redirect('homepage')
+    if request.user.is_authenticated:
+        # Clear session and rotate CSRF token before logout
+        request.session.flush()
+        rotate_token(request)
+        logout(request)
+        messages.success(request, 'You have been successfully logged out.')
+    
+    response = redirect('landing')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 def get_tags(request):
     query = request.GET.get('term', '')
@@ -226,8 +330,50 @@ def get_tags(request):
     return JsonResponse(list(tags), safe=False)
 
 @login_required
+@csrf_protect
 def event_signup(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    event.participants.add(request.user)
-    messages.success(request, f'Successfully signed up for {event.title}!')
-    return redirect('event_view', event_id=event_id)
+    user = request.user
+    
+    if request.method == 'POST':
+        try:
+            signup = EventSignUp.objects.filter(user=user, event=event).first()
+            print(f"Before action - User registered: {signup is not None}")
+            
+            if request.POST.get('unregister') and signup:
+                signup.delete()
+                messages.success(request, 'Successfully unregistered from the event.')
+                print(f"After unregister - Removed signup for user: {user.username}")
+                response = redirect('myevents')
+                response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                return response
+            
+            elif not signup:
+                EventSignUp.objects.create(user=user, event=event)
+                messages.success(request, 'Successfully registered for the event!')
+                print(f"After register - Created signup for user: {user.username}")
+            
+        except IntegrityError:
+            messages.error(request, 'You are already registered for this event.')
+        except Exception as e:
+            print(f"Error in event_signup: {str(e)}")
+            messages.error(request, f'An error occurred: {str(e)}')
+    
+    response = redirect('event_view', event_id=event_id)
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
+
+def signup(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST) 
+        if form.is_valid():
+            user = form.save()
+            # Redirect to a new page to display the username
+            return redirect('display_username', username=user.username)
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'registration/signup.html', {'form': form})
+
+def display_username(request, username):
+    return render(request, 'registration/display_username.html', {'username': username})
