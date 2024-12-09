@@ -83,6 +83,22 @@
             <h1>My Events</h1>
         </section>
 
+        <!-- Add this right after the top-section -->
+        <div style="display: none;">
+            Debug Info:
+            <pre>
+            Signed Up Past Events: {{ signed_up_past|length }}
+            {% for event in signed_up_past %}
+                - {{ event.title }}
+            {% endfor %}
+            
+            Signed Up Upcoming Events: {{ signed_up_upcoming|length }}
+            {% for event in signed_up_upcoming %}
+                - {{ event.title }}
+            {% endfor %}
+            </pre>
+        </div>
+
         <!-- Tab Section -->
         <div class="tab-container">
             <div class="tab active" onclick="showTabContent('signed-up')">Signed Up For</div>

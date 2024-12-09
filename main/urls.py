@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/tags/', views.get_tags, name='get_tags'),
     path('event_signup/<int:event_id>/', views.event_signup, name='event_signup'),
     path('username/<str:username>/', views.display_username, name='display_username'),
+    path('debug-registrations/', views.debug_registrations, name='debug_registrations'),
 ]
 
 if settings.DEBUG:

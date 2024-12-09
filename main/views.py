@@ -180,25 +180,37 @@ def event_view(request, event_id):
     return response
 
 @login_required
+@never_cache
 def my_events(request):
     today = timezone.now().date()
     user = request.user
     
-    print(f"\nCurrent user accessing my_events: {user.username}")
+    print("\n=== DEBUG INFO ===")
+    print(f"Current user: {user.username} (ID: {user.id})")
     
     # Get events created by this user
     created_events = Event.objects.filter(creator=user)
     
-    # Get events where user is registered through EventSignUp
-    signed_up_events = Event.objects.filter(
-        eventsignup__user=user
-    ).distinct()
+    # Check both registration methods
+    events_from_attendees = Event.objects.filter(attendees=user)
+    events_from_signups = Event.objects.filter(eventsignup__user=user)
     
-    print(f"User ID: {user.id}")
-    print(f"Created events count: {created_events.count()}")
-    print(f"Created events: {[e.title for e in created_events]}")
-    print(f"Signed up events count: {signed_up_events.count()}")
-    print(f"Signed up events: {[e.title for e in signed_up_events]}")
+    # Combine both querysets
+    signed_up_events = (events_from_attendees | events_from_signups).distinct()
+    
+    print("\n=== Registration Details ===")
+    print(f"Events from attendees field: {events_from_attendees.count()}")
+    print(f"Events from EventSignUp: {events_from_signups.count()}")
+    print(f"Total unique events registered: {signed_up_events.count()}")
+    
+    # List all registrations
+    print("\nDetailed Registration Info:")
+    print("From attendees field:")
+    for event in events_from_attendees:
+        print(f"- {event.title} (ID: {event.id})")
+    print("\nFrom EventSignUp:")
+    for event in events_from_signups:
+        print(f"- {event.title} (ID: {event.id})")
     
     # Split into past and upcoming
     created_past = created_events.filter(date__lt=today).order_by('-date')
@@ -213,7 +225,12 @@ def my_events(request):
         'signed_up_upcoming': signed_up_upcoming,
     }
     
-    return render(request, 'main/my_events.html', context)
+    # Add cache control headers
+    response = render(request, 'main/my_events.html', context)
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 def networking(request):
     return render(request, 'main/networking.html')
@@ -258,19 +275,13 @@ def home(request):
 def event_create(request):
     if request.method == 'POST':
         try:
-            # Create event
+            # Create event with only the fields that exist in your model
             event = Event(
                 title=request.POST['title'],
                 description=request.POST['description'],
                 date=request.POST['date'],
                 time=request.POST['time'],
-                location_type=request.POST['location_type'],
                 location=request.POST['location'],
-                virtual_link=request.POST['virtual_link'],
-                capacity=request.POST['capacity'],
-                line_of_service=request.POST['line_of_service'],
-                price_type=request.POST['price_type'],
-                cost=request.POST['cost'] if request.POST['cost'] else None,
                 creator=request.user
             )
             event.save()
@@ -288,9 +299,10 @@ def event_create(request):
                     EventImage.objects.create(event=event, image=image)
 
             messages.success(request, 'Event created successfully!')
-            return redirect('all_events')  # Redirect to all events page instead
+            return redirect('all_events')
             
         except Exception as e:
+            print(f"Error details: {str(e)}")  # Added for debugging
             messages.error(request, f'Error creating event: {str(e)}')
             return redirect('event_create')
     
@@ -331,6 +343,7 @@ def get_tags(request):
 
 @login_required
 @csrf_protect
+@never_cache
 def event_signup(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     user = request.user
@@ -338,29 +351,56 @@ def event_signup(request, event_id):
     if request.method == 'POST':
         try:
             signup = EventSignUp.objects.filter(user=user, event=event).first()
-            print(f"Before action - User registered: {signup is not None}")
+            print(f"\n=== EVENT SIGNUP DEBUG ===")
+            print(f"Event: {event.title} (ID: {event_id})")
+            print(f"User: {user.username} (ID: {user.id})")
+            print(f"Current signup status: {'Registered' if signup else 'Not registered'}")
             
             if request.POST.get('unregister') and signup:
                 signup.delete()
+                # Also remove from attendees if present
+                event.attendees.remove(user)
+                event.save()
+                
+                print("Action: Unregistered")
+                print("- Deleted EventSignUp record")
+                print("- Removed from attendees")
+                
                 messages.success(request, 'Successfully unregistered from the event.')
-                print(f"After unregister - Removed signup for user: {user.username}")
-                response = redirect('myevents')
-                response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                return response
+                return redirect('myevents')
             
             elif not signup:
+                # Create both types of registration
                 EventSignUp.objects.create(user=user, event=event)
+                event.attendees.add(user)
+                event.save()
+                
+                print("Action: Registered")
+                print("- Created EventSignUp record")
+                print("- Added to attendees")
+                
                 messages.success(request, 'Successfully registered for the event!')
-                print(f"After register - Created signup for user: {user.username}")
+            
+            # Verify registration status after action
+            final_signup = EventSignUp.objects.filter(user=user, event=event).exists()
+            final_attendee = event.attendees.filter(id=user.id).exists()
+            print(f"\nFinal Status:")
+            print(f"- EventSignUp record exists: {final_signup}")
+            print(f"- In attendees list: {final_attendee}")
+            print("=== END DEBUG ===\n")
             
         except IntegrityError:
             messages.error(request, 'You are already registered for this event.')
+            print("Error: IntegrityError - Already registered")
         except Exception as e:
             print(f"Error in event_signup: {str(e)}")
             messages.error(request, f'An error occurred: {str(e)}')
     
+    # Force reload of the page without cache
     response = redirect('event_view', event_id=event_id)
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
     return response
 
 def signup(request):
@@ -377,3 +417,29 @@ def signup(request):
 
 def display_username(request, username):
     return render(request, 'registration/display_username.html', {'username': username})
+
+@login_required
+def debug_registrations(request):
+    user = request.user
+    signups = EventSignUp.objects.filter(user=user)
+    attending = Event.objects.filter(attendees=user)
+    
+    context = {
+        'username': user.username,
+        'user_id': user.id,
+        'signups': [
+            {
+                'event_id': s.event.id,
+                'event_title': s.event.title,
+                'signup_date': s.signup_date
+            } for s in signups
+        ],
+        'attending': [
+            {
+                'event_id': e.id,
+                'event_title': e.title
+            } for e in attending
+        ]
+    }
+    
+    return JsonResponse(context)
