@@ -20,8 +20,23 @@ from django.db import IntegrityError
 
 
 def all_events(request):
+    # Get the show parameter from the URL
+    show = request.GET.get('show', 'current')
+    
+    # Get current datetime
+    now = timezone.now()
+    
+    # Base queryset
     events = Event.objects.all()
     
+    # Filter based on expired status
+    if show == 'expired':
+        events = events.filter(date__lt=now.date())
+        show_expired = True
+    else:
+        events = events.filter(date__gte=now.date())
+        show_expired = False
+
     # Get filter parameters
     sort_by = request.GET.get('sort_by', '-date')
     sort_direction = request.GET.get('direction', 'desc')
@@ -59,7 +74,7 @@ def all_events(request):
 
     context = {
         'events': events,
-        'all_tags': Tag.objects.all(),
+        'show_expired': show_expired,
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
@@ -70,7 +85,8 @@ def all_events(request):
             'location_type': location_type_filter,
             'price_type': price_type_filter,
             'tag': tag_filter,
-        }
+        },
+        'all_tags': Tag.objects.all(),
     }
     
     return render(request, 'main/all_events.html', context)
@@ -443,3 +459,51 @@ def debug_registrations(request):
     }
     
     return JsonResponse(context)
+
+@login_required
+def event_edit(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    
+    # Check if the user is the creator of the event
+    if event.creator != request.user:
+        messages.error(request, "You don't have permission to edit this event.")
+        return redirect('event_view', event_id=event_id)
+    
+    if request.method == 'POST':
+        # Update event details
+        event.title = request.POST.get('title')
+        event.description = request.POST.get('description')
+        event.date = request.POST.get('date')
+        event.time = request.POST.get('time')
+        event.location = request.POST.get('location')
+        event.capacity = request.POST.get('capacity')
+        event.price_type = request.POST.get('price_type')
+        
+        # Handle tags
+        selected_tags = request.POST.getlist('tags')
+        event.tags.clear()
+        event.tags.add(*selected_tags)
+        
+        # Handle image deletions
+        images_to_delete = request.POST.getlist('delete_images')
+        for image_id in images_to_delete:
+            try:
+                image = EventImage.objects.get(id=image_id)
+                image.delete()
+            except EventImage.DoesNotExist:
+                pass
+        
+        # Handle new images
+        new_images = request.FILES.getlist('new_images')
+        for image in new_images:
+            EventImage.objects.create(event=event, image=image)
+        
+        event.save()
+        messages.success(request, 'Event updated successfully!')
+        return redirect('event_view', event_id=event_id)
+    
+    context = {
+        'event': event,
+        'all_tags': Tag.objects.all(),
+    }
+    return render(request, 'main/event_edit.html', context)

@@ -206,6 +206,42 @@
             color: #495057;
             font-weight: bold;
         }
+
+        .event-tabs {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 2em;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab-button {
+            padding: 1em 2em;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #495057;
+            position: relative;
+        }
+
+        .tab-button.active {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #007bff;
+        }
+
+        .tab-button:hover {
+            color: #007bff;
+        }
     </style>
 {% endblock %}
 
@@ -213,6 +249,18 @@
     {% include 'main/navbar.html' %}
     <div class="container">
         <h1>All Events</h1>
+
+        <!-- Event Tabs -->
+        <div class="event-tabs">
+            <button class="tab-button {% if not show_expired %}active{% endif %}" 
+                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=current'">
+                Current Events
+            </button>
+            <button class="tab-button {% if show_expired %}active{% endif %}"
+                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=expired'">
+                Expired Events
+            </button>
+        </div>
         
         <!-- Filter Panel -->
         <div class="filter-container">
@@ -346,7 +394,7 @@
                     </div>
                 </a>
             {% empty %}
-                <p>No events found in the database.</p>
+                <p>No {% if show_expired %}expired{% else %}current{% endif %} events found.</p>
             {% endfor %}
         </div>
     </div>

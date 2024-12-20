@@ -13,19 +13,41 @@
             padding: 20px;
         }
 
+        .profile-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
         h1 {
             color: #333;
             margin-bottom: 30px;
         }
 
-        p {
-            margin: 15px 0;
-            font-size: 1.1em;
-            color: #444;
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
-        strong {
+        .info-group {
+            margin-bottom: 15px;
+        }
+
+        .info-group label {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-group p {
+            margin: 0;
+            font-size: 1.1em;
             color: #333;
+            font-weight: 500;
         }
 
         .back-button {
@@ -44,7 +66,7 @@
             color: #e0301e;
         }
 
-        a[href*="settings"] {
+        .update-button {
             display: inline-block;
             margin-top: 20px;
             padding: 10px 20px;
@@ -55,7 +77,7 @@
             transition: background-color 0.3s;
         }
 
-        a[href*="settings"]:hover {
+        .update-button:hover {
             background-color: #c62828;
         }
     </style>
@@ -65,10 +87,51 @@
     <a href="javascript:history.back()" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
     <main>
         <h1>Profile</h1>
-        <p><strong>Name:</strong> John Doe</p>
-        <p><strong>Email:</strong> johndoe@example.com</p>
-        <p><strong>Member Since:</strong> January 2021</p>
         
-        <a href="{% url 'settings' %}">Update Profile</a>
+        <div class="profile-section">
+            <div class="profile-grid">
+                <div class="info-group">
+                    <label>Full Name</label>
+                    <p>{{ user.first_name }} {{ user.last_name }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Username</label>
+                    <p>{{ user.username }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Email</label>
+                    <p>{{ user.email }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Phone Number</label>
+                    <p>{{ user.userprofile.phone_number }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Line of Service</label>
+                    <p>{{ user.userprofile.line_of_service }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Grade</label>
+                    <p>{{ user.userprofile.grade }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Office Location</label>
+                    <p>{{ user.userprofile.office_location }}</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Member Since</label>
+                    <p>{{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <a href="{% url 'settings' %}" class="update-button">Update Profile</a>
     </main>
 {% endblock %}

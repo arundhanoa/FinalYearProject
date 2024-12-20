@@ -218,6 +218,12 @@
                             <p><small>Current Attendees: {{ attendees|join:", " }}</small></p>
                         </div>
                         
+                        {% if event.creator == user %}
+                            <a href="{% url 'event_edit' event.id %}" class="signup-button" style="display: block; text-align: center; text-decoration: none; margin-bottom: 10px;">
+                                Edit Event
+                            </a>
+                        {% endif %}
+                        
                         <form method="POST" action="{% url 'event_signup' event.id %}" class="signup-form">
                             {% csrf_token %}
                             {% if is_registered %}

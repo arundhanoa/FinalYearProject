@@ -30,6 +30,7 @@ urlpatterns = [
     path('event_signup/<int:event_id>/', views.event_signup, name='event_signup'),
     path('username/<str:username>/', views.display_username, name='display_username'),
     path('debug-registrations/', views.debug_registrations, name='debug_registrations'),
+    path('event/<int:event_id>/edit/', views.event_edit, name='event_edit'),
 ]
 
 if settings.DEBUG:

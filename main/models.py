@@ -31,6 +31,7 @@ class Event(models.Model):
     location = models.CharField(max_length=200, default='TBD')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
     attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events_attending', blank=True)
+    tags = models.ManyToManyField('Tag', related_name='events', blank=True)
     
     def __str__(self):
         return self.title
