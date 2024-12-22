@@ -1,0 +1,93 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}All My Events{% endblock %}
+
+{% block content %}
+    {% include 'main/navbar.html' %}
+    
+    <main>
+        <section class="top-section">
+            <h1>All My Events</h1>
+        </section>
+
+        <div class="event-grid">
+            {% if all_my_events %}
+                {% for event in all_my_events %}
+                    <a href="{% url 'event_view' event.id %}" class="event-card">
+                        {% with first_image=event.event_images.first %}
+                            {% if first_image %}
+                                <img src="{{ first_image.image.url }}" alt="{{ event.title }}" 
+                                     style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                            {% endif %}
+                        {% endwith %}
+                        <h3>{{ event.title }}</h3>
+                        <p>Date: {{ event.date }}</p>
+                        <p>{{ event.description|truncatechars:100 }}</p>
+                        <p class="event-type">
+                            {% if event.creator == user %}
+                                <span class="badge created">Created by you</span>
+                            {% endif %}
+                            {% if event in user.events_signed_up.all %}
+                                <span class="badge signed-up">Signed up</span>
+                            {% endif %}
+                        </p>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="event-card">No events found</div>
+            {% endif %}
+        </div>
+    </main>
+
+    <style>
+        .top-section {
+            background-color: #e0301e;
+            color: #ffffff;
+            text-align: center;
+            font-size: 2rem;
+            padding: 3.125rem 1.25rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .event-card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background-color: #f5f5f5;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+        }
+
+        .created {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .signed-up {
+            background-color: #2196F3;
+            color: white;
+        }
+    </style>
+{% endblock %}

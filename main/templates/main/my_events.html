@@ -19,7 +19,9 @@
         .tab-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             margin-top: 1.25rem;
+            gap: 0.5rem;
         }
 
         .tab {
@@ -28,7 +30,8 @@
             background-color: lightgrey;
             border-radius: 0.5rem;
             margin: 0 0.5rem;
-            width: 50%;
+            width: auto;
+            min-width: 150px;
             font-weight: bold;
         }
 
@@ -72,6 +75,46 @@
             transform: translateY(-5px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+
+        .view-all-btn {
+            padding: 0.625rem 1.25rem;
+            background-color: #ff7f00;
+            color: white;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            margin-left: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-all-btn:hover {
+            background-color: #e67300;
+            color: white;
+            text-decoration: none;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .view-all-btn {
+            padding: 0.5rem 1rem;
+            background-color: #ff7f00;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            transition: background-color 0.3s;
+        }
+
+        .view-all-btn:hover {
+            background-color: #e67300;
+            color: white;
+            text-decoration: none;
+        }
     </style>
 {% endblock %}
 
@@ -103,12 +146,16 @@
         <div class="tab-container">
             <div class="tab active" onclick="showTabContent('signed-up')">Signed Up For</div>
             <div class="tab" onclick="showTabContent('created')">Created</div>
+            <a href="{% url 'all_my_events' %}" class="view-all-btn">View All My Events</a>
         </div>
 
         <!-- Tab Content: Signed up for -->
         <section id="signed-up" class="tab-content active">
             <section class="popular-section main-section">
-                <h2>Past</h2>
+                <div class="section-header">
+                    <h2>Past</h2>
+                    <a href="{% url 'all_signed_up_past' %}" class="view-all-btn">View All</a>
+                </div>
                 <div class="event-grid">
                     {% if signed_up_past %}
                         {% for event in signed_up_past %}
@@ -130,7 +177,10 @@
             </section>
 
             <section class="discover-section main-section">
-                <h2>Current and Upcoming</h2>
+                <div class="section-header">
+                    <h2>Current and Upcoming</h2>
+                    <a href="{% url 'all_signed_up_upcoming' %}" class="view-all-btn">View All</a>
+                </div>
                 <div class="event-grid">
                     {% if signed_up_upcoming %}
                         {% for event in signed_up_upcoming %}
@@ -155,7 +205,10 @@
         <!-- Tab Content: Created -->
         <section id="created" class="tab-content">
             <section class="popular-section main-section">
-                <h2>Past</h2>
+                <div class="section-header">
+                    <h2>Past</h2>
+                    <a href="{% url 'all_created_past' %}" class="view-all-btn">View All</a>
+                </div>
                 <div class="event-grid">
                     {% if created_past %}
                         {% for event in created_past %}
@@ -177,7 +230,10 @@
             </section>
 
             <section class="discover-section main-section">
-                <h2>Current and Upcoming</h2>
+                <div class="section-header">
+                    <h2>Current and Upcoming</h2>
+                    <a href="{% url 'all_created_upcoming' %}" class="view-all-btn">View All</a>
+                </div>
                 <div class="event-grid">
                     {% if created_upcoming %}
                         {% for event in created_upcoming %}

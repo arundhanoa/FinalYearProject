@@ -18,12 +18,21 @@ from django.views.decorators.cache import never_cache
 from django.db import IntegrityError
 # Create your views here.
 
-
+@never_cache
 def all_events(request):
+    # Get all events
     events = Event.objects.all()
+    
+    # Get current datetime
+    now = timezone.now()
     
     # Get filter parameters
     sort_by = request.GET.get('sort_by', '-date')
+    # Validate sort_by parameter
+    valid_sort_fields = ['date', 'title', 'location', '-date', '-title', '-location']
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date'  # Default to date if invalid sort field
+        
     sort_direction = request.GET.get('direction', 'desc')
     title_filter = request.GET.get('title', '')
     date_filter = request.GET.get('date', '')
@@ -57,8 +66,23 @@ def all_events(request):
     else:
         events = events.order_by(f"-{sort_by.replace('-', '')}")
 
+    # Now separate into upcoming and past
+    upcoming_events = []
+    past_events = []
+    
+    for event in events:
+        event_datetime = timezone.make_aware(
+            datetime.combine(event.date, event.time)
+        )
+        if event_datetime >= now:
+            upcoming_events.append(event)
+        else:
+            past_events.append(event)
+
     context = {
-        'events': events,
+        'events': events,  # Keep this for backwards compatibility
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
         'all_tags': Tag.objects.all(),
         'current_filters': {
             'sort_by': sort_by,
@@ -70,11 +94,88 @@ def all_events(request):
             'location_type': location_type_filter,
             'price_type': price_type_filter,
             'tag': tag_filter,
-        }
+        },
+        'user_created_count': Event.objects.filter(creator=request.user).count() if request.user.is_authenticated else 0,
+        'user_signed_up_count': Event.objects.filter(attendees=request.user).count() if request.user.is_authenticated else 0,
+    }
+        
+    return render(request, 'main/all_events.html', context) 
+
+@login_required
+@never_cache
+def all_signed_up_past(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all past events user has signed up for
+    past_events = Event.objects.filter(
+        eventsignup__user=user,
+        date__lt=now
+    ).order_by('-date')
+    
+    context = {
+        'events': past_events,
+        'section_title': 'All Past Events I\'ve Signed Up For'
     }
     
-    return render(request, 'main/all_events.html', context)
+    return render(request, 'main/event_list.html', context)
 
+@login_required
+@never_cache
+def all_signed_up_upcoming(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all upcoming events user has signed up for
+    upcoming_events = Event.objects.filter(
+        eventsignup__user=user,
+        date__gte=now
+    ).order_by('date')
+    
+    context = {
+        'events': upcoming_events,
+        'section_title': 'All Current and Upcoming Events I\'ve Signed Up For'
+    }
+    
+    return render(request, 'main/event_list.html', context)
+
+@login_required
+@never_cache
+def all_created_past(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all past events created by user
+    past_events = Event.objects.filter(
+        creator=user,
+        date__lt=now
+    ).order_by('-date')
+    
+    context = {
+        'events': past_events,
+        'section_title': 'All Past Events I\'ve Created'
+    }
+    
+    return render(request, 'main/event_list.html', context)
+
+@login_required
+@never_cache
+def all_created_upcoming(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all upcoming events created by user
+    upcoming_events = Event.objects.filter(
+        creator=user,
+        date__gte=now
+    ).order_by('date')
+    
+    context = {
+        'events': upcoming_events,
+        'section_title': 'All Current and Upcoming Events I\'ve Created'
+    }
+    
+    return render(request, 'main/event_list.html', context)
 
 @login_required
 def homepage(request):
@@ -443,3 +544,30 @@ def debug_registrations(request):
     }
     
     return JsonResponse(context)
+
+@login_required
+@never_cache
+def all_my_events(request):
+    user = request.user
+    # Get current datetime
+    now = timezone.now()
+    
+    # Get all events created by the user
+    created_events = Event.objects.filter(creator=request.user)
+    
+    # Get all events the user has signed up for
+    signed_up_events = Event.objects.filter(eventsignup__user=request.user)
+    
+    # Combine and remove duplicates
+    all_my_events = (created_events | signed_up_events).distinct()
+    
+    # Sort by date
+    all_my_events = all_my_events.order_by('-date')
+    
+    context = {
+        'all_my_events': all_my_events,
+        'created_count': created_events.count(),
+        'signed_up_count': signed_up_events.count()
+    }
+    
+    return render(request, 'main/all_my_events.html', context)

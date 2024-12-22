@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+from datetime import datetime
 
 # Tag Model
 class Tag(models.Model):
@@ -31,9 +33,18 @@ class Event(models.Model):
     location = models.CharField(max_length=200, default='TBD')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
     attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events_attending', blank=True)
+    tags = models.ManyToManyField(Tag, related_name='events')
     
     def __str__(self):
         return self.title
+
+    @property
+    def is_expired(self):
+        # Convert date and time to datetime object in the current timezone
+        event_datetime = timezone.make_aware(
+            datetime.combine(self.date, self.time)
+        )
+        return event_datetime < timezone.now()
 
 # Event Image Model
 class EventImage(models.Model):

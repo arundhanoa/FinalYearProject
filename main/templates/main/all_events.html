@@ -206,6 +206,51 @@
             color: #495057;
             font-weight: bold;
         }
+
+        .event-card.expired {
+            opacity: 0.7;
+            background-color: #f8f8f8;
+        }
+
+        h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .tab-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .tab-button.active {
+            background-color: #ff7f00;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
     </style>
 {% endblock %}
 
@@ -321,38 +366,77 @@
             </div>
         </div>
 
-        <div class="events-list">
-            {% for event in events %}
-                <a href="{% url 'event_view' event.id %}" class="event-card-link">
-                    <div class="event-card">
-                        {% with first_image=event.event_images.first %}
-                            {% if first_image %}
-                                <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
-                            {% endif %}
-                        {% endwith %}
-                        
-                        <h3>{{ event.title }}</h3>
-                        <p><strong>Description:</strong> {{ event.description }}</p>
-                        <p><strong>Date:</strong> {{ event.date }}</p>
-                        <p><strong>Time:</strong> {{ event.time }}</p>
-                        <p><strong>Location:</strong> {{ event.location }}</p>
-                        <p><strong>Price Type:</strong> {{ event.price_type }}</p>
-                        
-                        <p><strong>Tags:</strong> 
-                            {% for tag in event.tags.all %}
-                                <span class="tag">{{ tag.name }}</span>
-                            {% endfor %}
-                        </p>
-                    </div>
-                </a>
-            {% empty %}
-                <p>No events found in the database.</p>
-            {% endfor %}
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="showTab('upcoming')">Upcoming Events</button>
+            <button class="tab-button" onclick="showTab('past')">Past Events</button>
+        </div>
+
+        <!-- Upcoming Events Tab -->
+        <div id="upcoming-tab" class="tab-content active">
+            <div class="events-list">
+                {% for event in events %}
+                    {% if not event.is_expired %}
+                        <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                            <div class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <h3>{{ event.title }}</h3>
+                                <p><strong>Description:</strong> {{ event.description }}</p>
+                                <p><strong>Date:</strong> {{ event.date }}</p>
+                                <p><strong>Time:</strong> {{ event.time }}</p>
+                                <p><strong>Location:</strong> {{ event.location }}</p>
+                                <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                                
+                                <p><strong>Tags:</strong> 
+                                    {% for tag in event.tags.all %}
+                                        <span class="tag">{{ tag.name }}</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Past Events Tab -->
+        <div id="past-tab" class="tab-content">
+            <div class="events-list">
+                {% for event in events %}
+                    {% if event.is_expired %}
+                        <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                            <div class="event-card expired">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <h3>{{ event.title }}</h3>
+                                <p><strong>Description:</strong> {{ event.description }}</p>
+                                <p><strong>Date:</strong> {{ event.date }}</p>
+                                <p><strong>Time:</strong> {{ event.time }}</p>
+                                <p><strong>Location:</strong> {{ event.location }}</p>
+                                <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                                
+                                <p><strong>Tags:</strong> 
+                                    {% for tag in event.tags.all %}
+                                        <span class="tag">{{ tag.name }}</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-{% endblock %}
 
-{% block extra_scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tagInput = document.querySelector('#id_tags');  // Adjust selector as needed
@@ -398,5 +482,30 @@
                 document.querySelector('.arrow-icon').textContent = '▲';
             }
         }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Show the active tab on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the hash from URL or default to 'upcoming'
+            const activeTab = window.location.hash.substring(1) || 'upcoming';
+            showTab(activeTab);
+        });
     </script>
 {% endblock %}
