@@ -20,9 +20,23 @@ class Event(models.Model):
     ]
     
     LOCATION_CHOICES = [
-        ('Virtual', 'Virtual'),
-        ('In-person', 'In-person'),
-        ('Hybrid', 'Hybrid'),
+        ('virtual', 'Virtual'),
+        ('in-person', 'In-Person'),
+        ('hybrid', 'Hybrid')
+    ]
+    
+    PRICE_CHOICES = [
+        ('free', 'Free'),
+        ('paid', 'Paid'),
+        ('self-funded', 'Self-funded')
+    ]
+    
+    LINE_OF_SERVICE_CHOICES = [
+        ('Audit', 'Audit'),
+        ('Consulting', 'Consulting'),
+        ('Tax', 'Tax'),
+        ('Advisory', 'Advisory'),
+        ('Assurance', 'Assurance'),
     ]
     
     # Event details
@@ -33,10 +47,41 @@ class Event(models.Model):
     location = models.CharField(max_length=200, default='TBD')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
     attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events_attending', blank=True)
-    tags = models.ManyToManyField(Tag, related_name='events')
+    tags = models.ManyToManyField(Tag, blank=True)
+    location_type = models.CharField(
+        max_length=20, 
+        choices=LOCATION_CHOICES,
+        default='in-person'
+    )
+    price_type = models.CharField(
+        max_length=20, 
+        choices=PRICE_CHOICES,
+        default='self-funded'
+    )
+    meeting_link = models.URLField(max_length=500, blank=True, null=True)
+    
+    # New fields
+    cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    capacity = models.IntegerField(null=True, blank=True)
+    line_of_service = models.CharField(max_length=50, choices=LINE_OF_SERVICE_CHOICES, null=True, blank=True)
+    event_type = models.CharField(max_length=100, null=True, blank=True)
+    duration = models.IntegerField(default=0, help_text="Duration in minutes")
     
     def __str__(self):
         return self.title
+    
+    def get_duration_display(self):
+        """Returns a formatted string of the duration"""
+        hours = self.duration // 60
+        minutes = self.duration % 60
+        
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+        if minutes > 0:
+            parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+        
+        return " and ".join(parts) if parts else "0 minutes"
 
     @property
     def is_expired(self):

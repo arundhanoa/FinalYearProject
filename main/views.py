@@ -16,6 +16,7 @@ from django.middleware.csrf import rotate_token
 from .models import CustomUser
 from django.views.decorators.cache import never_cache
 from django.db import IntegrityError
+from django.db.models import Count
 # Create your views here.
 
 @never_cache
@@ -79,11 +80,16 @@ def all_events(request):
         else:
             past_events.append(event)
 
+    # Get tags that are actually being used in events
+    used_tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count__gt=0).distinct()
+
     context = {
-        'events': events,  # Keep this for backwards compatibility
+        'events': events,
         'upcoming_events': upcoming_events,
         'past_events': past_events,
-        'all_tags': Tag.objects.all(),
+        'all_tags': used_tags,  # Use the filtered tags here
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
@@ -376,15 +382,57 @@ def home(request):
 def event_create(request):
     if request.method == 'POST':
         try:
-            # Create event with only the fields that exist in your model
+            # Debug prints to see what's being received
+            print("POST data:", request.POST)
+            print("Price type:", request.POST.get('price_type'))
+            print("Cost:", request.POST.get('cost'))
+            print("Event types:", request.POST.get('event_types'))
+            print("Event type (single):", request.POST.get('event_type'))
+            
+            duration = int(request.POST.get('duration', 0))
+            
             event = Event(
                 title=request.POST['title'],
                 description=request.POST['description'],
                 date=request.POST['date'],
                 time=request.POST['time'],
                 location=request.POST['location'],
-                creator=request.user
+                location_type=request.POST['location_type'],
+                price_type=request.POST.get('price_type', 'free'),  # Added default
+                creator=request.user,
+                capacity=request.POST.get('capacity'),
+                line_of_service=request.POST.get('line_of_service'),
+                event_type=request.POST.get('event_types'),
+                duration=request.POST.get('duration')
+               
             )
+            
+            # Handle event types
+            event_types = request.POST.getlist('event_type')  # Get all selected event types
+            if event_types:
+                event.event_type = ', '.join(event_types)  # Combine multiple selections
+            
+            # Handle cost for paid/self-funded events
+            cost_value = request.POST.get('cost')
+            if cost_value and event.price_type in ['paid', 'self-funded']:
+                try:
+                    event.cost = float(cost_value)
+                except ValueError:
+                    print("Invalid cost value:", cost_value)
+            
+            # Handle meeting link for virtual/hybrid events
+            if event.location_type in ['virtual', 'hybrid']:
+                meeting_link = request.POST.get('meeting_link', '')
+                # Make sure the link starts with http:// or https://
+                if meeting_link and not meeting_link.startswith(('http://', 'https://')):
+                    meeting_link = 'https://' + meeting_link
+                event.meeting_link = meeting_link
+                print("Saved meeting link:", event.meeting_link)  # Debug print
+                print("About to save event with:")
+                print("- Price type:", event.price_type)
+                print("- Cost:", event.cost)
+                print("- Event type:", event.event_type)
+            
             event.save()
 
             # Save tags
@@ -399,16 +447,28 @@ def event_create(request):
                 for image in images:
                     EventImage.objects.create(event=event, image=image)
 
+            # After saving the event and handling tags
+            clean_unused_tags()
+            
             messages.success(request, 'Event created successfully!')
             return redirect('all_events')
             
         except Exception as e:
-            print(f"Error details: {str(e)}")  # Added for debugging
+            print(f"Error details: {str(e)}")
             messages.error(request, f'Error creating event: {str(e)}')
             return redirect('event_create')
     
-    existing_tags = Tag.objects.all()
-    return render(request, 'main/event_create.html', {'existing_tags': existing_tags})
+    # Get only tags that are actually used in events
+    existing_tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count__gt=0)
+    
+    context = {
+        'existing_tags': existing_tags,
+        'location_choices': Event.LOCATION_CHOICES,
+        'price_choices': Event.PRICE_CHOICES,
+    }
+    return render(request, 'main/event_create.html', context)
 
 @login_required
 @ensure_csrf_cookie
@@ -438,8 +498,13 @@ def logout_view(request):
     return response
 
 def get_tags(request):
-    query = request.GET.get('term', '')
-    tags = Tag.objects.filter(name__icontains=query).values_list('name', flat=True)
+    query = request.GET.get('a', '')
+    tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(
+        event_count__gt=0,
+        name__icontains=query
+    ).values_list('name', flat=True)
     return JsonResponse(list(tags), safe=False)
 
 @login_required
@@ -571,3 +636,19 @@ def all_my_events(request):
     }
     
     return render(request, 'main/all_my_events.html', context)
+
+def clean_unused_tags():
+    """Remove tags that aren't associated with any events"""
+    Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count=0).delete()
+
+@login_required
+def event_delete(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    if request.user == event.creator:
+        event.delete()
+        # Clean up unused tags after event deletion
+        clean_unused_tags()
+        messages.success(request, 'Event deleted successfully!')
+    return redirect('all_events')
