@@ -107,13 +107,10 @@ def all_events(request):
 
     context = {
         'events': events,
-<<<<<<< HEAD
         'show_expired': show_expired,
-=======
         'upcoming_events': upcoming_events,
         'past_events': past_events,
         'all_tags': used_tags,  # Use the filtered tags here
->>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
