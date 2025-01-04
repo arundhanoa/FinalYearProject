@@ -1,7 +1,7 @@
 # forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
+from .models import CustomUser, Event
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -59,3 +59,15 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'description', 'date', 'time', 'location', 'location_type', 'price_type']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'time': forms.TimeInput(attrs={'type': 'time'}),
+            'tags': forms.CheckboxSelectMultiple(),
+            'location_type': forms.Select(choices=Event.LOCATION_CHOICES),
+            'price_type': forms.Select(choices=Event.PRICE_CHOICES),
+        }

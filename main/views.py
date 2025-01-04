@@ -16,10 +16,12 @@ from django.middleware.csrf import rotate_token
 from .models import CustomUser
 from django.views.decorators.cache import never_cache
 from django.db import IntegrityError
+from django.db.models import Count
 # Create your views here.
 
-
+@never_cache
 def all_events(request):
+<<<<<<< HEAD
     # Get the show parameter from the URL
     show = request.GET.get('show', 'current')
     
@@ -37,8 +39,21 @@ def all_events(request):
         events = events.filter(date__gte=now.date())
         show_expired = False
 
+=======
+    # Get all events
+    events = Event.objects.all()
+    
+    # Get current datetime
+    now = timezone.now()
+    
+>>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
     # Get filter parameters
     sort_by = request.GET.get('sort_by', '-date')
+    # Validate sort_by parameter
+    valid_sort_fields = ['date', 'title', 'location', '-date', '-title', '-location']
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date'  # Default to date if invalid sort field
+        
     sort_direction = request.GET.get('direction', 'desc')
     title_filter = request.GET.get('title', '')
     date_filter = request.GET.get('date', '')
@@ -72,9 +87,33 @@ def all_events(request):
     else:
         events = events.order_by(f"-{sort_by.replace('-', '')}")
 
+    # Now separate into upcoming and past
+    upcoming_events = []
+    past_events = []
+    
+    for event in events:
+        event_datetime = timezone.make_aware(
+            datetime.combine(event.date, event.time)
+        )
+        if event_datetime >= now:
+            upcoming_events.append(event)
+        else:
+            past_events.append(event)
+
+    # Get tags that are actually being used in events
+    used_tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count__gt=0).distinct()
+
     context = {
         'events': events,
+<<<<<<< HEAD
         'show_expired': show_expired,
+=======
+        'upcoming_events': upcoming_events,
+        'past_events': past_events,
+        'all_tags': used_tags,  # Use the filtered tags here
+>>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
@@ -86,11 +125,91 @@ def all_events(request):
             'price_type': price_type_filter,
             'tag': tag_filter,
         },
+<<<<<<< HEAD
         'all_tags': Tag.objects.all(),
+=======
+        'user_created_count': Event.objects.filter(creator=request.user).count() if request.user.is_authenticated else 0,
+        'user_signed_up_count': Event.objects.filter(attendees=request.user).count() if request.user.is_authenticated else 0,
+    }
+        
+    return render(request, 'main/all_events.html', context) 
+
+@login_required
+@never_cache
+def all_signed_up_past(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all past events user has signed up for
+    past_events = Event.objects.filter(
+        eventsignup__user=user,
+        date__lt=now
+    ).order_by('-date')
+    
+    context = {
+        'events': past_events,
+        'section_title': 'All Past Events I\'ve Signed Up For'
+>>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
     }
     
-    return render(request, 'main/all_events.html', context)
+    return render(request, 'main/event_list.html', context)
 
+@login_required
+@never_cache
+def all_signed_up_upcoming(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all upcoming events user has signed up for
+    upcoming_events = Event.objects.filter(
+        eventsignup__user=user,
+        date__gte=now
+    ).order_by('date')
+    
+    context = {
+        'events': upcoming_events,
+        'section_title': 'All Current and Upcoming Events I\'ve Signed Up For'
+    }
+    
+    return render(request, 'main/event_list.html', context)
+
+@login_required
+@never_cache
+def all_created_past(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all past events created by user
+    past_events = Event.objects.filter(
+        creator=user,
+        date__lt=now
+    ).order_by('-date')
+    
+    context = {
+        'events': past_events,
+        'section_title': 'All Past Events I\'ve Created'
+    }
+    
+    return render(request, 'main/event_list.html', context)
+
+@login_required
+@never_cache
+def all_created_upcoming(request):
+    user = request.user
+    now = timezone.now()
+    
+    # Get all upcoming events created by user
+    upcoming_events = Event.objects.filter(
+        creator=user,
+        date__gte=now
+    ).order_by('date')
+    
+    context = {
+        'events': upcoming_events,
+        'section_title': 'All Current and Upcoming Events I\'ve Created'
+    }
+    
+    return render(request, 'main/event_list.html', context)
 
 @login_required
 def homepage(request):
@@ -291,15 +410,57 @@ def home(request):
 def event_create(request):
     if request.method == 'POST':
         try:
-            # Create event with only the fields that exist in your model
+            # Debug prints to see what's being received
+            print("POST data:", request.POST)
+            print("Price type:", request.POST.get('price_type'))
+            print("Cost:", request.POST.get('cost'))
+            print("Event types:", request.POST.get('event_types'))
+            print("Event type (single):", request.POST.get('event_type'))
+            
+            duration = int(request.POST.get('duration', 0))
+            
             event = Event(
                 title=request.POST['title'],
                 description=request.POST['description'],
                 date=request.POST['date'],
                 time=request.POST['time'],
                 location=request.POST['location'],
-                creator=request.user
+                location_type=request.POST['location_type'],
+                price_type=request.POST.get('price_type', 'free'),  # Added default
+                creator=request.user,
+                capacity=request.POST.get('capacity'),
+                line_of_service=request.POST.get('line_of_service'),
+                event_type=request.POST.get('event_types'),
+                duration=request.POST.get('duration')
+               
             )
+            
+            # Handle event types
+            event_types = request.POST.getlist('event_type')  # Get all selected event types
+            if event_types:
+                event.event_type = ', '.join(event_types)  # Combine multiple selections
+            
+            # Handle cost for paid/self-funded events
+            cost_value = request.POST.get('cost')
+            if cost_value and event.price_type in ['paid', 'self-funded']:
+                try:
+                    event.cost = float(cost_value)
+                except ValueError:
+                    print("Invalid cost value:", cost_value)
+            
+            # Handle meeting link for virtual/hybrid events
+            if event.location_type in ['virtual', 'hybrid']:
+                meeting_link = request.POST.get('meeting_link', '')
+                # Make sure the link starts with http:// or https://
+                if meeting_link and not meeting_link.startswith(('http://', 'https://')):
+                    meeting_link = 'https://' + meeting_link
+                event.meeting_link = meeting_link
+                print("Saved meeting link:", event.meeting_link)  # Debug print
+                print("About to save event with:")
+                print("- Price type:", event.price_type)
+                print("- Cost:", event.cost)
+                print("- Event type:", event.event_type)
+            
             event.save()
 
             # Save tags
@@ -314,16 +475,28 @@ def event_create(request):
                 for image in images:
                     EventImage.objects.create(event=event, image=image)
 
+            # After saving the event and handling tags
+            clean_unused_tags()
+            
             messages.success(request, 'Event created successfully!')
             return redirect('all_events')
             
         except Exception as e:
-            print(f"Error details: {str(e)}")  # Added for debugging
+            print(f"Error details: {str(e)}")
             messages.error(request, f'Error creating event: {str(e)}')
             return redirect('event_create')
     
-    existing_tags = Tag.objects.all()
-    return render(request, 'main/event_create.html', {'existing_tags': existing_tags})
+    # Get only tags that are actually used in events
+    existing_tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count__gt=0)
+    
+    context = {
+        'existing_tags': existing_tags,
+        'location_choices': Event.LOCATION_CHOICES,
+        'price_choices': Event.PRICE_CHOICES,
+    }
+    return render(request, 'main/event_create.html', context)
 
 @login_required
 @ensure_csrf_cookie
@@ -353,8 +526,13 @@ def logout_view(request):
     return response
 
 def get_tags(request):
-    query = request.GET.get('term', '')
-    tags = Tag.objects.filter(name__icontains=query).values_list('name', flat=True)
+    query = request.GET.get('a', '')
+    tags = Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(
+        event_count__gt=0,
+        name__icontains=query
+    ).values_list('name', flat=True)
     return JsonResponse(list(tags), safe=False)
 
 @login_required
@@ -461,6 +639,7 @@ def debug_registrations(request):
     return JsonResponse(context)
 
 @login_required
+<<<<<<< HEAD
 def event_edit(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     
@@ -507,3 +686,46 @@ def event_edit(request, event_id):
         'all_tags': Tag.objects.all(),
     }
     return render(request, 'main/event_edit.html', context)
+=======
+@never_cache
+def all_my_events(request):
+    user = request.user
+    # Get current datetime
+    now = timezone.now()
+    
+    # Get all events created by the user
+    created_events = Event.objects.filter(creator=request.user)
+    
+    # Get all events the user has signed up for
+    signed_up_events = Event.objects.filter(eventsignup__user=request.user)
+    
+    # Combine and remove duplicates
+    all_my_events = (created_events | signed_up_events).distinct()
+    
+    # Sort by date
+    all_my_events = all_my_events.order_by('-date')
+    
+    context = {
+        'all_my_events': all_my_events,
+        'created_count': created_events.count(),
+        'signed_up_count': signed_up_events.count()
+    }
+    
+    return render(request, 'main/all_my_events.html', context)
+
+def clean_unused_tags():
+    """Remove tags that aren't associated with any events"""
+    Tag.objects.annotate(
+        event_count=Count('event')
+    ).filter(event_count=0).delete()
+
+@login_required
+def event_delete(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    if request.user == event.creator:
+        event.delete()
+        # Clean up unused tags after event deletion
+        clean_unused_tags()
+        messages.success(request, 'Event deleted successfully!')
+    return redirect('all_events')
+>>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94

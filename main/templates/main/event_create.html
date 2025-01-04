@@ -245,7 +245,32 @@
         .select2-search__field {
             padding: 6px !important;
         }
-    </style>
+
+        .duration-inputs input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.duration-inputs input[type="number"]:focus {
+    outline: none;
+    border-color: #ff7f00;
+    box-shadow: 0 0 5px rgba(255, 127, 0, 0.2);
+}
+
+/* Remove spinner buttons from number inputs */
+.duration-inputs input[type="number"]::-webkit-inner-spin-button,
+.duration-inputs input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.duration-inputs input[type="number"] {
+    appearance: textfield;
+}
+
+</style>
 {% endblock extra_head %}
 
 {% block content %}
@@ -272,6 +297,7 @@
                 Description: {{ request.POST.description }}
                 Date: {{ request.POST.date }}
                 Time: {{ request.POST.time }}
+                Duration: {{request.POST.duration}}
                 Location Type: {{ request.POST.location_type }}
                 Price Type: {{ request.POST.price_type }}
                 Capacity: {{ request.POST.capacity }}
@@ -305,7 +331,7 @@
                         <!-- Image Upload -->
                         <div class="form-group">
                             <label for="event-image">Upload Event Images</label>
-                            <input type="file" id="event-image" name="images" multiple onchange="updateImagePreview()">
+                            <input type="file" id="event-image" name="images" multiple required onchange="updateImagePreview()">
                         </div>
         
                         <!-- Price Options -->
@@ -333,7 +359,7 @@
                         <!-- Event Capacity -->
                         <div class="form-group">
                             <label for="capacity">Event Capacity</label>
-                            <input type="text" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
+                            <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
                         </div>
         
                         <!-- Line of Service -->
@@ -390,7 +416,36 @@
                             <label for="event-time">Time</label>
                             <input type="time" id="event-time" name="time" required onchange="updatePreviewDate()">
                         </div>
-        
+
+                        <div class="form-group">
+                            <label>Expected Duration</label>
+                            <div class="duration-inputs" style="display: flex; gap: 10px; align-items: center;">
+                                <div>
+                                    <input type="number" 
+                                           id="duration-hours" 
+                                           name="duration_hours" 
+                                           min="0" 
+                                           max="24" 
+                                           placeholder="0" 
+                                           style="width: 70px;"
+                                           onchange="updateDuration()">
+                                    <label for="duration-hours">Hours</label>
+                                </div>
+                                <div>
+                                    <input type="number" 
+                                           id="duration-minutes" 
+                                           name="duration_minutes" 
+                                           min="0" 
+                                           max="59" 
+                                           placeholder="0" 
+                                           style="width: 70px;"
+                                           onchange="updateDuration()">
+                                    <label for="duration-minutes">Minutes</label>
+                                </div>
+                                <!-- Hidden input to store total duration in minutes -->
+                                <input type="hidden" id="total-duration" name="duration" value="0">
+                            </div>
+                        </div>
                         <!-- Location Options -->
                         <div class="form-group">
                             <label>Location</label>
@@ -401,7 +456,8 @@
                             </div>
                             <div id="meeting-link" class="form-group hidden">
                                 <label for="link">Meeting Link</label>
-                                <input type="text" id="link" name="virtual_link" placeholder="Enter virtual meeting link" oninput="updatePreviewLocation()">
+                                <input type="text" id="link" name="meeting_link" placeholder="Enter virtual meeting link (include https://)" oninput="updatePreviewLocation()">
+                                <small class="form-text text-muted">Please include https:// in your link</small>
                             </div>
                             <div id="address-input" class="form-group hidden">
                                 <label for="address">Address</label>
@@ -450,14 +506,16 @@
                         </div>
                     </div>
                     <div class="preview-section">
-                        <!-- First Row: Line of Service and Capacity -->
+
+                        <!-- First Row: Event Title -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
+
+
+                        <!-- Second Row: Line of Service and Capacity -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
                             <span id="preview-line-service">Line of Service: N/A</span>
                             <span id="preview-capacity">Capacity: 0</span>
                         </div>
-            
-                        <!-- Second Row: Event Title -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
             
                         <!-- Third Row: Price -->
                         <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-price">Price: Free</div>
@@ -465,13 +523,16 @@
                         <!-- Fourth Row: Date and Time -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
                             <span id="preview-date">Date: N/A</span>
-                            <span id="preview-time">Time: N/A</span>
+                            <span id="preview-locationx">Location: N/A</span>
                         </div>
-            
-                        <!-- Fifth Row: Location -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-location">Location: N/A</div>
-            +
-                        <!-- Description -->
+
+                         <!-- Fourth Row: Date and Time -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-time">Time: N/A</span>
+                            <span id="preview-duration">Duration: N/A</span>
+                        </div>
+                        
+                        <!-- Fifth Row: Description -->
                         <div class="preview-row" style="padding: 10px 0;" id="preview-description">Description: N/A</div>
                     </div>
                 </div>
@@ -525,6 +586,7 @@
     
         function selectPrice(price) {
             const priceType = price.toLowerCase().replace(/ /g, '-');  // Convert "Paid for" to "paid-for"
+            document.getElementById("price_type").value = price;
             document.getElementById("preview-price").innerText = `Price: ${price}`;
             
             // Remove selected class from all buttons
@@ -587,6 +649,38 @@
         function updatePreviewDate() {
             document.getElementById("preview-date").innerText = `Date: ${document.getElementById("event-date").value}`;
             document.getElementById("preview-time").innerText = `Time: ${document.getElementById("event-time").value}`;
+        }
+
+        function updateDuration() {
+            const hours = parseInt(document.getElementById('duration-hours').value) || 0;
+            const minutes = parseInt(document.getElementById('duration-minutes').value) || 0;
+    
+            // Store total minutes in hidden field
+            const totalMinutes = (hours * 60) + minutes;
+            document.getElementById('total-duration').value = totalMinutes;
+    
+            // Update preview
+            let durationText = '';
+            if (hours > 0) {
+                durationText += `${hours} hour${hours !== 1 ? 's' : ''}`;
+            }
+            if (minutes > 0) {
+                if (hours > 0) durationText += ' and ';
+                durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            }
+            if (!durationText) durationText = '0 minutes';
+    
+            document.getElementById('preview-duration').innerText = `Duration: ${durationText}`;
+        }
+
+        // Add this to your document ready function or at the end of your scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize duration preview
+            updateDuration();
+        });
+
+        function updatePreviewDuration() {
+            document.getElementById("preview-duration").innerText = `Duration: ${document.getElementById("event-duration").value}`;
         }
     
         function updatePreviewLocation() {

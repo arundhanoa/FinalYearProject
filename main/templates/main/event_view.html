@@ -165,21 +165,22 @@
                     <h3>Event Details</h3>
                     <p><strong>Date:</strong> {{ event.date }}</p>
                     <p><strong>Time:</strong> {{ event.time }}</p>
+                    <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
                     <p><strong>Capacity:</strong> {{ event.capacity }} people</p>
                     <p><strong>Line of Service:</strong> {{ event.line_of_service }}</p>
-                    <p><strong>Event Type:</strong> {{ event.event_types }}</p>
+                    <p><strong>Event Type:</strong> {{ event.event_type }}</p>
                 </div>
 
                 <div class="info-section">
                     <h3>Location</h3>
-                    <p><strong>Type:</strong> {{ event.location_type }}</p>
+                    <p><strong>Type:</strong> {{ event.get_location_type_display }}</p>
                     {% if event.location_type == 'virtual' %}
-                        <p><strong>Meeting Link:</strong> <a href="{{ event.virtual_link }}" target="_blank">Join Meeting</a></p>
+                        <p><strong>Meeting Link:</strong> <a href="{{ event.meeting_link }}" target="_blank">Join Meeting</a></p>
                     {% elif event.location_type == 'in-person' %}
                         <p><strong>Address:</strong> {{ event.location }}</p>
                     {% else %}
                         <p><strong>Address:</strong> {{ event.location }}</p>
-                        <p><strong>Meeting Link:</strong> <a href="{{ event.virtual_link }}" target="_blank">Join Meeting</a></p>
+                        <p><strong>Meeting Link:</strong> <a href="{{ event.meeting_link }}" target="_blank">Join Meeting</a></p>
                     {% endif %}
                 </div>
 
@@ -202,16 +203,16 @@
                         {% for tag in event.tags.all %}
                             <span class="tag">{{ tag.name }}</span>
                         {% endfor %}
-                    </div>
+                    </div> 
                 </div>
 
                 <div class="info-section">
                     <h3>Event Status</h3>
                     <p><strong>Created by:</strong> {{ event.creator.username }}</p>
-                    <p><strong>Current Attendees:</strong> {{ attendee_count }}</p>
+                    <p><strong>No. of Attendees:</strong> {{ attendee_count }}</p>
                     
                     {% if user.is_authenticated %}
-                        <!-- Debug info -->
+                        
                         <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                             <p><small>Debug: Registration status - {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
                             <p><small>Current User: {{ current_user.username }}</small></p>

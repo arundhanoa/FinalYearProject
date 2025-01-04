@@ -15,6 +15,7 @@ urlpatterns = [
     path('event_create/', views.event_create, name='event_create'),  # Changed from whatever it was before
     path('event_view/<int:event_id>/', views.event_view, name='event_view'),
     path('myevents/', views.my_events, name='myevents'),
+    path('all-my-events/', views.all_my_events, name='all_my_events'),
     path('networking/', views.networking, name='networking'),
     path('profile/', views.profile, name='profile'),
     path('register/', views.register, name='register'),
@@ -31,6 +32,10 @@ urlpatterns = [
     path('username/<str:username>/', views.display_username, name='display_username'),
     path('debug-registrations/', views.debug_registrations, name='debug_registrations'),
     path('event/<int:event_id>/edit/', views.event_edit, name='event_edit'),
+    path('signed-up/past/', views.all_signed_up_past, name='all_signed_up_past'),
+    path('signed-up/upcoming/', views.all_signed_up_upcoming, name='all_signed_up_upcoming'),
+    path('created/past/', views.all_created_past, name='all_created_past'),
+    path('created/upcoming/', views.all_created_upcoming, name='all_created_upcoming'),
 ]
 
 if settings.DEBUG:
