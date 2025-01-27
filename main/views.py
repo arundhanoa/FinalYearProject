@@ -21,7 +21,6 @@ from django.db.models import Count
 
 @never_cache
 def all_events(request):
-<<<<<<< HEAD
     # Get the show parameter from the URL
     show = request.GET.get('show', 'current')
     
@@ -39,14 +38,6 @@ def all_events(request):
         events = events.filter(date__gte=now.date())
         show_expired = False
 
-=======
-    # Get all events
-    events = Event.objects.all()
-    
-    # Get current datetime
-    now = timezone.now()
-    
->>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
     # Get filter parameters
     sort_by = request.GET.get('sort_by', '-date')
     # Validate sort_by parameter
@@ -100,17 +91,19 @@ def all_events(request):
         else:
             past_events.append(event)
 
-    # Get tags that are actually being used in events
-    used_tags = Tag.objects.annotate(
+    # Get tags that are only used by the currently filtered events
+    used_tags = Tag.objects.filter(
+        event__in=events
+    ).annotate(
         event_count=Count('event')
-    ).filter(event_count__gt=0).distinct()
+    ).filter(event_count__gt=0).distinct().order_by('name')
 
     context = {
         'events': events,
         'show_expired': show_expired,
         'upcoming_events': upcoming_events,
         'past_events': past_events,
-        'all_tags': used_tags,  # Use the filtered tags here
+        'tags': used_tags,  # Replace all_tags with used_tags
         'current_filters': {
             'sort_by': sort_by,
             'direction': sort_direction,
@@ -122,9 +115,6 @@ def all_events(request):
             'price_type': price_type_filter,
             'tag': tag_filter,
         },
-<<<<<<< HEAD
-        'all_tags': Tag.objects.all(),
-=======
         'user_created_count': Event.objects.filter(creator=request.user).count() if request.user.is_authenticated else 0,
         'user_signed_up_count': Event.objects.filter(attendees=request.user).count() if request.user.is_authenticated else 0,
     }
@@ -146,7 +136,6 @@ def all_signed_up_past(request):
     context = {
         'events': past_events,
         'section_title': 'All Past Events I\'ve Signed Up For'
->>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
     }
     
     return render(request, 'main/event_list.html', context)
@@ -404,85 +393,79 @@ def home(request):
     return render(request, 'main/home.html', {'events': events})
 
 @login_required
+@never_cache
 def event_create(request):
     if request.method == 'POST':
-        try:
-            # Debug prints to see what's being received
-            print("POST data:", request.POST)
-            print("Price type:", request.POST.get('price_type'))
-            print("Cost:", request.POST.get('cost'))
-            print("Event types:", request.POST.get('event_types'))
-            print("Event type (single):", request.POST.get('event_type'))
-            
-            duration = int(request.POST.get('duration', 0))
-            
-            event = Event(
-                title=request.POST['title'],
-                description=request.POST['description'],
-                date=request.POST['date'],
-                time=request.POST['time'],
-                location=request.POST['location'],
-                location_type=request.POST['location_type'],
-                price_type=request.POST.get('price_type', 'free'),  # Added default
-                creator=request.user,
-                capacity=request.POST.get('capacity'),
-                line_of_service=request.POST.get('line_of_service'),
-                event_type=request.POST.get('event_types'),
-                duration=request.POST.get('duration')
-               
-            )
-            
-            # Handle event types
-            event_types = request.POST.getlist('event_type')  # Get all selected event types
-            if event_types:
-                event.event_type = ', '.join(event_types)  # Combine multiple selections
-            
-            # Handle cost for paid/self-funded events
-            cost_value = request.POST.get('cost')
-            if cost_value and event.price_type in ['paid', 'self-funded']:
-                try:
-                    event.cost = float(cost_value)
-                except ValueError:
-                    print("Invalid cost value:", cost_value)
-            
-            # Handle meeting link for virtual/hybrid events
-            if event.location_type in ['virtual', 'hybrid']:
-                meeting_link = request.POST.get('meeting_link', '')
-                # Make sure the link starts with http:// or https://
-                if meeting_link and not meeting_link.startswith(('http://', 'https://')):
-                    meeting_link = 'https://' + meeting_link
-                event.meeting_link = meeting_link
-                print("Saved meeting link:", event.meeting_link)  # Debug print
-                print("About to save event with:")
-                print("- Price type:", event.price_type)
-                print("- Cost:", event.cost)
-                print("- Event type:", event.event_type)
-            
-            event.save()
+        print("DEBUG - POST Data:")
+        print("Price Type:", request.POST.get('price_type'))
+        print("Cost:", request.POST.get('cost'))
+        print("Event types:", request.POST.get('event_types'))
+        print("Event type (single):", request.POST.get('event_type'))
+        
+        duration = int(request.POST.get('duration', 0))
+        
+        event = Event(
+            title=request.POST['title'],
+            description=request.POST['description'],
+            date=request.POST['date'],
+            time=request.POST['time'],
+            location=request.POST['location'],
+            location_type=request.POST['location_type'],
+            price_type=request.POST.get('price_type', 'free'),  # Added default
+            creator=request.user,
+            capacity=request.POST.get('capacity'),
+            line_of_service=request.POST.get('line_of_service'),
+            event_type=request.POST.get('event_types'),
+            duration=request.POST.get('duration')
+           
+        )
+        
+        # Handle event types
+        event_types = request.POST.getlist('event_type')  # Get all selected event types
+        if event_types:
+            event.event_type = ', '.join(event_types)  # Combine multiple selections
+        
+        # Handle cost for paid/self-funded events
+        cost_value = request.POST.get('cost')
+        if cost_value and event.price_type in ['paid-for', 'self-funded']:
+            try:
+                event.cost = float(cost_value)
+            except ValueError:
+                print("Invalid cost value:", cost_value)
+        
+        # Handle meeting link for virtual/hybrid events
+        if event.location_type in ['virtual', 'hybrid']:
+            meeting_link = request.POST.get('meeting_link', '')
+            # Make sure the link starts with http:// or https://
+            if meeting_link and not meeting_link.startswith(('http://', 'https://')):
+                meeting_link = 'https://' + meeting_link
+            event.meeting_link = meeting_link
+            print("Saved meeting link:", event.meeting_link)  # Debug print
+            print("About to save event with:")
+            print("- Price type:", event.price_type)
+            print("- Cost:", event.cost)
+            print("- Event type:", event.event_type)
+        
+        event.save()
 
-            # Save tags
-            tags = request.POST.getlist('tags[]')
-            for tag_name in tags:
-                tag, created = Tag.objects.get_or_create(name=tag_name.strip())
-                event.tags.add(tag)
+        # Save tags
+        tags = request.POST.getlist('tags[]')
+        for tag_name in tags:
+            tag, created = Tag.objects.get_or_create(name=tag_name.strip())
+            event.tags.add(tag)
 
-            # Handle images
-            if 'images' in request.FILES:
-                images = request.FILES.getlist('images')
-                for image in images:
-                    EventImage.objects.create(event=event, image=image)
+        # Handle images
+        if 'images' in request.FILES:
+            images = request.FILES.getlist('images')
+            for image in images:
+                EventImage.objects.create(event=event, image=image)
 
-            # After saving the event and handling tags
-            clean_unused_tags()
-            
-            messages.success(request, 'Event created successfully!')
-            return redirect('all_events')
-            
-        except Exception as e:
-            print(f"Error details: {str(e)}")
-            messages.error(request, f'Error creating event: {str(e)}')
-            return redirect('event_create')
-    
+        # After saving the event and handling tags
+        clean_unused_tags()
+        
+        messages.success(request, 'Event created successfully!')
+        return redirect('all_events')
+        
     # Get only tags that are actually used in events
     existing_tags = Tag.objects.annotate(
         event_count=Count('event')
@@ -636,15 +619,19 @@ def debug_registrations(request):
     return JsonResponse(context)
 
 @login_required
-<<<<<<< HEAD
+@never_cache
+@csrf_protect
+@ensure_csrf_cookie
 def event_edit(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     
-    # Check if the user is the creator of the event
     if event.creator != request.user:
         messages.error(request, "You don't have permission to edit this event.")
         return redirect('event_view', event_id=event_id)
     
+    duration_hours = event.duration // 60 if event.duration else 0
+    duration_minutes = event.duration % 60 if event.duration else 0
+        
     if request.method == 'POST':
         # Update event details
         event.title = request.POST.get('title')
@@ -652,13 +639,10 @@ def event_edit(request, event_id):
         event.date = request.POST.get('date')
         event.time = request.POST.get('time')
         event.location = request.POST.get('location')
+        event.location_type = request.POST.get('location_type')
         event.capacity = request.POST.get('capacity')
         event.price_type = request.POST.get('price_type')
-        
-        # Handle tags
-        selected_tags = request.POST.getlist('tags')
-        event.tags.clear()
-        event.tags.add(*selected_tags)
+        event.duration = request.POST.get('duration')
         
         # Handle image deletions
         images_to_delete = request.POST.getlist('delete_images')
@@ -674,6 +658,31 @@ def event_edit(request, event_id):
         for image in new_images:
             EventImage.objects.create(event=event, image=image)
         
+        # Handle meeting link for virtual/hybrid events
+        if event.location_type in ['virtual', 'hybrid']:
+            meeting_link = request.POST.get('meeting_link', '')
+            if meeting_link and not meeting_link.startswith(('http://', 'https://')):
+                meeting_link = 'https://' + meeting_link
+            event.meeting_link = meeting_link
+
+        # Handle cost for paid events
+        if event.price_type in ['paid-for', 'self-funded']:
+            try:
+                event.cost = float(request.POST.get('cost', 0))
+            except ValueError:
+                event.cost = 0
+        else:
+            event.cost = None
+        
+        # Handle tags
+        tags = request.POST.get('tags', '').split(',')
+        event.tags.clear()
+        for tag_name in tags:
+            tag_name = tag_name.strip()
+            if tag_name:
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
+                event.tags.add(tag)
+        
         event.save()
         messages.success(request, 'Event updated successfully!')
         return redirect('event_view', event_id=event_id)
@@ -681,9 +690,12 @@ def event_edit(request, event_id):
     context = {
         'event': event,
         'all_tags': Tag.objects.all(),
+        'duration_hours': duration_hours,
+        'duration_minutes': duration_minutes,
     }
     return render(request, 'main/event_edit.html', context)
-=======
+
+
 @never_cache
 def all_my_events(request):
     user = request.user
@@ -725,4 +737,3 @@ def event_delete(request, event_id):
         clean_unused_tags()
         messages.success(request, 'Event deleted successfully!')
     return redirect('all_events')
->>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94

@@ -67,9 +67,10 @@
         }
         .info-section {
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         .info-section h3 {
             color: #333;
@@ -90,14 +91,19 @@
             font-size: 0.9em;
         }
         .signup-button {
+            display: block;
+            width: 100%;
+            font-size: 0.9em;
+            text-align: center;
             background: #e0301e;
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
+            margin: 0;
+            box-sizing: border-box;
+            text-decoration: none;
         }
         .signup-button.signed-up {
             background: #666;
@@ -122,6 +128,22 @@
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        .event-details h1 {
+            padding: 0 20px;
+            margin: 20px 0;
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+        .action-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .signup-form {
+            width: 100%;
         }
     </style>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -168,7 +190,7 @@
                     <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
                     <p><strong>Capacity:</strong> {{ event.capacity }} people</p>
                     <p><strong>Line of Service:</strong> {{ event.line_of_service }}</p>
-                    <p><strong>Event Type:</strong> {{ event.event_type }}</p>
+                    <p><strong>Event Type:</strong> {{ event.location_type }}</p>
                 </div>
 
                 <div class="info-section">
@@ -212,15 +234,16 @@
                     <p><strong>No. of Attendees:</strong> {{ attendee_count }}</p>
                     
                     {% if user.is_authenticated %}
-                        
+
                         <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                             <p><small>Debug: Registration status - {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
                             <p><small>Current User: {{ current_user.username }}</small></p>
                             <p><small>Current Attendees: {{ attendees|join:", " }}</small></p>
                         </div>
-                        
+
+                        <div class="action-buttons-container">
                         {% if event.creator == user %}
-                            <a href="{% url 'event_edit' event.id %}" class="signup-button" style="display: block; text-align: center; text-decoration: none; margin-bottom: 10px;">
+                            <a href="{% url 'event_edit' event.id %}" class="signup-button">
                                 Edit Event
                             </a>
                         {% endif %}

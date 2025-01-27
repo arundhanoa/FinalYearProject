@@ -247,29 +247,28 @@
         }
 
         .duration-inputs input[type="number"] {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
 
-.duration-inputs input[type="number"]:focus {
-    outline: none;
-    border-color: #ff7f00;
-    box-shadow: 0 0 5px rgba(255, 127, 0, 0.2);
-}
+        .duration-inputs input[type="number"]:focus {
+            outline: none;
+            border-color: #ff7f00;
+            box-shadow: 0 0 5px rgba(255, 127, 0, 0.2);
+        }
 
-/* Remove spinner buttons from number inputs */
-.duration-inputs input[type="number"]::-webkit-inner-spin-button,
-.duration-inputs input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+        /* Remove spinner buttons from number inputs */
+        .duration-inputs input[type="number"]::-webkit-inner-spin-button,
+        .duration-inputs input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-.duration-inputs input[type="number"] {
-    appearance: textfield;
-}
-
+        .duration-inputs input[type="number"] {
+            appearance: textfield;
+        }
 </style>
 {% endblock extra_head %}
 
@@ -344,7 +343,7 @@
                             </div>
                             <div id="cost-input" class="form-group hidden">
                                 <label for="cost">Cost (numbers only)</label>
-                                <input type="number" 
+                                £ <input type="number" 
                                        step="0.01" 
                                        class="form-control" 
                                        id="cost" 
@@ -397,7 +396,6 @@
                                     <label for="type-networking">Networking</label>
                                 </div>
                             </div>
-                            <!-- Hidden input to store the combined values -->
                             <input type="hidden" id="event-types" name="event_types" value="">
                         </div>
                         
@@ -451,8 +449,8 @@
                             <label>Location</label>
                             <div class="button-group">
                                 <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('Virtual')">Virtual</button>
-                                <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('In-person')">In-person</button>
-                                <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('Hybrid')">Hybrid</button>
+                                <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('in-person')">In-person</button>
+                                <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('hybrid')">Hybrid</button>
                             </div>
                             <div id="meeting-link" class="form-group hidden">
                                 <label for="link">Meeting Link</label>
@@ -464,6 +462,7 @@
                                 <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
                                 <div id="map"></div>
                             </div>
+                            <input type="hidden" id="location_type" name="location_type" value="">
                         </div>
         
                         <!-- Description -->
@@ -480,7 +479,7 @@
                                     <option value="{{ tag.name }}">{{ tag.name }}</option>
                                 {% endfor %}
                             </select>
-                            <small class="form-text text-muted">Type to search existing tags or create new ones</small>
+                            <small class="form-text text-muted">Type to search existing tags or press Enter to create new ones</small>
                         </div>
 
                         <!-- Add submit button -->
@@ -507,18 +506,22 @@
                     </div>
                     <div class="preview-section">
 
-                        <!-- First Row: Event Title -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
 
-
-                        <!-- Second Row: Line of Service and Capacity -->
+                        <!-- First Row: Line of Service and Capacity -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
                             <span id="preview-line-service">Line of Service: N/A</span>
                             <span id="preview-capacity">Capacity: 0</span>
                         </div>
+
+                        <!-- Second Row: Event Title -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
+
             
                         <!-- Third Row: Price -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-price">Price: Free</div>
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-price">Price: Free</span>
+                            <span id="preview-event-type">Type: N/A</span>
+                            </div>
 
                         <!-- Fourth Row: Date and Time -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
@@ -586,52 +589,82 @@
     
         function selectPrice(price) {
             const priceType = price.toLowerCase().replace(/ /g, '-');  // Convert "Paid for" to "paid-for"
-            document.getElementById("price_type").value = price;
-            document.getElementById("preview-price").innerText = `Price: ${price}`;
+            console.log('Price Type:', priceType);  // Debug log
+            console.log('Hidden Input Value:', document.getElementById("price_type").value);  // Debug log
+            
+            // Set the hidden input value
+            document.getElementById("price_type").value = priceType;
+            
+            // Add more debug logs
+            console.log('After setting - Hidden Input Value:', document.getElementById("price_type").value);
+            console.log('Cost Input Value:', document.getElementById("cost").value);
+            
+            // Update preview and handle cost input visibility
+            const costInput = document.getElementById("cost-input");
+            if (price === 'Free') {
+                costInput.classList.add('hidden');
+                document.getElementById("preview-price").innerText = 'Price: Free';
+                document.getElementById("cost").value = '';  // Clear cost value for free events
+            } else {
+                costInput.classList.remove('hidden');
+                const costValue = document.getElementById("cost").value;
+                document.getElementById("preview-price").innerText = costValue ? 
+                    `Price: £${costValue}` : 
+                    `Price: ${price}`;
+            }
+            
+            // Update button states
+            document.querySelectorAll('.price-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.price === priceType) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+    
+        function selectLocation(location) {
+            console.log('selectLocation called with:', location); // Debug line
             
             // Remove selected class from all buttons
-            document.querySelectorAll('.price-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.location-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
             
-            // Add selected class to the clicked button
-            const selectedButton = document.querySelector(`.price-btn[data-price="${priceType}"]`);
+            // Add selected class to clicked button
+            const selectedButton = document.querySelector(`.location-btn[data-location="${location}"]`);
             if (selectedButton) {
                 selectedButton.classList.add('selected');
             }
 
-            const costInput = document.getElementById("cost-input");
-            costInput.classList.toggle('hidden', price === 'Free');
-
-            // Set the hidden input value
-            document.getElementById("price_type").value = priceType;
-        }
-    
-        function selectLocation(location) {
-            const locationType = location.toLowerCase();
-            document.getElementById("preview-location").innerText = `Location: ${location}`;
-            document.querySelectorAll('.location-btn').forEach(btn => btn.classList.remove('selected'));
-            document.querySelector(`.location-btn[data-location="${locationType}"]`).classList.add('selected');
-    
             const meetingLink = document.getElementById("meeting-link");
             const addressInput = document.getElementById("address-input");
-    
+            
+            // Hide both inputs initially
             meetingLink.classList.add("hidden");
             addressInput.classList.add("hidden");
-    
-            if (location === "Virtual") {
+            
+            // Show appropriate inputs based on selection
+            if (location === "virtual") {
                 meetingLink.classList.remove("hidden");
-            } else if (location === "In-person") {
+            } else if (location === "in-person") {
                 addressInput.classList.remove("hidden");
-            } else if (location === "Hybrid") {
+            } else if (location === "hybrid") {
                 meetingLink.classList.remove("hidden");
                 addressInput.classList.remove("hidden");
             }
-    
-            // Set the hidden input value
-            document.getElementById("location_type").value = locationType;
+            
+            // Update hidden input
+            document.getElementById("location_type").value = location;
+
+            // Only update preview if the element exists
+            const previewLocation = document.getElementById("preview-locationx");
+            if (previewLocation) {
+                previewLocation.innerText = `Location: ${location}`;
+            }
         }
     
         function updatePreviewPrice() {
-            document.getElementById("preview-price").innerText = `Approximate Cost: ${document.getElementById("cost").value}`;
+            document.getElementById("preview-price").innerText = `Approximate Cost: £${document.getElementById("cost").value}`;
         }
     
         function updatePreviewCapacity() {
@@ -694,11 +727,14 @@
         }
     
         function handleEventTypeChange(checkbox) {
+            console.log('handleEventTypeChange called'); // Debug line
+            
             const generalCheckbox = document.getElementById('type-general');
             const teambuilding = document.getElementById('type-teambuilding');
             const volunteering = document.getElementById('type-volunteering');
             const networking = document.getElementById('type-networking');
             const eventTypesInput = document.getElementById('event-types');
+            const previewEventType = document.getElementById('preview-event-type');
             
             if (checkbox.id === 'type-general' && checkbox.checked) {
                 // If General is checked, uncheck all others
@@ -729,31 +765,82 @@
                 if (networking.checked) selectedTypes.push('Networking');
             }
             eventTypesInput.value = selectedTypes.join(',');
+
+            // Update preview
+            if (previewEventType) {
+                previewEventType.innerText = `Event Type: ${selectedTypes.length > 0 ? selectedTypes.join(', ') : 'N/A'}`;
+            }
         }
 
         // Document Ready Handlers
         $(document).ready(function() {
             $('.select2-tags').select2({
                 tags: true,
-                tokenSeparators: [',', ' '],
+                tokenSeparators: [','],
                 ajax: {
                     url: '{% url "get_tags" %}',
                     dataType: 'json',
                     delay: 250,
-                    processResults: function (data) {
+                    data: function(params) {
                         return {
-                            results: data.map(function(item) {
-                                return {
-                                    id: item,
-                                    text: item
-                                };
-                            })
+                            term: params.term || ''  // Send the search term to the server
                         };
                     },
-                    cache: true
+                    processResults: function(data) {
+                        // Add the search term as the first option if it doesn't exist
+                        const searchTerm = $('.select2-search__field').val().toLowerCase();
+                        
+                        // Filter the data based on the search term
+                        let filteredData = data;
+                        if (searchTerm) {
+                            filteredData = data.filter(item => 
+                                item.toLowerCase().includes(searchTerm)
+                            );
+                        }
+
+                        // Map the filtered data to Select2 format
+                        let results = filteredData.map(item => ({
+                            id: item,
+                            text: item,
+                            existing: true
+                        }));
+
+                        // Add the search term as a new tag option if it doesn't exist
+                        const exactMatch = results.some(item => 
+                            item.text.toLowerCase() === searchTerm
+                        );
+
+                        if (searchTerm && !exactMatch) {
+                            results.unshift({
+                                id: searchTerm,
+                                text: searchTerm,
+                                newTag: true
+                            });
+                        }
+
+                        return { results };
+                    }
+                },
+                templateResult: function(data) {
+                    if (data.newTag) {
+                        return $(`<span>
+                            <i class="fas fa-plus-circle" style="color: #28a745; margin-right: 5px;"></i>
+                            Create new tag: "${data.text}"
+                        </span>`);
+                    }
+                    return data.text;
+                },
+                language: {
+                    noResults: function() {
+                        const searchTerm = $('.select2-search__field').val();
+                        return `No matches found. Press Enter to create "${searchTerm}" as a new tag`;
+                    }
                 }
+            }).on('select2:select', function(e) {
+                // No need to modify the text after selection since we're using templateResult
             });
         });
+        
     // Form Reset Handler
     document.addEventListener('DOMContentLoaded', function() {
         {% if messages %}
@@ -771,6 +858,7 @@
                     document.getElementById('preview-capacity').innerText = 'Capacity: 0';
                     document.getElementById('preview-line-service').innerText = 'Line of Service: N/A';
                     document.getElementById('preview-price').innerText = 'Price: Free';
+                    document.getElementById('preview-event-type').innerText = "Type: N/A";
                     
                     // Reset image preview
                     document.getElementById('preview-image').src = '';
@@ -811,5 +899,7 @@
             }
         });
     });
+    
     </script>
+    
     {% endblock extra_scripts %}

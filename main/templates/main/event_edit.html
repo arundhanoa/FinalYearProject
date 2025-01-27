@@ -4,152 +4,1083 @@
 {% block title %}Edit Event{% endblock %}
 
 {% block extra_head %}
-<style>
-    .edit-form-container {
-        max-width: 800px;
-        margin: 2em auto;
-        padding: 2em;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Basic styling for layout */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    
+        .price-btn.selected,
+        .location-btn.selected {
+            background-color: #ff7f00;
+            color: white;
+        }
+    
+        .indicator.active {
+            background-color: #ff7f00;
+        }
+    
+        .indicator {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: pointer;
+        }
+    
+        .preview-row {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
 
-    .form-group {
-        margin-bottom: 1.5em;
-    }
+        .row-flex {
+            display: flex;
+            justify-content: space-between;
+        }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5em;
-        font-weight: bold;
-    }
+        /* Ensures the preview section is displayed in a column format */
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+        }
+        /* Left form container */
+        .form-container {
+            flex: 1;
+            background-color: #f8f8f8;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        /* Right preview container */
+        .preview-container {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .preview-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .button-group button {
+            padding: 0.75rem 1.5rem;
+            margin-right: 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+        }
+        .button-group button.selected {
+            background-color: #e0301e;
+            color: #ffffff;
+        }
+        .hidden {
+            display: none;
+        }
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #event-image {
+            border: 2px solid #000;
+            padding: 1rem;
+            background-color: #f3f3f3;
+            border-radius: 4px;
+        }
+        /* Map styling */
+        #map {
+            width: 100%;
+            height: 250px;
+            margin-top: 1rem;
+        }
+        /* Event preview styling */
+        .event-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .preview-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .preview-image-container img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        /* Image slider indicators */
+        .image-indicators {
+            position: absolute;
+            bottom: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        .indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+        .indicator.active {
+            opacity: 1;
+        }
+        .preview-section {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-top: 1px solid #ccc;
+        }
+        .preview-item {
+            font-size: 1rem;
+            padding: 0.25rem 0;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
 
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-        width: 100%;
-        padding: 0.5em;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .form-group textarea {
-        min-height: 150px;
-    }
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
 
-    .button-group {
-        display: flex;
-        gap: 1em;
-        justify-content: flex-end;
-        margin-top: 2em;
-    }
+        .checkbox-item label {
+            margin: 0;
+            font-weight: normal;
+        }
 
-    .save-button {
-        background-color: #007bff;
-        color: white;
-        padding: 0.5em 1em;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+        /* Tag Input Styling */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0.5rem;
+            min-height: 45px;
+        }
 
-    .cancel-button {
-        background-color: #6c757d;
-        color: white;
-        padding: 0.5em 1em;
-        border: none;
-        border-radius: 4px;
-        text-decoration: none;
-    }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #ff7f00;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin: 3px;
+        }
 
-    .image-preview {
-        margin: 1em 0;
-    }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+            margin-right: 5px;
+        }
 
-    .image-preview img {
-        max-width: 200px;
-        height: auto;
-        margin: 0.5em;
-    }
-</style>
-{% endblock %}
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #ff7f00;
+        }
+
+        .select2-dropdown {
+            border: 1px solid #ccc;
+        }
+
+        .select2-search__field {
+            padding: 6px !important;
+        }
+
+        .duration-inputs input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .duration-inputs input[type="number"]:focus {
+            outline: none;
+            border-color: #ff7f00;
+            box-shadow: 0 0 5px rgba(255, 127, 0, 0.2);
+        }
+
+        /* Remove spinner buttons from number inputs */
+        .duration-inputs input[type="number"]::-webkit-inner-spin-button,
+        .duration-inputs input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .duration-inputs input[type="number"] {
+            appearance: textfield;
+        }
+    </style>
+{% endblock extra_head %}
 
 {% block content %}
-<div class="edit-form-container">
-    <h2>Edit Event: {{ event.title }}</h2>
-    
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+    {% include 'main/navbar.html' %}
+
+    {% if messages %}
+    <div class="messages" style="padding: 10px; margin: 10px;">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main>
+        <div class="container" style="display: flex; justify-content: space-between;">
+            <!-- Left side: form inputs for creating an event -->
+            <div class="form-container" style="flex: 1; margin-right: 20px;">
+                <div class="form-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <h1>Edit Event: {{ event.title }}</h1>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
         
-        <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" value="{{ event.title }}" required>
-        </div>
+                        <!-- Add these hidden inputs -->
+                        <input type="hidden" id="price_type" name="price_type" value="free">
+                        
 
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" required>{{ event.description }}</textarea>
-        </div>
+                        <div class="form-group">
+                            <label>Current Images</label>
+                            <div class="current-images-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                                {% for image in event.event_images.all %}
+                                <div class="current-image-item" style="position: relative; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px;">
+                                    <img src="{{ image.image.url }}" alt="Event image" style="width: 100%; height: auto;">
+                                    <div style="margin-top: 0.5rem;">
+                                        <input type="checkbox" id="delete_image_{{ image.id }}" name="delete_images" value="{{ image.id }}">
+                                        <label for="delete_image_{{ image.id }}">Delete</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
 
-        <div class="form-group">
-            <label for="date">Date</label>
-            <input type="date" id="date" name="date" value="{{ event.date|date:'Y-m-d' }}" required>
-        </div>
+                        <div class="form-group">
+                            <label for="new_images">Add New Images</label>
+                            <input type="file" id="new_images" name="new_images" multiple accept="image/*">
+                        </div>
 
-        <div class="form-group">
-            <label for="time">Time</label>
-            <input type="time" id="time" name="time" value="{{ event.time|time:'H:i' }}" required>
-        </div>
+                        <!-- Price Options -->
+                        <div class="form-group">
+                            <label>Price</label>
+                            <div class="button-group">
+                                <button type="button" class="price-btn {% if event.price_type == 'free' %}selected{% endif %}" 
+                                        data-price="free" onclick="selectPrice('Free')">Free</button>
+                                <button type="button" class="price-btn {% if event.price_type == 'self-funded' %}selected{% endif %}" 
+                                        data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
+                                <button type="button" class="price-btn {% if event.price_type == 'paid-for' %}selected{% endif %}" 
+                                        data-price="paid-for" onclick="selectPrice('Paid for')">Paid for</button>
+                            </div>
+                            <div id="cost-input" class="form-group {% if event.price_type == 'free' %}hidden{% endif %}">
+                                <label for="cost">Cost (numbers only)</label>
+                                £ <input type="number" 
+                                       step="0.01" 
+                                       class="form-control" 
+                                       id="cost" 
+                                       name="cost"
+                                       placeholder="8.00"
+                                       pattern="[0-9]*\.?[0-9]*"
+                                       value="{{ event.cost|default:'' }}"
+                                       oninput="updatePreviewPrice()">
+                                <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
+                            </div>
+                        </div>
+        
+                        <!-- Event Capacity -->
+                        <div class="form-group">
+                            <label for="capacity">Event Capacity</label>
+                            <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" value="{{event.capacity}}" required oninput="updatePreviewCapacity()">
+                        </div>
+        
+                        <!-- Line of Service -->
+                        <div class="form-group">
+                            <label for="line-service">Line of Service</label>
+                            <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
+                                <option value="" disabled>Select line of service</option>
+                                <option value="Audit" {% if event.line_of_service == 'Audit' %}selected{% endif %}>Audit</option>
+                                <option value="Consulting" {% if event.line_of_service == 'Consulting' %}selected{% endif %}>Consulting</option>
+                                <option value="Tax" {% if event.line_of_service == 'Tax' %}selected{% endif %}>Tax</option>
+                                <option value="Advisory" {% if event.line_of_service == 'Advisory' %}selected{% endif %}>Advisory</option>
+                                <option value="Assurance" {% if event.line_of_service == 'Assurance' %}selected{% endif %}>Assurance</option>
+                            </select>
+                        </div>
+                        
+                        
+                        <div class="form-group">
+                            <label>Event Type</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-general" name="event_type" value="General" 
+                                           {% if 'General' in event.event_type %}checked{% endif %} 
+                                           onchange="handleEventTypeChange(this)">
+                                    <label for="type-general">General</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-teambuilding" name="event_type" value="Teambuilding" 
+                                           {% if 'Teambuilding' in event.event_type %}checked{% endif %} 
+                                           onchange="handleEventTypeChange(this)">
+                                    <label for="type-teambuilding">Teambuilding</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-networking" name="event_type" value="Networking" 
+                                           {% if 'Networking' in event.event_type %}checked{% endif %} 
+                                           onchange="handleEventTypeChange(this)">
+                                    <label for="type-networking">Networking</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="type-volunteering" name="event_type" value="Volunteering" 
+                                           {% if 'Volunteering' in event.event_type %}checked{% endif %} 
+                                           onchange="handleEventTypeChange(this)">
+                                    <label for="type-volunteering">Volunteering</label>
+                                </div>
+                            <input type="hidden" id="event-types" name="event_types" value="{{ event.event_type }}">
+                        </div>
+        
+                        <!--Event Title-->
+                        <div class="form-group">
+                            <label for="title">Event Title</label>
+                            <input type="text" id="title" name="title" value="{{ event.title }}" required oninput="updatePreviewTitle()">
+                        </div>
+                        </div>
 
-        <div class="form-group">
-            <label for="location">Location</label>
-            <input type="text" id="location" name="location" value="{{ event.location }}" required>
-        </div>
+                        <!-- Date and Time -->
+                        <div class="form-group">
+                            <label for="event-date">Date</label>
+                            <input type="date" id="event-date" name="date" value="{{event.date|date:'Y-m-d'}}" required onchange="updatePreviewDate()">
+                        </div>
+                        <div class="form-group">
+                            <label for="event-time">Time</label>
+                            <input type="time" id="event-time" name="time" value="{{event.time|time:'H:i'}}" onchange="updatePreviewDate()">
+                        </div>
 
-        <div class="form-group">
-            <label for="capacity">Capacity</label>
-            <input type="number" id="capacity" name="capacity" value="{{ event.capacity }}" required>
-        </div>
+                        <div class="form-group">
+                            <label>Expected Duration</label>
+                            <div class="duration-inputs" style="display: flex; gap: 10px; align-items: center;">
+                                <div>
+                                    <input type="number" 
+                                           id="duration-hours" 
+                                           name="duration_hours" 
+                                           min="0" 
+                                           max="24" 
+                                           placeholder="0" 
+                                           style="width: 70px;"
+                                           value="{{duration_hours}}"
+                                           onchange="updateDuration()">
+                                    <label for="duration-hours">Hours</label>
+                                </div>
+                                <div>
+                                    <input type="number" 
+                                           id="duration-minutes" 
+                                           name="duration_minutes" 
+                                           min="0" 
+                                           max="59" 
+                                           placeholder="0" 
+                                           style="width: 70px;"
+                                           value="{{duration_minutes}}"
+                                           onchange="updateDuration()">
+                                    <label for="duration-minutes">Minutes</label>
+                                </div>
+                                <!-- Hidden input to store total duration in minutes -->
+                                <input type="hidden" id="total-duration" name="duration" value="0">
+                            </div>
+                        </div>
+                        <!-- Location Options -->
+                        <div class="form-group">
+                            <label>Location</label>
+                            <div class="button-group">
+                                <button type="button" class="location-btn {% if event.location_type == 'virtual' %}selected{% endif %}" 
+                                        data-location="virtual" onclick="selectLocation('virtual')">Virtual</button>
+                                <button type="button" class="location-btn {% if event.location_type == 'in-person' %}selected{% endif %}" 
+                                        data-location="in-person" onclick="selectLocation('in-person')">In-person</button>
+                                <button type="button" class="location-btn {% if event.location_type == 'hybrid' %}selected{% endif %}" 
+                                        data-location="hybrid" onclick="selectLocation('hybrid')">Hybrid</button>
+                            </div>
+                            <input type="hidden" id="location_type" name="location_type" value="{{ event.location_type }}">
+                            <div id="meeting-link" class="form-group hidden">
+                                <label for="link">Meeting Link</label>
+                                <input type="text" id="link" name="meeting_link" value="{{ event.meeting_link }}" placeholder="Enter virtual meeting link (include https://)" oninput="updatePreviewLocation()">
+                                <small class="form-text text-muted">Please include https:// in your link</small>
+                            </div>
+                            <div id="address-input" class="form-group hidden">
+                                <label for="address">Address</label>
+                                <input type="text" id="address" name="location" value="{{ event.location }}" placeholder="Enter address" oninput="updatePreviewLocation()">
+                                <div id="map"></div>
+                            </div>
+                        </div>
+        
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="event-description">Description</label>
+                            <textarea id="description" name="description" required>{{event.description}}</textarea>
+                        </div>
 
-        <div class="form-group">
-            <label for="price_type">Price Type</label>
-            <select id="price_type" name="price_type" required>
-                <option value="free" {% if event.price_type == 'free' %}selected{% endif %}>Free</option>
-                <option value="self-funded" {% if event.price_type == 'self-funded' %}selected{% endif %}>Self-funded</option>
-                <option value="paid-for" {% if event.price_type == 'paid-for' %}selected{% endif %}>Paid for</option>
-            </select>
-        </div>
+                        <!-- Tags Input -->
+                        <div class="form-group">
+                            <label for="tags">Tags</label>
+                            <button type="button" onclick="openTagModal()" class="edit-tags-btn" style="background-color: #ff7f00; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                                <i class="fas fa-edit"></i> Edit Tags
+                            </button>
+                        </div>
 
-        <div class="form-group">
-            <label for="tags">Tags</label>
-            <select id="tags" name="tags" multiple>
-                {% for tag in all_tags %}
-                    <option value="{{ tag.id }}" {% if tag in event.tags.all %}selected{% endif %}>
-                        {{ tag.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
+                        <!-- Add the modal HTML right after the form-group div, but before the form closing tag -->
+                        <div id="tagModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+                            <div class="modal-content" style="background-color: #fff; margin: 10% auto; padding: 20px; width: 80%; max-width: 800px; border-radius: 8px;">
+                                <div class="modal-header">
+                                    <h2>Edit Event Tags</h2>
+                                    <span class="close" onclick="closeTagModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="tags-container" style="display: flex; gap: 20px;">
+                                        <div class="existing-tags-section" style="flex: 1;">
+                                            <h3>Existing Tags</h3>
+                                            <div id="existingTags" class="tag-list">
+                                                {% for tag in event.tags.all %}
+                                                <div class="tag-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; margin: 5px 0; background-color: #f0f0f0; border-radius: 4px;">
+                                                    <span>{{ tag.name }}</span>
+                                                    <button onclick="removeTag('{{ tag.name }}')" class="remove-tag" style="background: none; border: none; color: #ff0000; cursor: pointer;">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="add-tags-section" style="flex: 1;">
+                                            <h3>Add More Tags</h3>
+                                            <select id="newTags" class="select2-tags" multiple style="width: 100%"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" style="margin-top: 20px; text-align: right;">
+                                    <button onclick="saveTagChanges()" class="save-btn" style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="form-group">
-            <label>Current Images</label>
-            <div class="image-preview">
-                {% for image in event.event_images.all %}
-                    <img src="{{ image.image.url }}" alt="Event image">
-                    <input type="checkbox" name="delete_images" value="{{ image.id }}"> Delete
-                {% endfor %}
+                        <!-- Action Buttons -->
+                        <div class="form-group" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <a href="{% url 'event_detail' event.id %}" class="cancel-button" style="background-color: #6c757d;">
+                                Cancel
+                            </a>
+                            <button type="submit" class="submit-btn" style="background-color: #ff7f00;">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+    
+            <!-- Right side: Live preview of the event card -->
+            <div class="preview-container" style="flex: 0.7;">
+                <h2 class="preview-title">Event Preview</h2>
+                <div class="event-preview" style="border: 2px solid #ccc; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">
+                    <div class="preview-image-container" style="text-align: center; background-color: white; padding: 10px; border-radius: 5px;">
+                        <img id="preview-image" src="" alt="Event Image" style="max-width: 100%; height: auto; border-radius: 5px;">
+                        <div class="image-indicators" style="text-align: center; margin-top: 10px;">
+                            <span class="indicator active"></span>
+                            <span class="indicator"></span>
+                            <!-- Additional indicators for each image will be generated dynamically -->
+                        </div>
+                    </div>
+                    <div class="preview-section">
 
-        <div class="form-group">
-            <label for="new_images">Add New Images</label>
-            <input type="file" id="new_images" name="new_images" multiple accept="image/*">
-        </div>
+                        <!-- First Row: Event Title -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
 
-        <div class="button-group">
-            <a href="{% url 'event_view' event.id %}" class="cancel-button">Cancel</a>
-            <button type="submit" class="save-button">Save Changes</button>
+
+                        <!-- Second Row: Line of Service and Capacity -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-line-service">Line of Service: N/A</span>
+                            <span id="preview-capacity">Capacity: 0</span>
+                        </div>
+            
+                        <!-- Third Row: Price -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-price">Price: Free</div>
+
+                        <!-- Fourth Row: Date and Time -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-date">Date: N/A</span>
+                            <span id="preview-locationx">Location: N/A</span>
+                        </div>
+
+                         <!-- Fourth Row: Date and Time -->
+                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <span id="preview-time">Time: N/A</span>
+                            <span id="preview-duration">Duration: N/A</span>
+                        </div>
+                        
+                        <!-- Fifth Row: Description -->
+                        <div class="preview-row" style="padding: 10px 0;" id="preview-description">Description: N/A</div>
+                    </div>
+                </div>
+            </div>
+            
         </div>
-    </form>
-</div>
-{% endblock %}
+    </main>
+{% endblock content %}
+
+{% block extra_scripts %}
+    <script>
+        // Image Preview
+        let currentImageIndex = 0;
+        const images = [];
+
+    
+        function updateImagePreview() {
+            const fileInput = document.getElementById("event-image");
+            const indicatorContainer = document.querySelector(".image-indicators");
+            const previewImage = document.getElementById("preview-image");
+    
+            images.length = 0;
+            indicatorContainer.innerHTML = '';
+    
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                images.push(URL.createObjectURL(file));
+    
+                const indicator = document.createElement("span");
+                indicator.classList.add("indicator");
+                indicator.onclick = () => {
+                    currentImageIndex = i;
+                    updatePreviewImage();
+                };
+                indicatorContainer.appendChild(indicator);
+            }
+    
+            if (images.length > 0) {
+                currentImageIndex = 0;
+                updatePreviewImage();
+            }
+        }
+    
+        function updatePreviewImage() {
+            const previewImage = document.getElementById("preview-image");
+            previewImage.src = images[currentImageIndex];
+            document.querySelectorAll(".indicator").forEach((indicator, index) => {
+                indicator.classList.toggle("active", index === currentImageIndex);
+            });
+        }
+    
+        function selectPrice(price) {
+            console.log('selectPrice called with:', price);
+            
+            // Properly format the price type for the hidden input
+            let priceType;
+            if (price === 'Paid for') {
+                priceType = 'paid-for';
+            } else if (price === 'Self-funded') {
+                priceType = 'self-funded';
+            } else {
+                priceType = 'free';
+            }
+            
+            console.log('Setting price_type to:', priceType);
+            document.getElementById("price_type").value = priceType;
+            
+            // Remove selected class from all buttons
+            document.querySelectorAll('.price-btn').forEach(btn => btn.classList.remove('selected'));
+            
+            // Add selected class to the clicked button
+            const selectedButton = document.querySelector(`.price-btn[data-price="${priceType}"]`);
+            console.log('Selected button:', selectedButton);
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+
+            const costInput = document.getElementById("cost-input");
+            const costField = document.getElementById("cost");
+            console.log('Current cost field value:', costField.value);
+            
+            if (price === 'Free') {
+                costInput.classList.add('hidden');
+                document.getElementById("preview-price").innerText = 'Price: Free';
+                costField.value = '';  // Clear the cost value for free events
+                console.log('Set to Free, cleared cost value');
+            } else {
+                costInput.classList.remove('hidden');
+                const currentCost = costField.value || "{{ event.cost }}";
+                console.log('Setting cost to:', currentCost);
+                document.getElementById("preview-price").innerText = `Approximate Cost: £${currentCost}`;
+            }
+        }
+    
+        function selectLocation(location) {
+            console.log('selectLocation called with:', location);
+            
+            // Convert location to lowercase for consistency
+            const locationType = location.toLowerCase().replace(/ /g, '-');
+            
+            // Set the hidden input value
+            document.getElementById("location_type").value = locationType;
+            console.log('Set location_type to:', locationType); // Debug log
+            
+            // Remove selected class from all buttons
+            document.querySelectorAll('.location-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked button
+            const selectedButton = document.querySelector(`.location-btn[data-location="${locationType}"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+
+            const meetingLink = document.getElementById("meeting-link");
+            const addressInput = document.getElementById("address-input");
+            
+            // Hide both inputs initially
+            meetingLink.classList.add("hidden");
+            addressInput.classList.add("hidden");
+            
+            // Show appropriate inputs based on selection
+            if (locationType === "virtual") {
+                meetingLink.classList.remove("hidden");
+            } else if (locationType === "in-person") {
+                addressInput.classList.remove("hidden");
+            } else if (locationType === "hybrid") {
+                meetingLink.classList.remove("hidden");
+                addressInput.classList.remove("hidden");
+            }
+            
+            // Update preview
+            updatePreviewLocation();
+        }
+    
+        function updatePreviewPrice() {
+            const costValue = document.getElementById("cost").value;
+            const priceType = document.getElementById("price_type").value;
+            console.log('updatePreviewPrice called');
+            console.log('Current cost value:', costValue);
+            console.log('Current price type:', priceType);
+            document.getElementById("preview-price").innerText = costValue ? `Approximate Cost: £${costValue}` : 'Price: Free';
+        }
+    
+        function updatePreviewCapacity() {
+            document.getElementById("preview-capacity").innerText = `Capacity: ${document.getElementById("capacity").value}`;
+        }
+    
+        function updatePreviewLineService() {
+            document.getElementById("preview-line-service").innerText = `Line of Service: ${document.getElementById("line-service").value}`;
+        }
+    
+        function updatePreviewTitle() {
+            document.getElementById("preview-title").innerText = `Title: ${document.getElementById("title").value}`;
+        }
+    
+        function updatePreviewDate() {
+            document.getElementById("preview-date").innerText = `Date: ${document.getElementById("event-date").value}`;
+            document.getElementById("preview-time").innerText = `Time: ${document.getElementById("event-time").value}`;
+        }
+
+        function updateDuration() {
+            const hours = parseInt(document.getElementById('duration-hours').value) || 0;
+            const minutes = parseInt(document.getElementById('duration-minutes').value) || 0;
+    
+            // Store total minutes in hidden field
+            const totalMinutes = (hours * 60) + minutes;
+            document.getElementById('total-duration').value = totalMinutes;
+    
+            // Update preview
+            let durationText = '';
+            if (hours > 0) {
+                durationText += `${hours} hour${hours !== 1 ? 's' : ''}`;
+            }
+            if (minutes > 0) {
+                if (hours > 0) durationText += ' and ';
+                durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            }
+            if (!durationText) durationText = '0 minutes';
+    
+            document.getElementById('preview-duration').innerText = `Duration: ${durationText}`;
+        }
+
+        // Add this to your document ready function or at the end of your scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded event fired');
+            
+            // Initialize duration preview
+            updateDuration();
+
+            // Initialize price type and cost
+            const priceType = "{{ event.price_type }}";
+            const cost = "{{ event.cost|default:'' }}";
+            console.log('Initial price type:', priceType);
+            console.log('Initial cost:', cost);
+            
+            // Update preview price based on price type and cost
+            const previewPrice = document.getElementById("preview-price");
+            if (priceType === 'free') {
+                previewPrice.innerText = 'Price: Free';
+            } else if (cost) {
+                previewPrice.innerText = `Approximate Cost: £${cost}`;
+            } else {
+                previewPrice.innerText = `Price: ${priceType.replace('-', ' ')}`;
+            }
+
+            // Initialize the price type and preview
+            if (priceType) {
+                const formattedPriceType = priceType.charAt(0).toUpperCase() + priceType.slice(1).replace('-', ' ');
+                console.log('Formatted price type:', formattedPriceType);
+                selectPrice(formattedPriceType);
+            }
+
+            // Initialize title
+            document.getElementById('preview-title').innerText = `Title: {{ event.title }}`;
+
+            // Initialize line of service
+            document.getElementById('preview-line-service').innerText = `Line of Service: {{ event.line_of_service }}`;
+
+            // Initialize capacity
+            document.getElementById('preview-capacity').innerText = `Capacity: {{ event.capacity }}`;
+
+            // Initialize date and time
+            document.getElementById('preview-date').innerText = `Date: {{ event.date|date:"F j, Y" }}`;
+            document.getElementById('preview-time').innerText = `Time: {{ event.time|time:"g:i A" }}`;
+
+            // Initialize location
+            const locationType = "{{ event.location_type }}";
+            if (locationType === 'virtual') {
+                document.getElementById('preview-locationx').innerText = `Location: Virtual ({{ event.meeting_link }})`;
+            } else if (locationType === 'in-person') {
+                document.getElementById('preview-locationx').innerText = `Location: {{ event.location }}`;
+            } else if (locationType === 'hybrid') {
+                document.getElementById('preview-locationx').innerText = `Location: Hybrid - {{ event.location }} / {{ event.meeting_link }}`;
+            }
+
+            // Initialize description
+            document.getElementById('preview-description').innerText = `Description: {{ event.description }}`;
+
+            // Initialize event type
+            const eventTypes = "{{ event.event_type }}".split(',');
+            document.getElementById('preview-event-type').innerText = `Type: ${eventTypes.join(', ')}`;
+
+            // Initialize location buttons
+            selectLocation("{{ event.location_type }}");
+        });
+
+        function updatePreviewDuration() {
+            document.getElementById("preview-duration").innerText = `Duration: ${document.getElementById("event-duration").value}`;
+        }
+    
+        function updatePreviewLocation() {
+            const link = document.getElementById("link").value;
+            const address = document.getElementById("address").value;
+            document.getElementById("preview-location").innerText = link || address ? `Location: ${link || address}` : 'Location: N/A';
+        }
+    
+        function updatePreviewDescription() {
+            document.getElementById("preview-description").innerText = `Description: ${document.getElementById("event-description").value}`;
+        }
+    
+        function handleEventTypeChange(checkbox) {
+            const generalCheckbox = document.getElementById('type-general');
+            const teambuilding = document.getElementById('type-teambuilding');
+            const volunteering = document.getElementById('type-volunteering');
+            const networking = document.getElementById('type-networking');
+            const eventTypesInput = document.getElementById('event-types');
+            
+            if (checkbox.id === 'type-general' && checkbox.checked) {
+                // If General is checked, uncheck all others
+                teambuilding.checked = false;
+                volunteering.checked = false;
+                networking.checked = false;
+            } else if (checkbox.id !== 'type-general') {
+                // If any other checkbox is checked, uncheck General
+                generalCheckbox.checked = false;
+                
+                // Check if all three non-general types are checked
+                if (teambuilding.checked && volunteering.checked && networking.checked) {
+                    // Uncheck all and check General
+                    teambuilding.checked = false;
+                    volunteering.checked = false;
+                    networking.checked = false;
+                    generalCheckbox.checked = true;
+                }
+            }
+
+            // Update hidden input with selected values
+            const selectedTypes = [];
+            if (generalCheckbox.checked) {
+                selectedTypes.push('General');
+            } else {
+                if (teambuilding.checked) selectedTypes.push('Teambuilding');
+                if (volunteering.checked) selectedTypes.push('Volunteering');
+                if (networking.checked) selectedTypes.push('Networking');
+            }
+            eventTypesInput.value = selectedTypes.join(',');
+        }
+    
+        // Document Ready Handlers
+        $(document).ready(function() {
+            $('.select2-tags').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                ajax: {
+                    url: '{% url "get_tags" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function(item) {
+                                return {
+                                    id: item,
+                                    text: item
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    
+    
+        // Add these tag management functions right before the Document Ready Handlers
+        let currentTags = new Set([{% for tag in event.tags.all %}'{{ tag.name }}'{% if not forloop.last %}, {% endif %}{% endfor %}]);
+
+        function openTagModal() {
+            document.getElementById('tagModal').style.display = 'block';
+            initializeSelect2();
+        }
+
+        function closeTagModal() {
+            document.getElementById('tagModal').style.display = 'none';
+        }
+
+        function initializeSelect2() {
+            $('#newTags').select2({
+                tags: true,
+                tokenSeparators: [','],
+                ajax: {
+                    url: '{% url "get_tags" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            term: params.term || ''  // Send the search term to the server
+                        };
+                    },
+                    processResults: function(data) {
+                        // Add the search term as the first option if it doesn't exist
+                        const searchTerm = $('.select2-search__field').val().toLowerCase();
+                        
+                        // Filter the data based on the search term
+                        let filteredData = data;
+                        if (searchTerm) {
+                            filteredData = data.filter(item => 
+                                item.toLowerCase().includes(searchTerm)
+                            );
+                        }
+
+                        // Filter out tags that are already selected
+                        filteredData = filteredData.filter(item => !currentTags.has(item));
+
+                        // Map the filtered data to Select2 format
+                        let results = filteredData.map(item => ({
+                            id: item,
+                            text: item,
+                            existing: true
+                        }));
+
+                        // Add the search term as a new tag option if it doesn't exist
+                        const exactMatch = results.some(item => 
+                            item.text.toLowerCase() === searchTerm
+                        );
+
+                        if (searchTerm && !exactMatch) {
+                            results.unshift({
+                                id: searchTerm,
+                                text: searchTerm,
+                                newTag: true
+                            });
+                        }
+
+                        return { results };
+                    }
+                },
+                templateResult: function(data) {
+                    if (data.newTag) {
+                        return $(`<span>
+                            <i class="fas fa-plus-circle" style="color: #28a745; margin-right: 5px;"></i>
+                            Create new tag: "${data.text}"
+                        </span>`);
+                    }
+                    return data.text;
+                },
+                language: {
+                    noResults: function() {
+                        const searchTerm = $('.select2-search__field').val();
+                        return `No matches found. Press Enter to create "${searchTerm}" as a new tag`;
+                    }
+                }
+            });
+        }
+
+        function removeTag(tagName) {
+            currentTags.delete(tagName);
+            updateTagDisplay();
+        }
+
+        function updateTagDisplay() {
+            const container = document.getElementById('existingTags');
+            container.innerHTML = Array.from(currentTags).map(tag => `
+                <div class="tag-item">
+                    <span>${tag}</span>
+                    <button onclick="removeTag('${tag}')" class="remove-tag">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function saveTagChanges() {
+            // Add new tags from Select2
+            const newTagsSelect = $('#newTags').select2('data');
+            newTagsSelect.forEach(tag => currentTags.add(tag.text));
+            
+            // Update hidden input with all tags
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'tags';
+            hiddenInput.value = Array.from(currentTags).join(',');
+            document.querySelector('form').appendChild(hiddenInput);
+            
+            closeTagModal();
+        }
+
+        // Add click outside to close modal
+        window.onclick = function(event) {
+            const modal = document.getElementById('tagModal');
+            if (event.target === modal) {
+                closeTagModal();
+            }
+        }
+
+    // Form Reset Handler
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    // Clear the form
+                    document.querySelector('form').reset();
+                    
+                    // Reset any preview elements
+                    document.getElementById('preview-title').innerText = 'Title: Event Title';
+                    document.getElementById('preview-description').innerText = 'Description: N/A';
+                    document.getElementById('preview-date').innerText = 'Date: N/A';
+                    document.getElementById('preview-time').innerText = 'Time: N/A';
+                    document.getElementById('preview-location').innerText = 'Location: N/A';
+                    document.getElementById('preview-capacity').innerText = 'Capacity: 0';
+                    document.getElementById('preview-line-service').innerText = 'Line of Service: N/A';
+                    document.getElementById('preview-price').innerText = 'Price: Free';
+                    
+                    // Reset image preview
+                    document.getElementById('preview-image').src = '';
+                    
+                    // Reset any selected buttons
+                    document.querySelectorAll('.price-btn, .location-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Hide any conditional inputs
+                    document.getElementById('cost-input').classList.add('hidden');
+                    document.getElementById('meeting-link').classList.add('hidden');
+                    document.getElementById('address-input').classList.add('hidden');
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+   
+    $(document).ready(function() {
+        $('#id_tags').select2({
+            tags: true,
+            tokenSeparators: [','],
+            ajax: {
+                url: '{% url "get_tags" %}',  // Create this URL
+                dataType: 'json',
+                delay: 250,
+                processResults: function (data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item,
+                                text: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+    </script>
+    {% endblock extra_scripts %}

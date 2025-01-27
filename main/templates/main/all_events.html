@@ -5,6 +5,8 @@
 
     {% block extra_head %}
         <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <style>
             body {
                 margin: 0;
@@ -242,34 +244,8 @@
         .tab-button:hover {
             color: #007bff;
         }
-    </style>
-{% endblock %}
 
-{% block content %}
-    {% include 'main/navbar.html' %}
-    <div class="container">
-        <h1>All Events</h1>
-
-        <!-- Event Tabs -->
-        <div class="event-tabs">
-            <button class="tab-button {% if not show_expired %}active{% endif %}" 
-                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=current'">
-                Current Events
-            </button>
-            <button class="tab-button {% if show_expired %}active{% endif %}"
-                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=expired'">
-                Expired Events
-            </button>
-        </div>
-        
-        <!-- Filter Panel -->
-        <div class="filter-container">
-            <button class="filter-header" onclick="toggleFilters()">
-                <span>Filters</span>
-                <i class="arrow-icon">▼</i>
-            </button>
-            
-            .event-card {
+        .event-card {
                 border: 1px solid #ddd;
                 padding: 15px;
                 border-radius: 8px;
@@ -590,13 +566,54 @@
                 margin-bottom: 5px;
                 font-size: 12px;
             }
-        </style>
-    {% endblock %}
 
-    {% block content %}
-        {% include 'main/navbar.html' %}
-        <div class="container">
-            <h1>All Events</h1>
+            /* Select2 Filter Styling */
+            .select2-filter-container .select2-selection--single {
+                height: 38px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+
+            .select2-filter-container .select2-selection__rendered {
+                line-height: 36px;
+                padding-left: 12px;
+            }
+
+            .select2-filter-container .select2-selection__arrow {
+                height: 36px;
+            }
+
+            .select2-dropdown {
+                border: 1px solid #ccc;
+            }
+
+            .select2-results__option {
+                padding: 8px 12px;
+            }
+
+            .select2-results__option--highlighted[aria-selected] {
+                background-color: #ff7f00;
+            }
+        </style>
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% include 'main/navbar.html' %}
+    <div class="container">
+        <h1>All Events</h1>
+
+        <!-- Event Tabs -->
+        <div class="event-tabs">
+            <button class="tab-button {% if not show_expired %}active{% endif %}" 
+                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=current'">
+                Upcoming Events
+            </button>
+            <button class="tab-button {% if show_expired %}active{% endif %}"
+                    onclick="window.location.href='{% url 'all_events' %}?{% if request.GET %}{% for key, value in request.GET.items %}{% if key != 'expired' %}{{ key }}={{ value }}&{% endif %}{% endfor %}{% endif %}show=expired'">
+                Expired Events
+            </button>
+        </div>
             
             <!-- Filter Panel -->
             <div class="filter-container">
@@ -698,10 +715,12 @@
 
                             <div class="filter-group">
                                 <label for="tag-filter">Tag:</label>
-                                <select id="tag-filter" onchange="filterEvents()">
-                                    <option value="all">All Tags</option>
+                                <select id="tag-filter" name="tag" class="select2-filter" style="width: 100%;">
+                                    <option value="">All Tags</option>
                                     {% for tag in tags %}
-                                        <option value="{{ tag.name }}">{{ tag.name }}</option>
+                                        <option value="{{ tag.name }}" {% if request.GET.tag == tag.name %}selected{% endif %}>
+                                            {{ tag.name }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -718,11 +737,7 @@
                 </div>
             </div>
 
-            <!-- Tab Navigation -->
-            <div class="tab-navigation">
-                <button class="tab-button active" onclick="showTab('upcoming')">Upcoming Events</button>
-                <button class="tab-button" onclick="showTab('past')">Past Events</button>
-            </div>
+        
 
             <!-- Upcoming Events Tab -->
             <div id="upcoming-tab" class="tab-content active">
@@ -815,7 +830,6 @@
             </div>
         </div>
 
-<<<<<<< HEAD
         <div class="events-list">
             {% for event in events %}
                 <a href="{% url 'event_view' event.id %}" class="event-card-link">
@@ -849,97 +863,66 @@
 
 {% block extra_scripts %}
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tagInput = document.querySelector('#id_tags');  // Adjust selector as needed
+        // Define toggleFilters function globally
+        function toggleFilters() {
+            const filterPanel = document.getElementById('filterPanel');
+            const arrowIcon = document.querySelector('.arrow-icon');
             
-            // Fetch existing tags from backend
-            fetch('/api/tags/')  // You'll need to create this endpoint
-                .then(response => response.json())
-                .then(tags => {
-                    // Add autocomplete functionality
-                    // Implementation depends on your chosen library
-                });
-        });
+            if (filterPanel.style.display === 'none') {
+                filterPanel.style.display = 'block';
+                arrowIcon.textContent = '▲';
+            } else {
+                filterPanel.style.display = 'none';
+                arrowIcon.textContent = '▼';
+            }
+        }
 
-        // Get all filter inputs and selects
-        const filterInputs = document.querySelectorAll('.filter-form select, .filter-form input');
-        
-        // Add change event listener to each filter
-        filterInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                // Submit the form when any filter changes
-                document.querySelector('.filter-form').submit();
-=======
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const tagInput = document.querySelector('#id_tags');  // Adjust selector as needed
-                
-                // Fetch existing tags from backend
-                fetch('/api/tags/')  // You'll need to create this endpoint
-                    .then(response => response.json())
-                    .then(tags => {
-                        // Add autocomplete functionality
-                        // Implementation depends on your chosen library
-                    });
->>>>>>> 8d42766243e4fe83e06cffe129ec216afa058e94
+        // Define showTab function globally
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
             });
+            
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
 
-            // Get all filter inputs and selects
+        // DOM ready event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize filter inputs
             const filterInputs = document.querySelectorAll('.filter-form select, .filter-form input');
             
-            // Add change event listener to each filter
             filterInputs.forEach(input => {
                 input.addEventListener('change', () => {
-                    // Submit the form when any filter changes
                     document.querySelector('.filter-form').submit();
                 });
             });
 
-            function toggleFilters() {
-                const filterPanel = document.getElementById('filterPanel');
-                const arrowIcon = document.querySelector('.arrow-icon');
-                
-                if (filterPanel.style.display === 'none') {
-                    filterPanel.style.display = 'block';
-                    arrowIcon.textContent = '▲';
-                } else {
-                    filterPanel.style.display = 'none';
-                    arrowIcon.textContent = '▼';
-                }
+            // Check URL params for filter panel display
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.toString()) {
+                document.getElementById('filterPanel').style.display = 'block';
+                document.querySelector('.arrow-icon').textContent = '▲';
             }
 
-            // Show filter panel if there are active filters
-            window.onload = function() {
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.toString()) {
-                    document.getElementById('filterPanel').style.display = 'block';
-                    document.querySelector('.arrow-icon').textContent = '▲';
-                }
-            }
+            // Set active tab
+            const activeTab = window.location.hash.substring(1) || 'upcoming';
+            showTab(activeTab);
+        });
 
-            function showTab(tabName) {
-                // Hide all tabs
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                // Remove active class from all buttons
-                document.querySelectorAll('.tab-button').forEach(button => {
-                    button.classList.remove('active');
-                });
-                
-                // Show selected tab
-                document.getElementById(`${tabName}-tab`).classList.add('active');
-                
-                // Add active class to clicked button
-                event.target.classList.add('active');
-            }
-
-            // Show the active tab on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                // Get the hash from URL or default to 'upcoming'
-                const activeTab = window.location.hash.substring(1) || 'upcoming';
-                showTab(activeTab);
+        $(document).ready(function() {
+            $('.select2-filter').select2({
+                placeholder: 'Search tags...',
+                allowClear: true,
+                width: '100%',
+                containerCssClass: 'select2-filter-container'
+            }).on('change', function() {
+                filterEvents(); // Your existing filter function
             });
-        </script>
-    {% endblock %}
+        });
+    </script>
+{% endblock %}
