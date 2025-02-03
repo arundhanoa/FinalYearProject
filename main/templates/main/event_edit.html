@@ -463,17 +463,19 @@
                                 <button type="button" class="location-btn {% if event.location_type == 'hybrid' %}selected{% endif %}" 
                                         data-location="hybrid" onclick="selectLocation('hybrid')">Hybrid</button>
                             </div>
-                            <input type="hidden" id="location_type" name="location_type" value="{{ event.location_type }}">
-                            <div id="meeting-link" class="form-group hidden">
+                            
+                            <div id="meeting-link" class="form-group {% if event.location_type != 'virtual' and event.location_type != 'hybrid' %}hidden{% endif %}">
                                 <label for="link">Meeting Link</label>
-                                <input type="text" id="link" name="meeting_link" value="{{ event.meeting_link }}" placeholder="Enter virtual meeting link (include https://)" oninput="updatePreviewLocation()">
+                                <input type="text" id="link" name="meeting_link" value="{{ event.meeting_link|default:'' }}" 
+                                       placeholder="Enter virtual meeting link (include https://)" oninput="updatePreviewLocation()">
                                 <small class="form-text text-muted">Please include https:// in your link</small>
                             </div>
-                            <div id="address-input" class="form-group hidden">
+                            <div id="address-input" class="form-group {% if event.location_type != 'in-person' and event.location_type != 'hybrid' %}hidden{% endif %}">
                                 <label for="address">Address</label>
-                                <input type="text" id="address" name="location" value="{{ event.location }}" placeholder="Enter address" oninput="updatePreviewLocation()">
-                                <div id="map"></div>
+                                <input type="text" id="address" name="location" value="{{ event.location|default:'' }}" 
+                                       placeholder="Enter address" oninput="updatePreviewLocation()">
                             </div>
+                            <input type="hidden" id="location_type" name="location_type" value="{{ event.location_type|default:'' }}">
                         </div>
         
                         <!-- Description -->
@@ -676,23 +678,21 @@
         function selectLocation(location) {
             console.log('selectLocation called with:', location);
             
-            // Convert location to lowercase for consistency
-            const locationType = location.toLowerCase().replace(/ /g, '-');
-            
-            // Set the hidden input value
-            document.getElementById("location_type").value = locationType;
-            console.log('Set location_type to:', locationType); // Debug log
-            
             // Remove selected class from all buttons
             document.querySelectorAll('.location-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
             
             // Add selected class to clicked button
-            const selectedButton = document.querySelector(`.location-btn[data-location="${locationType}"]`);
+            const selectedButton = document.querySelector(`.location-btn[data-location="${location.toLowerCase()}"]`);
             if (selectedButton) {
                 selectedButton.classList.add('selected');
             }
+
+            // Set the hidden input value
+            const locationTypeInput = document.getElementById("location_type");
+            locationTypeInput.value = location.toLowerCase();
+            console.log('Set location_type to:', locationTypeInput.value);
 
             const meetingLink = document.getElementById("meeting-link");
             const addressInput = document.getElementById("address-input");
@@ -702,11 +702,11 @@
             addressInput.classList.add("hidden");
             
             // Show appropriate inputs based on selection
-            if (locationType === "virtual") {
+            if (location.toLowerCase() === "virtual") {
                 meetingLink.classList.remove("hidden");
-            } else if (locationType === "in-person") {
+            } else if (location.toLowerCase() === "in-person") {
                 addressInput.classList.remove("hidden");
-            } else if (locationType === "hybrid") {
+            } else if (location.toLowerCase() === "hybrid") {
                 meetingLink.classList.remove("hidden");
                 addressInput.classList.remove("hidden");
             }
@@ -832,9 +832,23 @@
         }
     
         function updatePreviewLocation() {
+            const locationType = document.getElementById("location_type").value;
             const link = document.getElementById("link").value;
             const address = document.getElementById("address").value;
-            document.getElementById("preview-location").innerText = link || address ? `Location: ${link || address}` : 'Location: N/A';
+            let locationText = '';
+            
+            if (locationType === "virtual") {
+                locationText = link ? `Virtual` : 'Virtual';
+            } else if (locationType === "in-person") {
+                locationText = address ? `In-person` : 'In-person';
+            } else if (locationType === "hybrid") {
+                const parts = [];
+                if (address) parts.push(address);
+                if (link) parts.push(link);
+                locationText = parts.length > 0 ? `Hybrid` : 'Hybrid';
+            }
+            
+            document.getElementById("preview-locationx").innerText = `Location: ${locationText}`;
         }
     
         function updatePreviewDescription() {
@@ -1081,6 +1095,13 @@
                 cache: true
             }
         });
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        console.log('Form submission:');
+        console.log('location_type:', document.getElementById('location_type').value);
+        console.log('location:', document.getElementById('address').value);
+        console.log('meeting_link:', document.getElementById('link').value);
     });
     </script>
     {% endblock extra_scripts %}

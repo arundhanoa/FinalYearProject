@@ -171,7 +171,7 @@ class CustomUser(AbstractUser):
         verbose_name='groups',
     )
     user_permissions = models.ManyToManyField(
-        'auth.Permission',
+        'auth.Permission', 
         related_name='custom_user_set',
         blank=True,
         help_text='Specific permissions for this user.',
@@ -188,3 +188,15 @@ class CustomUser(AbstractUser):
             models.Index(fields=['first_name']),
             models.Index(fields=['last_name']),
         ]
+
+class Announcement(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='announcements')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Announcement for {self.event.title} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"

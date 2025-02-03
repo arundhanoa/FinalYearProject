@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Event, Tag, EventImage, EventSignUp
+from .models import Event, Tag, EventImage, EventSignUp, Announcement
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -18,6 +18,10 @@ from django.views.decorators.cache import never_cache
 from django.db import IntegrityError
 from django.db.models import Count
 # Create your views here.
+from loginsights.main import LogInsightsLogger
+from django.db import models
+
+logger = LogInsightsLogger.get_logger()
 
 @never_cache
 def all_events(request):
@@ -217,6 +221,9 @@ def homepage(request):
         'home_office': user.home_office,
         'phone_number': user.phone_number,
     }
+
+        # Log an informational message
+    logger.info(f"loading {user.first_name} on the homepage")
     
     return render(request, 'main/homepage.html', context)
 
@@ -284,6 +291,14 @@ def event_view(request, event_id):
     print(f"Is registered: {is_registered}")
     print(f"EventSignUp exists: {is_registered}")
     print(f"Total attendee count: {attendees.count()}")
+
+    event_view_metadata= {
+        "user": request.user.username,
+        "event_title": event.title,
+        "attendee_count": attendees.count(),
+        "is_registered": is_registered
+    }
+    logger.add_metric("Event View",event_view_metadata)
     
     context = {
         'event': event,
@@ -292,6 +307,11 @@ def event_view(request, event_id):
         'current_user': request.user,
         'attendees': attendees,
     }
+
+    logger.add_metric("Event Views", {
+        "event_id": event.id,
+        "event_title": event.title
+    })
     
     # Force cache refresh
     response = render(request, 'main/event_view.html', context)
@@ -305,6 +325,8 @@ def event_view(request, event_id):
 def my_events(request):
     today = timezone.now().date()
     user = request.user
+
+    logger.info(f"My Events page accessed by user {user.username} with user id {user.id}")
     
     print("\n=== DEBUG INFO ===")
     print(f"Current user: {user.username} (ID: {user.id})")
@@ -323,6 +345,16 @@ def my_events(request):
     print(f"Events from attendees field: {events_from_attendees.count()}")
     print(f"Events from EventSignUp: {events_from_signups.count()}")
     print(f"Total unique events registered: {signed_up_events.count()}")
+
+    user_stats = {
+        "user_id": user.id,
+        "username": user.username,
+        "created_events": created_events.count(),
+        "events_from_attendees": events_from_attendees.count(),
+        "events_from_signups": events_from_signups.count(),
+        "total_unique_registered": signed_up_events.count()
+    }
+    logger.add_metric("User event statistics",user_stats)
     
     # List all registrations
     print("\nDetailed Registration Info:")
@@ -339,11 +371,23 @@ def my_events(request):
     signed_up_past = signed_up_events.filter(date__lt=today).order_by('-date')
     signed_up_upcoming = signed_up_events.filter(date__gte=today).order_by('date')
     
+    # Get announcements for events user is signed up for
+    relevant_announcements = Announcement.objects.filter(
+        event__in=signed_up_events,  # Only for events user is signed up for
+        created_at__gt=models.Subquery(  # Only announcements after signup
+            EventSignUp.objects.filter(
+                user=request.user,
+                event=models.OuterRef('event')
+            ).values('signup_date')
+        )
+    ).select_related('event', 'created_by').order_by('-created_at')[:10]  # Latest 10 announcements
+
     context = {
         'created_past': created_past,
         'created_upcoming': created_upcoming,
         'signed_up_past': signed_up_past,
         'signed_up_upcoming': signed_up_upcoming,
+        'relevant_announcements': relevant_announcements,
     }
     
     # Add cache control headers
@@ -364,6 +408,7 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
+            logger.add_metric("New Users", {"Form data": form.data})
             return redirect('login')
     return render(request, 'main/register.html', {'form': form})
 
@@ -396,11 +441,11 @@ def home(request):
 @never_cache
 def event_create(request):
     if request.method == 'POST':
-        print("DEBUG - POST Data:")
-        print("Price Type:", request.POST.get('price_type'))
-        print("Cost:", request.POST.get('cost'))
-        print("Event types:", request.POST.get('event_types'))
-        print("Event type (single):", request.POST.get('event_type'))
+        print("\nEvent Create Debug:")
+        print("Full POST data:", dict(request.POST))
+        print(f"location_type in POST: {request.POST.get('location_type')}")
+        print(f"location in POST: {request.POST.get('location')}")
+        print(f"meeting_link in POST: {request.POST.get('meeting_link')}")
         
         duration = int(request.POST.get('duration', 0))
         
@@ -425,6 +470,12 @@ def event_create(request):
         if event_types:
             event.event_type = ', '.join(event_types)  # Combine multiple selections
         
+        
+        print("\nEvent Object Debug (before save):")
+        print(f"event.location_type: {event.location_type}")
+        print(f"event.location: {event.location}")
+        print(f"event.meeting_link: {event.meeting_link}")
+        
         # Handle cost for paid/self-funded events
         cost_value = request.POST.get('cost')
         if cost_value and event.price_type in ['paid-for', 'self-funded']:
@@ -447,6 +498,12 @@ def event_create(request):
             print("- Event type:", event.event_type)
         
         event.save()
+        
+        print("\nEvent Object Debug (after save):")
+        print(f"event.id: {event.id}")
+        print(f"event.location_type: {event.location_type}")
+        print(f"event.location: {event.location}")
+        print(f"event.meeting_link: {event.meeting_link}")
 
         # Save tags
         tags = request.POST.getlist('tags[]')
@@ -564,12 +621,13 @@ def event_signup(request, event_id):
             print("=== END DEBUG ===\n")
             
         except IntegrityError:
+            logger.error(f"User {user.username} has already registered for this event.")
             messages.error(request, 'You are already registered for this event.')
             print("Error: IntegrityError - Already registered")
         except Exception as e:
+            logger.error(f"Error in event_signup {repr(e)}")
             print(f"Error in event_signup: {str(e)}")
             messages.error(request, f'An error occurred: {str(e)}')
-    
     # Force reload of the page without cache
     response = redirect('event_view', event_id=event_id)
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -624,6 +682,8 @@ def debug_registrations(request):
 @ensure_csrf_cookie
 def event_edit(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+    print(f"\nEvent Edit Debug:")
+    print(f"Initial event location_type: {event.location_type}")
     
     if event.creator != request.user:
         messages.error(request, "You don't have permission to edit this event.")
@@ -633,6 +693,11 @@ def event_edit(request, event_id):
     duration_minutes = event.duration % 60 if event.duration else 0
         
     if request.method == 'POST':
+        print("\nPOST Data Debug:")
+        print(f"location_type in POST: {request.POST.get('location_type')}")
+        print(f"location in POST: {request.POST.get('location')}")
+        print(f"meeting_link in POST: {request.POST.get('meeting_link')}")
+        
         # Update event details
         event.title = request.POST.get('title')
         event.description = request.POST.get('description')
@@ -737,3 +802,54 @@ def event_delete(request, event_id):
         clean_unused_tags()
         messages.success(request, 'Event deleted successfully!')
     return redirect('all_events')
+
+@login_required
+@csrf_protect
+def add_announcement(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    
+    # Check if the user is the event creator
+    if request.user != event.creator:
+        logger.error({
+            "message": "Unauthorized announcement attempt",
+            "user": request.user.username,
+            "event_id": event_id
+        })
+        messages.error(request, "Only the event creator can post announcements.")
+        return redirect('event_view', event_id=event_id)
+    
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            try:
+                announcement = Announcement.objects.create(
+                    event=event,
+                    content=content,
+                    created_by=request.user
+                )
+                
+                logger.info({
+                    "message": "New announcement created",
+                    "event_id": event_id,
+                    "event_title": event.title,
+                    "created_by": request.user.username
+                })
+                
+                logger.add_metric("Announcement Created", {
+                    "event_id": event_id,
+                    "event_title": event.title
+                })
+                
+                messages.success(request, "Announcement posted successfully!")
+            except Exception as e:
+                logger.error({
+                    "message": f"Error creating announcement: {str(e)}",
+                    "event_id": event_id,
+                    "user": request.user.username,
+                    "error": str(e)
+                })
+                messages.error(request, "Failed to post announcement. Please try again.")
+        else:
+            messages.error(request, "Announcement content cannot be empty.")
+    
+    return redirect('event_view', event_id=event_id)

@@ -325,7 +325,6 @@
         
                         <!-- Add these hidden inputs -->
                         <input type="hidden" id="price_type" name="price_type" value="free">
-                        <input type="hidden" id="location_type" name="location_type" value="">
         
                         <!-- Image Upload -->
                         <div class="form-group">
@@ -448,13 +447,15 @@
                         <div class="form-group">
                             <label>Location</label>
                             <div class="button-group">
-                                <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('Virtual')">Virtual</button>
+                                <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('virtual')">Virtual</button>
                                 <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('in-person')">In-person</button>
                                 <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('hybrid')">Hybrid</button>
                             </div>
+                            
                             <div id="meeting-link" class="form-group hidden">
                                 <label for="link">Meeting Link</label>
-                                <input type="text" id="link" name="meeting_link" placeholder="Enter virtual meeting link (include https://)" oninput="updatePreviewLocation()">
+                                <input type="text" id="link" name="meeting_link" placeholder="Enter virtual meeting link (include https://)" 
+                                       oninput="updatePreviewLocation()">
                                 <small class="form-text text-muted">Please include https:// in your link</small>
                             </div>
                             <div id="address-input" class="form-group hidden">
@@ -623,7 +624,7 @@
         }
     
         function selectLocation(location) {
-            console.log('selectLocation called with:', location); // Debug line
+            console.log('selectLocation called with:', location);
             
             // Remove selected class from all buttons
             document.querySelectorAll('.location-btn').forEach(btn => {
@@ -631,10 +632,15 @@
             });
             
             // Add selected class to clicked button
-            const selectedButton = document.querySelector(`.location-btn[data-location="${location}"]`);
+            const selectedButton = document.querySelector(`.location-btn[data-location="${location.toLowerCase()}"]`);
             if (selectedButton) {
                 selectedButton.classList.add('selected');
             }
+
+            // Set the hidden input value
+            const locationTypeInput = document.getElementById("location_type");
+            locationTypeInput.value = location.toLowerCase();
+            console.log('Set location_type to:', locationTypeInput.value);
 
             const meetingLink = document.getElementById("meeting-link");
             const addressInput = document.getElementById("address-input");
@@ -644,23 +650,17 @@
             addressInput.classList.add("hidden");
             
             // Show appropriate inputs based on selection
-            if (location === "virtual") {
+            if (location.toLowerCase() === "virtual") {
                 meetingLink.classList.remove("hidden");
-            } else if (location === "in-person") {
+            } else if (location.toLowerCase() === "in-person") {
                 addressInput.classList.remove("hidden");
-            } else if (location === "hybrid") {
+            } else if (location.toLowerCase() === "hybrid") {
                 meetingLink.classList.remove("hidden");
                 addressInput.classList.remove("hidden");
             }
             
-            // Update hidden input
-            document.getElementById("location_type").value = location;
-
-            // Only update preview if the element exists
-            const previewLocation = document.getElementById("preview-locationx");
-            if (previewLocation) {
-                previewLocation.innerText = `Location: ${location}`;
-            }
+            // Update preview
+            updatePreviewLocation();
         }
     
         function updatePreviewPrice() {
@@ -717,9 +717,32 @@
         }
     
         function updatePreviewLocation() {
+            const locationType = document.getElementById("location_type").value;
             const link = document.getElementById("link").value;
             const address = document.getElementById("address").value;
-            document.getElementById("preview-location").innerText = link || address ? `Location: ${link || address}` : 'Location: N/A';
+            let locationText = '';
+            
+            console.log('Updating preview with:', { locationType, link, address });
+            
+            if (locationType === "virtual") {
+                locationText = link ? `Virtual` : 'Virtual';
+            } else if (locationType === "in-person") {
+                locationText = address ? `In-person` : 'In-person';
+            } else if (locationType === "hybrid") {
+                const parts = [];
+                if (address) parts.push(address);
+                if (link) parts.push(link);
+                locationText = parts.length > 0 ? `Hybrid` : 'Hybrid';
+            }
+            
+            // Make sure we're updating the correct element
+            const previewLocation = document.getElementById("preview-locationx");
+            if (previewLocation) {
+                previewLocation.innerText = `Location: ${locationText}`;
+                console.log('Updated preview to:', locationText);
+            } else {
+                console.error('Could not find preview-locationx element');
+            }
         }
     
         function updatePreviewDescription() {
@@ -900,6 +923,16 @@
         });
     });
     
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Don't prevent default - we want the form to submit
+        const formData = new FormData(this);
+        console.log('Form submission data:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        console.log('location_type value:', document.getElementById('location_type').value);
+    });
+   
     </script>
     
     {% endblock extra_scripts %}

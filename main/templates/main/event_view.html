@@ -61,7 +61,7 @@
         }
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr) 300px;
             gap: 20px;
             padding: 20px;
         }
@@ -71,6 +71,36 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow: hidden;
+        }
+        .announcements-section {
+            grid-column: 4;
+            grid-row: 1 / span 2;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+        }
+        .announcement-form {
+            margin-top: 15px;
+        }
+        .announcement-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .announcement-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .announcement-timestamp {
+            font-size: 0.8em;
+            color: #666;
         }
         .info-section h3 {
             color: #333;
@@ -234,7 +264,6 @@
                     <p><strong>No. of Attendees:</strong> {{ attendee_count }}</p>
                     
                     {% if user.is_authenticated %}
-
                         <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                             <p><small>Debug: Registration status - {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
                             <p><small>Current User: {{ current_user.username }}</small></p>
@@ -242,35 +271,59 @@
                         </div>
 
                         <div class="action-buttons-container">
-                        {% if event.creator == user %}
-                            <a href="{% url 'event_edit' event.id %}" class="signup-button">
-                                Edit Event
-                            </a>
-                        {% endif %}
-                        
-                        <form method="POST" action="{% url 'event_signup' event.id %}" class="signup-form">
-                            {% csrf_token %}
-                            {% if is_registered %}
-                                <input type="hidden" name="unregister" value="true">
-                                <button type="submit" class="signup-button signed-up">
-                                    Unregister from Event
-                                </button>
-                            {% else %}
-                                <button type="submit" class="signup-button">
-                                    Sign Up for Event
-                                </button>
+                            {% if event.creator == user %}
+                                <a href="{% url 'event_edit' event.id %}" class="signup-button">
+                                    Edit Event
+                                </a>
                             {% endif %}
-                        </form>
-                        
-                        {% if messages %}
-                            <div class="messages mt-3">
-                                {% for message in messages %}
-                                    <div class="alert alert-{{ message.tags }}">
-                                        {{ message }}
-                                    </div>
-                                {% endfor %}
+                            
+                            <form method="POST" action="{% url 'event_signup' event.id %}" class="signup-form">
+                                {% csrf_token %}
+                                {% if is_registered %}
+                                    <input type="hidden" name="unregister" value="true">
+                                    <button type="submit" class="signup-button signed-up">
+                                        Unregister from Event
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="signup-button">
+                                        Sign Up for Event
+                                    </button>
+                                {% endif %}
+                            </form>
+                            
+                            {% if messages %}
+                                <div class="messages mt-3">
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags }}">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- New Announcements Section -->
+                <div class="announcements-section">
+                    <h3>Announcements</h3>
+                    <div class="announcements-list">
+                        {% for announcement in event.announcements.all %}
+                            <div class="announcement-item">
+                                <p>{{ announcement.content }}</p>
+                                <span class="announcement-timestamp">{{ announcement.created_at|date:"M d, Y H:i" }}</span>
                             </div>
-                        {% endif %}
+                        {% empty %}
+                            <p>No announcements yet.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if user == event.creator %}
+                        <form method="POST" action="{% url 'add_announcement' event.id %}" class="announcement-form">
+                            {% csrf_token %}
+                            <textarea name="content" class="announcement-input" placeholder="Write an announcement..." required></textarea>
+                            <button type="submit" class="signup-button">Post Announcement</button>
+                        </form>
                     {% endif %}
                 </div>
             </div>

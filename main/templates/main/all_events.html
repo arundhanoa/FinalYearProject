@@ -728,8 +728,9 @@
                             <div class="filter-group">
                                 <label>&nbsp;</label>
                                 <div class="button-group">
+                                    <input type="hidden" name="show" value="{{ request.GET.show|default:'upcoming' }}">
                                     <button type="submit" class="filter-button">Apply Filters</button>
-                                    <a href="{% url 'all_events' %}" class="reset-button">Reset</a>
+                                    <a href="{% url 'all_events' %}?show={{ request.GET.show|default:'upcoming' }}" class="reset-button">Reset</a>
                                 </div>
                             </div>
                         </div>
