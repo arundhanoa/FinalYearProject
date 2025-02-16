@@ -365,12 +365,12 @@
                             <label for="line-service">Line of Service</label>
                             <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
                                 <option value="" disabled selected>Select line of service</option>
+                                <option value="All">All</option>
                                 <option value="Audit">Audit</option>
                                 <option value="Consulting">Consulting</option>
                                 <option value="Tax">Tax</option>
                                 <option value="Advisory">Advisory</option>
                                 <option value="Assurance">Assurance</option>
-                                <!-- Add other options as needed -->
                             </select>
                         </div>
                         
@@ -602,16 +602,20 @@
             
             // Update preview and handle cost input visibility
             const costInput = document.getElementById("cost-input");
-            if (price === 'Free') {
-                costInput.classList.add('hidden');
-                document.getElementById("preview-price").innerText = 'Price: Free';
-                document.getElementById("cost").value = '';  // Clear cost value for free events
-            } else {
+            
+            // Only show cost input for self-funded events
+            if (priceType === 'self-funded') {
                 costInput.classList.remove('hidden');
                 const costValue = document.getElementById("cost").value;
                 document.getElementById("preview-price").innerText = costValue ? 
                     `Price: £${costValue}` : 
-                    `Price: ${price}`;
+                    'Price: Self-funded (cost required)';
+            } else {
+                costInput.classList.add('hidden');
+                document.getElementById("cost").value = '';  // Clear cost value
+                document.getElementById("preview-price").innerText = priceType === 'free' ? 
+                    'Price: Free' : 
+                    'Price: Paid For';  // For paid-for events
             }
             
             // Update button states
@@ -924,7 +928,16 @@
     });
     
     document.querySelector('form').addEventListener('submit', function(e) {
-        // Don't prevent default - we want the form to submit
+        const priceType = document.getElementById("price_type").value;
+        const cost = document.getElementById("cost").value;
+        
+        if (priceType === 'self-funded' && !cost) {
+            e.preventDefault();
+            alert('Please enter a cost for self-funded events');
+            return;
+        }
+        
+        // Existing form submission code...
         const formData = new FormData(this);
         console.log('Form submission data:');
         for (let pair of formData.entries()) {
@@ -932,6 +945,22 @@
         }
         console.log('location_type value:', document.getElementById('location_type').value);
     });
+   
+    function handlePriceTypeChange(button) {
+        const costInput = document.getElementById('cost-input');
+        const priceType = button.value;
+        
+        // Only show cost input for self-funded events
+        if (priceType === 'self-funded') {
+            costInput.classList.remove('hidden');
+        } else {
+            costInput.classList.add('hidden');
+            // Clear cost value when not self-funded
+            document.getElementById('cost').value = '';
+        }
+        
+        updatePreviewPrice();
+    }
    
     </script>
     

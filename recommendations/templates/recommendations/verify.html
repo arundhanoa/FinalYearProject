@@ -1,0 +1,32 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+<div class="verification-panel">
+    <h2>Recommendation Verification</h2>
+    
+    <!-- Show User's Interactions -->
+    <div class="interactions">
+        <h3>Your Event Interactions:</h3>
+        {% for interaction in user_interactions %}
+        <div class="interaction">
+            <p>Event: {{ interaction.event.title }}</p>
+            <p>Type: {{ interaction.interaction_type }}</p>
+            <p>Weight: {{ interaction.weight }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Show Recommendations with Scores -->
+    <div class="recommendations">
+        <h3>Recommended Events:</h3>
+        {% for event in recommendations %}
+        <div class="recommendation">
+            <h4>{{ event.title }}</h4>
+            <p>Content Score: {{ scores.content_based|get_item:event.id|get_item:'total_score' }}</p>
+            <p>Tags Match: {{ scores.content_based|get_item:event.id|get_item:'tags_match' }}</p>
+            <p>Location Match: {{ scores.content_based|get_item:event.id|get_item:'location_match' }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

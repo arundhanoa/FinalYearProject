@@ -762,9 +762,6 @@
                                     <!-- Location Information -->
                                     <p><strong>Location:</strong> 
                                         {{ event.get_location_type_display }}
-                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
-                                            {{ event.location }}
-                                        {% endif %}
                                     </p>
                                     
                                     <p><strong>Price Type:</strong> {{ event.get_price_type_display }}</p>

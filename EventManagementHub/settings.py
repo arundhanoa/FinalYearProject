@@ -25,8 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'main.apps.MainConfig',  # Make sure it's exactly like this
+    'main.apps.MainConfig', 
     'django_select2',
+    'recommendations',
 ]
 
 MIDDLEWARE = [
@@ -157,3 +158,23 @@ config = {
 
 # Configure the logger
 LogInsightsLogger.configure(config)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'recommender_debug.log',
+        },
+    },
+    'loggers': {
+        'recommendations.services': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        },
+    },
+}

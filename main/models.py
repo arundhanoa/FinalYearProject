@@ -3,6 +3,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import datetime
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 
 # Tag Model
 class Tag(models.Model):
@@ -27,11 +29,12 @@ class Event(models.Model):
     
     PRICE_CHOICES = [
         ('free', 'Free'),
-        ('paid', 'Paid'),
-        ('self-funded', 'Self-funded')
+        ('self-funded', 'Self-funded'),  # This one needs cost field
+        ('paid-for', 'Paid For')  # This one should not show cost field
     ]
     
     LINE_OF_SERVICE_CHOICES = [
+        ('All', 'All'),
         ('Audit', 'Audit'),
         ('Consulting', 'Consulting'),
         ('Tax', 'Tax'),
@@ -90,6 +93,18 @@ class Event(models.Model):
             datetime.combine(self.date, self.time)
         )
         return event_datetime < timezone.now()
+
+    def is_full(self):
+        """Check if event is at capacity"""
+        if self.capacity is None:  # If no capacity set, event is never full
+            return False
+        return self.attendees.count() >= self.capacity
+
+    def get_available_spots(self):
+        """Get number of spots left"""
+        if self.capacity is None:  # If no capacity set, show unlimited
+            return "Unlimited"
+        return max(0, self.capacity - self.attendees.count())
 
 # Event Image Model
 class EventImage(models.Model):
@@ -194,9 +209,34 @@ class Announcement(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    for_user = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='personal_announcements',
+        null=True, 
+        blank=True
+    )
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return f"Announcement for {self.event.title} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+@receiver(m2m_changed, sender=Event.attendees.through)
+def handle_attendee_change(sender, instance, action, pk_set, **kwargs):
+    """Signal handler for changes in event attendees"""
+    if action == "remove":  # Someone unregistered
+        event = instance
+        if not event.is_full():  # Check if event now has space
+            # Get all users interested in this event
+            interested_users = EventInterest.objects.filter(event=event)
+            
+            for interest in interested_users:
+                # Create announcement for each interested user
+                Announcement.objects.create(
+                    event=event,
+                    content=f"A spot has opened up in '{event.title}'! You can now register for this event.",
+                    created_by=event.creator,
+                    for_user=interest.user
+                )

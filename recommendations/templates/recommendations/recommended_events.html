@@ -1,0 +1,388 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Recommended Events{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin: 30px 0;
+            font-size: 2em;
+        }
+
+        .recommendation-section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ff7f00;
+        }
+
+        .events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .event-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .event-image-container {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+            background-color: #f5f5f5;
+            margin-bottom: 15px;
+        }
+
+        .event-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .event-image:hover {
+            transform: scale(1.05);
+        }
+
+        .event-details h3 {
+            color: #333;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+        .event-meta {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .event-description {
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.4;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .tag {
+            background: #ff7f00;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .view-event-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #e0301e;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .view-event-btn:hover {
+            background: #c62828;
+        }
+
+        .no-recommendations {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .recommendation-type {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .capacity-status {
+            font-size: 0.9em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .capacity-status.full {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-buttons {
+            margin-top: 10px;
+        }
+
+        .interest-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #ff9800;
+            color: white;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .interest-btn:hover {
+            background: #f57c00;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% include 'main/navbar.html' %}
+    
+    <div class="container">
+        <h1>Your Personalised Recommendations</h1>
+
+        <!-- Hybrid Recommendations Section -->
+        <div class="recommendation-section">
+            <div class="section-header">
+                <h2>Recommended for You</h2>
+                <span class="recommendation-type">Based on your interests and interactions</span>
+            </div>
+            <div class="events-list">
+                {% for event in recommended_events %}
+                    <div class="event-card">
+                        <div class="event-image-container">
+                            {% if event.event_images.first %}
+                                <img src="{{ event.event_images.first.image.url }}" 
+                                     alt="{{ event.title }}" 
+                                     class="event-image">
+                            {% else %}
+                                <img src="{% static 'images/default-event.jpg' %}" 
+                                     alt="Default event image" 
+                                     class="event-image">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="event-details">
+                            <h3>{{ event.title }}</h3>
+                            
+                            <div class="event-meta">
+                                <span>{{ event.date|date:"M d, Y" }}</span>
+                                <span>{{ event.time }}</span>
+                                <span class="capacity-status {% if event.is_full %} full{% endif %}">
+                                    {% if event.capacity is None %}
+                                        Unlimited Spots
+                                    {% elif event.is_full %}
+                                        Full Capacity
+                                    {% else %}
+                                        {{ event.get_available_spots }} spots left
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <p class="event-description">{{ event.description|truncatechars:100 }}</p>
+                            
+                            <div class="action-buttons">
+                                {% if event.is_full and event.capacity is not None %}
+                                    <button onclick="recordInterest({{ event.id }})" 
+                                            class="interest-btn">
+                                        I'm Interested in This Event
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'event_view' event.id %}" 
+                                       class="view-event-btn"
+                                       onclick="recordInteraction({{ event.id }}, 'view')">
+                                        View Event
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="no-recommendations">
+                        <h3>We're still learning about your preferences. </h3>
+                        <p>Interact with more events to get personalized recommendations!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Similar Events Section -->
+        {% if similar_events %}
+        <div class="recommendation-section">
+            <div class="section-header">
+                <h2>Similar to Events You've Viewed</h2>
+                <span class="recommendation-type">Based on your recent activity</span>
+            </div>
+            <div class="events-list">
+                {% for event in similar_events %}
+                    <div class="event-card">
+                        <div class="event-image-container">
+                            {% if event.event_images.first %}
+                                <img src="{{ event.event_images.first.image.url }}" 
+                                     alt="{{ event.title }}" 
+                                     class="event-image">
+                            {% else %}
+                                <img src="{% static 'images/default-event.jpg' %}" 
+                                     alt="Default event image" 
+                                     class="event-image">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="event-details">
+                            <h3>{{ event.title }}</h3>
+                            
+                            <div class="event-meta">
+                                <span>{{ event.date|date:"M d, Y" }}</span>
+                                <span>{{ event.time }}</span>
+                                <span class="capacity-status {% if event.is_full %}full{% endif %}">
+                                    {% if event.capacity is None %}
+                                        Unlimited Spots
+                                    {% elif event.is_full %}
+                                        Full Capacity
+                                    {% else %}
+                                        {{ event.get_available_spots }} spots left
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <p class="event-description">{{ event.description|truncatechars:100 }}</p>
+                            
+                            <div class="event-tags">
+                                {% for tag in event.tags.all %}
+                                    <span class="tag">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="action-buttons">
+                                {% if event.is_full and event.capacity is not None %}
+                                    <button onclick="recordInterest({{ event.id }})" 
+                                            class="interest-btn">
+                                        I'm Interested in This Event
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'event_view' event.id %}" 
+                                       class="view-event-btn"
+                                       onclick="recordInteraction({{ event.id }}, 'view')">
+                                        View Event
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Refresh recommendations every 5 minutes
+        setInterval(function() {
+            location.reload();
+        }, 80000);  // 5 minutes in milliseconds
+        
+        // Refresh after recording an interaction
+        function recordInteraction(eventId, interactionType) {
+            fetch(`/recommendations/record-interaction/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    interaction_type: interactionType
+                })
+            }).then(() => {
+                location.reload();  // Refresh after interaction
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function recordInterest(eventId) {
+            fetch(`/recommendations/record-interest/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // Change button appearance to show interest recorded
+                    const button = event.target;
+                    button.textContent = 'Interest Recorded';
+                    button.disabled = true;
+                    button.classList.add('interest-recorded');
+                }
+            });
+        }
+    </script>
+{% endblock %} 

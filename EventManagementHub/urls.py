@@ -23,4 +23,5 @@ from django.shortcuts import redirect
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
+    path('recommendations/', include('recommendations.urls', namespace='recommendations')),
 ]

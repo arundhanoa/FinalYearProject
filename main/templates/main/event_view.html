@@ -308,10 +308,15 @@
                 <div class="announcements-section">
                     <h3>Announcements</h3>
                     <div class="announcements-list">
-                        {% for announcement in event.announcements.all %}
-                            <div class="announcement-item">
+                        {% for announcement in announcements %}
+                            <div class="announcement-item {% if announcement.for_user %}personal-announcement{% endif %}">
+                                {% if announcement.for_user %}
+                                    <span class="personal-badge">Just for you</span>
+                                {% endif %}
                                 <p>{{ announcement.content }}</p>
-                                <span class="announcement-timestamp">{{ announcement.created_at|date:"M d, Y H:i" }}</span>
+                                <span class="announcement-timestamp">
+                                    {{ announcement.created_at|date:"M d, Y H:i" }}
+                                </span>
                             </div>
                         {% empty %}
                             <p>No announcements yet.</p>

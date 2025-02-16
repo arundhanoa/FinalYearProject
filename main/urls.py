@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth.decorators import login_required
 from . import views
 from django.conf import settings
@@ -37,6 +37,7 @@ urlpatterns = [
     path('created/past/', views.all_created_past, name='all_created_past'),
     path('created/upcoming/', views.all_created_upcoming, name='all_created_upcoming'),
     path('event/<int:event_id>/add-announcement/', views.add_announcement, name='add_announcement'),
+    path('recommendations/', include('recommendations.urls', namespace='recommendations')),
 ]
 
 if settings.DEBUG:

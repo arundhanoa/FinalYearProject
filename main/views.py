@@ -20,6 +20,7 @@ from django.db.models import Count
 # Create your views here.
 from loginsights.main import LogInsightsLogger
 from django.db import models
+from django.db.models import Q
 
 logger = LogInsightsLogger.get_logger()
 
@@ -300,12 +301,19 @@ def event_view(request, event_id):
     }
     logger.add_metric("Event View",event_view_metadata)
     
+    # Get both general and personal announcements
+    announcements = Announcement.objects.filter(
+        Q(event=event, for_user__isnull=True) |  # General announcements
+        Q(event=event, for_user=request.user)     # Personal announcements
+    ).order_by('-created_at')
+    
     context = {
         'event': event,
         'is_registered': is_registered,
         'attendee_count': attendees.count(),
         'current_user': request.user,
         'attendees': attendees,
+        'announcements': announcements,
     }
 
     logger.add_metric("Event Views", {
