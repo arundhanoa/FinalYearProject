@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: loginsights
+Version: 0.0.8
+Summary: This is a powerful library handling the formatting of application logs and metrics to the LogInsights platform.
+Project-URL: Homepage, https://www.loginsights.studio/
+Project-URL: Issues, https://github.com/pypa/sampleproject/issues
+Author-email: Owner <cdewind123@gmail.com>
+License-Expression: MIT
+License-File: LICENSE
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.12
+Requires-Dist: azure-core==1.32.0
+Requires-Dist: azure-storage-queue==12.12.0
+Requires-Dist: certifi==2025.1.31
+Requires-Dist: cffi==1.17.1
+Requires-Dist: charset-normalizer==3.4.1
+Requires-Dist: cryptography==44.0.0
+Requires-Dist: idna==3.10
+Requires-Dist: isodate==0.7.2
+Requires-Dist: pycparser==2.22
+Requires-Dist: requests==2.32.3
+Requires-Dist: six==1.17.0
+Requires-Dist: typing-extensions==4.12.2
+Requires-Dist: urllib3==2.3.0
+Description-Content-Type: text/markdown
+
+# LogInsights-Library
+
+LogInsights-Library is a powerful library for handling the formatting of application logs and metrics to the LogInsights platform. It is designed to help you monitor, analyze, and debug your applications with ease, offering deep insights into performance, usage patterns, and system health.
+
+## Features
+
+- Flexible and high-performance.
+- Full support for Python.
+- Capture and manage logs from across your application, with support for structured and unstructured log formats.
+- Define and track custom metrics to measure application performance and user interactions.
+- Easily capture exceptions and errors, providing detailed context for debugging.
+
+## Important: The Logger Must Be Configured Before Use
+
+Before using the logger in your application, it **must be configured** with the appropriate connection details. Ensure that the logger is set up with the correct connection string, client application ID, and secret before any logging or metric capturing takes place.
+
+## Code example
+
+### `settings.py`
+
+```python
+from loginsights.main import LogInsightsLogger
+
+# Configuration variables (replace with your own details)
+connection_string = ""  # Replace with your connection string
+client_application_id = -1  # Replace with the given client application id
+secret = ""  # Replace with the given secret
+
+config = {
+    "ConnectionString": connection_string,
+    "ClientApplicationId": client_application_id,
+    "Secret": secret
+}
+
+# Configure the logger
+LogInsightsLogger.configure(config)
+```
+
+### `app.py`
+
+```python
+from loginsights.main import LogInsightsLogger
+
+logger = LogInsightsLogger.get_logger()
+
+# Example of logging and metric capturing in the application
+username = "testuser"  # Example username
+
+# Log an informational message
+logger.info(f"{username} has been authenticated, redirecting {username} to login")
+
+# Add a custom metric
+logger.add_metric("New Users", {"Username": username})
+```
