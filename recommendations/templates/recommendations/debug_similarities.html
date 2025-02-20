@@ -1,0 +1,26 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+<div class="debug-panel">
+    <h2>Similarity Debug for: {{ event.title }}</h2>
+    
+    <div class="event-details">
+        <h3>Source Event Details:</h3>
+        <p>Tags: {% for tag in event.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+        <p>Service: {{ event.line_of_service }}</p>
+        <p>Location Type: {{ event.location_type }}</p>
+    </div>
+    
+    <div class="similarities">
+        <h3>Top Similar Events:</h3>
+        {% for sim in similarities %}
+        <div class="similarity-item">
+            <h4>{{ sim.event.title }} (Score: {{ sim.score|floatformat:3 }})</h4>
+            <p>Matching Tags: {% for tag in sim.matching_tags %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+            <p>Service Match: {% if sim.service_match %}✓{% else %}✗{% endif %}</p>
+            <p>Location Match: {% if sim.location_match %}✓{% else %}✗{% endif %}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

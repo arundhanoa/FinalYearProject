@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Event, Tag, EventImage, EventSignUp, Announcement
+from recommendations.models import UserEventInteraction
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -342,53 +343,47 @@ def my_events(request):
     # Get events created by this user
     created_events = Event.objects.filter(creator=user)
     
-    # Check both registration methods
-    events_from_attendees = Event.objects.filter(attendees=user)
-    events_from_signups = Event.objects.filter(eventsignup__user=user)
-    
-    # Combine both querysets
-    signed_up_events = (events_from_attendees | events_from_signups).distinct()
+    # Get events user has signed up for
+    events_from_signups = Event.objects.filter(
+        eventsignup__user=user
+    ).exclude(  # Exclude events user created
+        creator=user
+    ).distinct()
     
     print("\n=== Registration Details ===")
-    print(f"Events from attendees field: {events_from_attendees.count()}")
-    print(f"Events from EventSignUp: {events_from_signups.count()}")
-    print(f"Total unique events registered: {signed_up_events.count()}")
+    print(f"Events signed up for: {events_from_signups.count()}")
+    print(f"Events created: {created_events.count()}")
 
     user_stats = {
         "user_id": user.id,
         "username": user.username,
         "created_events": created_events.count(),
-        "events_from_attendees": events_from_attendees.count(),
-        "events_from_signups": events_from_signups.count(),
-        "total_unique_registered": signed_up_events.count()
+        "signed_up_events": events_from_signups.count(),
     }
-    logger.add_metric("User event statistics",user_stats)
+    logger.add_metric("User event statistics", user_stats)
     
     # List all registrations
     print("\nDetailed Registration Info:")
-    print("From attendees field:")
-    for event in events_from_attendees:
-        print(f"- {event.title} (ID: {event.id})")
-    print("\nFrom EventSignUp:")
+    print("From EventSignUp:")
     for event in events_from_signups:
         print(f"- {event.title} (ID: {event.id})")
     
     # Split into past and upcoming
     created_past = created_events.filter(date__lt=today).order_by('-date')
     created_upcoming = created_events.filter(date__gte=today).order_by('date')
-    signed_up_past = signed_up_events.filter(date__lt=today).order_by('-date')
-    signed_up_upcoming = signed_up_events.filter(date__gte=today).order_by('date')
+    signed_up_past = events_from_signups.filter(date__lt=today).order_by('-date')
+    signed_up_upcoming = events_from_signups.filter(date__gte=today).order_by('date')
     
     # Get announcements for events user is signed up for
     relevant_announcements = Announcement.objects.filter(
-        event__in=signed_up_events,  # Only for events user is signed up for
-        created_at__gt=models.Subquery(  # Only announcements after signup
+        event__in=events_from_signups,
+        created_at__gt=models.Subquery(
             EventSignUp.objects.filter(
                 user=request.user,
                 event=models.OuterRef('event')
             ).values('signup_date')
         )
-    ).select_related('event', 'created_by').order_by('-created_at')[:10]  # Latest 10 announcements
+    ).select_related('event', 'created_by').order_by('-created_at')[:10]
 
     context = {
         'created_past': created_past,
@@ -596,51 +591,71 @@ def event_signup(request, event_id):
             print(f"Current signup status: {'Registered' if signup else 'Not registered'}")
             
             if request.POST.get('unregister') and signup:
-                signup.delete()
-                # Also remove from attendees if present
-                event.attendees.remove(user)
-                event.save()
+                with transaction.atomic():
+                    # Handle unregistration - delete all records
+                    signup.delete()
+                    event.attendees.remove(user)
+                    UserEventInteraction.objects.filter(
+                        user=user,
+                        event=event,
+                        interaction_type='signup'
+                    ).delete()
+                    event.save()
                 
                 print("Action: Unregistered")
                 print("- Deleted EventSignUp record")
                 print("- Removed from attendees")
+                print("- Removed interaction record")
                 
                 messages.success(request, 'Successfully unregistered from the event.')
                 return redirect('myevents')
             
             elif not signup:
-                # Create both types of registration
-                EventSignUp.objects.create(user=user, event=event)
-                event.attendees.add(user)
-                event.save()
+                with transaction.atomic():
+                    # Create all necessary records atomically
+                    EventSignUp.objects.create(
+                        user=user,
+                        event=event,
+                        signup_date=timezone.now()
+                    )
+                    event.attendees.add(user)
+                    UserEventInteraction.objects.create(
+                        user=user,
+                        event=event,
+                        interaction_type='signup',
+                        weight=5.0
+                    )
+                    event.save()
                 
                 print("Action: Registered")
                 print("- Created EventSignUp record")
                 print("- Added to attendees")
+                print("- Created interaction record")
                 
                 messages.success(request, 'Successfully registered for the event!')
             
-            # Verify registration status after action
+            # Verify registration status
             final_signup = EventSignUp.objects.filter(user=user, event=event).exists()
             final_attendee = event.attendees.filter(id=user.id).exists()
+            final_interaction = UserEventInteraction.objects.filter(
+                user=user,
+                event=event,
+                interaction_type='signup'
+            ).exists()
+            
             print(f"\nFinal Status:")
             print(f"- EventSignUp record exists: {final_signup}")
             print(f"- In attendees list: {final_attendee}")
+            print(f"- Interaction record exists: {final_interaction}")
             print("=== END DEBUG ===\n")
             
-        except IntegrityError:
-            logger.error(f"User {user.username} has already registered for this event.")
-            messages.error(request, 'You are already registered for this event.')
-            print("Error: IntegrityError - Already registered")
         except Exception as e:
             logger.error(f"Error in event_signup {repr(e)}")
             print(f"Error in event_signup: {str(e)}")
             messages.error(request, f'An error occurred: {str(e)}')
-    # Force reload of the page without cache
+            
     response = redirect('event_view', event_id=event_id)
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response['Pragma'] = 'no-cache'
-    response['Expires'] = '0'
     return response
 
 def signup(request):

@@ -102,29 +102,34 @@ class ContentBasedRecommender:
 
     def get_recommendations_for_user(self, user, limit=5):
         """Get content-based recommendations for a user based on their event history"""
+        current_time = timezone.now()
+        logger.info(f"\n{'='*50}\nGetting recommendations for user {user.username} (ID: {user.id})")
+        
         # Get events the user has interacted with
         user_interactions = UserEventInteraction.objects.filter(
             user=user
         ).select_related('event').distinct()
         
-        logger.debug(f"User {user.id} has interacted with {user_interactions.count()} events")
+        logger.info(f"Found {user_interactions.count()} total interactions")
         
         # If user has no interactions, return profile-based recommendations
         if not user_interactions.exists():
-            logger.debug("No user interactions found, using profile-based recommendations")
+            logger.warning(f"No interactions found for user {user.username} - falling back to profile-based")
             return self._get_profile_based_recommendations(user, limit)
         
         # Get set of events user has already interacted with
         interacted_events = set(interaction.event for interaction in user_interactions)
+        logger.info(f"User has interacted with {len(interacted_events)} unique events")
         
         # Get similar events for each event the user has interacted with
         similar_events = defaultdict(float)
-        current_time = timezone.now()
         
         for interaction in user_interactions:
             event = interaction.event
-            logger.debug(f"Finding similar events to {event.title}")
+            logger.info(f"\nProcessing interaction with event '{event.title}' (ID: {event.id})")
+            logger.info(f"Interaction type: {interaction.interaction_type}, Weight: {interaction.weight}")
             
+            # Get similarities for this event
             event_similarities = EventSimilarity.objects.filter(
                 event1=event,
                 # Filter out expired events
@@ -132,23 +137,44 @@ class ContentBasedRecommender:
                 event2__time__gte=current_time.time() if F('date')==current_time.date() else '00:00'
             ).select_related('event2')
             
+            logger.info(f"Found {event_similarities.count()} similar events")
+            
             for sim in event_similarities:
-                # Only include events that:
-                # 1. Aren't full
-                # 2. User hasn't interacted with before
-                if (not sim.event2.is_full() and 
-                    sim.event2 not in interacted_events):
-                    similar_events[sim.event2] += sim.similarity_score * interaction.weight
-                    logger.debug(f"Added {sim.event2.title} with score {sim.similarity_score * interaction.weight}")
+                event2 = sim.event2
+                logger.debug(f"\nEvaluating similar event: '{event2.title}' (ID: {event2.id})")
+                logger.debug(f"Similarity score: {sim.similarity_score}")
+                
+                if event2.is_full():
+                    logger.debug("Skipping - Event is full")
+                    continue
+                    
+                if event2 in interacted_events:
+                    logger.debug("Skipping - User already interacted with this event")
+                    continue
+                
+                score = sim.similarity_score * interaction.weight
+                similar_events[event2] += score
+                logger.debug(f"Added score {score} (Total: {similar_events[event2]})")
         
-        # Sort by similarity score and exclude events the user has already interacted with
+        # Sort and log recommendations
         recommended_events = sorted(
             similar_events.items(),
             key=lambda x: x[1],
             reverse=True
         )
         
-        return [event for event, _ in recommended_events[:limit]]
+        logger.info("\nFinal Recommendations:")
+        for event, score in recommended_events[:limit]:
+            logger.info(f"- {event.title} (ID: {event.id})")
+            logger.info(f"  Score: {score}")
+            logger.info(f"  Tags: {', '.join(tag.name for tag in event.tags.all())}")
+            logger.info(f"  Service: {event.line_of_service}")
+            logger.info(f"  Location: {event.location_type}")
+        
+        final_recommendations = [event for event, _ in recommended_events[:limit]]
+        logger.info(f"\nReturning {len(final_recommendations)} recommendations")
+        
+        return final_recommendations
 
     def _get_profile_based_recommendations(self, user, limit=5):
         """Get recommendations based on user profile when no interactions exist"""

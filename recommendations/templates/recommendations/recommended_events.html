@@ -5,7 +5,7 @@
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <style>
@@ -236,16 +236,27 @@
                             
                             <p class="event-description">{{ event.description|truncatechars:100 }}</p>
                             
+                            <div class="event-tags">
+                                {% for tag in event.tags.all %}
+                                    <span class="tag">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                            
                             <div class="action-buttons">
                                 {% if event.is_full and event.capacity is not None %}
-                                    <button onclick="recordInterest({{ event.id }})" 
-                                            class="interest-btn">
+                                    <button 
+                                        type="button"
+                                        onclick="recordInterest(event, {{ event.id }})"
+                                        class="interest-btn"
+                                    >
                                         I'm Interested in This Event
                                     </button>
                                 {% else %}
-                                    <a href="{% url 'event_view' event.id %}" 
-                                       class="view-event-btn"
-                                       onclick="recordInteraction({{ event.id }}, 'view')">
+                                    <a 
+                                        href="{% url 'event_view' event.id %}"
+                                        class="view-event-btn"
+                                        onclick="recordInteraction(event, {{ event.id }}, 'view'); return true;"
+                                    >
                                         View Event
                                     </a>
                                 {% endif %}
@@ -310,14 +321,19 @@
                             
                             <div class="action-buttons">
                                 {% if event.is_full and event.capacity is not None %}
-                                    <button onclick="recordInterest({{ event.id }})" 
-                                            class="interest-btn">
+                                    <button 
+                                        type="button"
+                                        onclick="recordInterest(event, {{ event.id }})"
+                                        class="interest-btn"
+                                    >
                                         I'm Interested in This Event
                                     </button>
                                 {% else %}
-                                    <a href="{% url 'event_view' event.id %}" 
-                                       class="view-event-btn"
-                                       onclick="recordInteraction({{ event.id }}, 'view')">
+                                    <a 
+                                        href="{% url 'event_view' event.id %}"
+                                        class="view-event-btn"
+                                        onclick="recordInteraction(event, {{ event.id }}, 'view'); return true;"
+                                    >
                                         View Event
                                     </a>
                                 {% endif %}
@@ -331,13 +347,13 @@
     </div>
 
     <script>
-        // Refresh recommendations every 5 minutes
+        // Refresh recommendations every 1 minute instead of 5
         setInterval(function() {
             location.reload();
-        }, 80000);  // 5 minutes in milliseconds
+        }, 60000);  // 1 minute in milliseconds
         
-        // Refresh after recording an interaction
-        function recordInteraction(eventId, interactionType) {
+        // Modify recordInteraction to force a fresh reload
+        function recordInteraction(event, eventId, interactionType) {
             fetch(`/recommendations/record-interaction/${eventId}/`, {
                 method: 'POST',
                 headers: {
@@ -346,9 +362,11 @@
                 },
                 body: JSON.stringify({
                     interaction_type: interactionType
-                })
+                }),
+                cache: 'no-store'  // Prevent fetch caching
             }).then(() => {
-                location.reload();  // Refresh after interaction
+                // Force a fresh reload
+                window.location.href = window.location.href + '?t=' + new Date().getTime();
             });
         }
 
@@ -367,7 +385,7 @@
             return cookieValue;
         }
 
-        function recordInterest(eventId) {
+        function recordInterest(event, eventId) {
             fetch(`/recommendations/record-interest/${eventId}/`, {
                 method: 'POST',
                 headers: {

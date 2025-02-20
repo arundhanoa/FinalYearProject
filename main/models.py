@@ -69,6 +69,7 @@ class Event(models.Model):
     line_of_service = models.CharField(max_length=50, choices=LINE_OF_SERVICE_CHOICES, null=True, blank=True)
     event_type = models.CharField(max_length=100, null=True, blank=True)
     duration = models.IntegerField(default=0, help_text="Duration in minutes")
+    image = models.ImageField(upload_to='event_images/', null=True, blank=True)
     
     def __str__(self):
         return self.title
@@ -155,7 +156,18 @@ class CustomUser(AbstractUser):
     other_names = models.CharField(max_length=100, blank=True, default='')
     work_email = models.EmailField(unique=True)
     workday_id = models.CharField(max_length=50, unique=True)
-    line_of_service = models.CharField(max_length=100)
+    line_of_service = models.CharField(
+        max_length=50,
+        choices=[
+            ('Audit', 'Audit'),
+            ('Tax', 'Tax'),
+            ('Consulting', 'Consulting'),
+            ('Advisory', 'Advisory'),
+            ('Assurance', 'Assurance'),
+            ('All', 'All')
+        ],
+        default='All'
+    )
     team = models.CharField(max_length=100, blank=True, default='')
     job_title = models.CharField(max_length=100)
     line_manager = models.CharField(max_length=100)
