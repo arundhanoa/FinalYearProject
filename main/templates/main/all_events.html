@@ -276,7 +276,7 @@
 
             .tag {
                 display: inline-block;
-                background-color: #e0301e;
+                background-color: #ff7f00;
                 color: white;
                 padding: 0.25rem 0.5rem;
                 border-radius: 1rem;
@@ -558,7 +558,7 @@
 
             .tag {
                 display: inline-block;
-                background-color: #e0301e;
+                background-color: #ff7f00;
                 color: white;
                 padding: 4px 8px;
                 border-radius: 4px;
@@ -741,90 +741,103 @@
         
 
             <!-- Upcoming Events Tab -->
-            <div id="upcoming-tab" class="tab-content active">
-                <div class="events-list">
-                    {% for event in events %}
-                        {% if not event.is_expired %}
-                            <a href="{% url 'event_view' event.id %}" class="event-card-link">
-                                <div class="event-card">
-                                    {% with first_image=event.event_images.first %}
-                                        {% if first_image %}
-                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" 
-                                                style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                        {% endif %}
-                                    {% endwith %}
-                                    
-                                    <h3>{{ event.title }}</h3>
-                                    <p><strong>Description:</strong> {{ event.description }}</p>
-                                    <p><strong>Date:</strong> {{ event.date }}</p>
-                                    <p><strong>Time:</strong> {{ event.time }}</p>
-                                    
-                                    <!-- Location Information -->
-                                    <p><strong>Location:</strong> 
-                                        {{ event.get_location_type_display }}
-                                    </p>
-                                    
-                                    <p><strong>Price Type:</strong> {{ event.get_price_type_display }}</p>
+            <div class="events-list">
+                {% for event in events %}
+                    {% if not event.is_expired %}
+                    <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                        <div class="event-card">
+                            {% with first_image=event.event_images.first %}
+                                {% if first_image %}
+                                    <img src="{{ first_image.image.url }}" alt="{{ event.title }}" 
+                                        style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                {% endif %}
+                            {% endwith %}
+                            
+                            <h3>{{ event.title }}</h3>
+                            <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                <p><strong>LoS:</strong> {{ event.line_of_service }}</p>
+                                <p><strong>Capacity:</strong> {{ attendee_count }}/{{event.capacity }}</p>
+                            </div>
+                            <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <p><strong>Price:</strong> {{ event.get_price_type_display }}</p>
+                            <p><strong>Type:</strong> {{ event.get_location_type_display }}</p>
+                            </div>
+                            
+                            <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                            <p><strong>Date:</strong> {{ event.date }}</p>
+                            <p><strong>Location:</strong> 
+                                {{ event.get_location_type_display }}
+                                {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                    - {{ event.location }}
+                                {% endif %}
+                            </p>
+                            </div>
+                            <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                <p><strong>Time:</strong> {{ event.time }}</p>
+                                <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
+                            </div>
+                            <p><strong>Description:</strong> {{ event.description }}</p>
 
-                                    <!-- Tags Section -->
-                                    <div class="event-tags">
-                                        {% for tag in event.tags.all %}
-                                            <span class="tag">{{ tag.name }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                            <!-- Tags Section -->
+                            <div class="event-tags">
+                                {% for tag in event.tags.all %}
+                                    <span class="tag">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endif %}
+                {% endfor %}
             </div>
 
             <!-- Past Events Tab -->
-            <div id="past-tab" class="tab-content">
-                <div class="events-list">
-                    {% for event in events %}
-                        {% if event.is_expired %}
-                            <a href="{% url 'event_view' event.id %}" class="event-card-link">
-                                <div class="event-card">
-                                    {% with first_image=event.event_images.first %}
-                                        {% if first_image %}
-                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" 
-                                                style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                        {% endif %}
-                                    {% endwith %}
-                                    
-                                    <h3>{{ event.title }}</h3>
-                                    <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                                        <p><strong>LoS:</strong> {{ event.line_of_service }}</p>
-                                        <p><strong>Capacity:</strong> {{ attendee_count }}/{{event.capacity }}</p>
-                                    </div>
-                                    <p><strong>Price:</strong> {{ event.get_price_type_display }}</p>
-                                    <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                                    <p><strong>Date:</strong> {{ event.date }}</p>
-                                    <p><strong>Location:</strong> 
-                                        {{ event.get_location_type_display }}
-                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
-                                            - {{ event.location }}
-                                        {% endif %}
-                                    </p>
-                                    </div>
-                                    <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                                        <p><strong>Time:</strong> {{ event.time }}</p>
-                                        <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
-                                    </div>
-                                    <p><strong>Description:</strong> {{ event.description }}</p>
-
-                                    <!-- Tags Section -->
-                                    <div class="event-tags">
-                                        {% for tag in event.tags.all %}
-                                            <span class="tag">{{ tag.name }}</span>
-                                        {% endfor %}
-                                    </div>
+            <div class="events-list">
+                {% for event in events %}
+                    {% if event.is_expired %}
+                        <a href="{% url 'event_view' event.id %}" class="event-card-link">
+                            <div class="event-card">
+                                {% with first_image=event.event_images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" 
+                                            style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <h3>{{ event.title }}</h3>
+                                <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                    <p><strong>LoS:</strong> {{ event.line_of_service }}</p>
+                                    <p><strong>Capacity:</strong> {{ attendee_count }}/{{event.capacity }}</p>
                                 </div>
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                                <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                <p><strong>Price:</strong> {{ event.get_price_type_display }}</p>
+                                <p><strong>Type:</strong> {{ event.get_location_type_display }}</p>
+                                </div>
+                                
+                                <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                <p><strong>Date:</strong> {{ event.date }}</p>
+                                <p><strong>Location:</strong> 
+                                    {{ event.get_location_type_display }}
+                                    {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                        - {{ event.location }}
+                                    {% endif %}
+                                </p>
+                                </div>
+                                <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
+                                    <p><strong>Time:</strong> {{ event.time }}</p>
+                                    <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
+                                </div>
+                                <p><strong>Description:</strong> {{ event.description }}</p>
+
+                                <!-- Tags Section -->
+                                <div class="event-tags">
+                                    {% for tag in event.tags.all %}
+                                        <span class="tag">{{ tag.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </a>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
 

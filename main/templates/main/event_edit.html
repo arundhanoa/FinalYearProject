@@ -919,7 +919,11 @@
     
     
         // Add these tag management functions right before the Document Ready Handlers
-        let currentTags = new Set([{% for tag in event.tags.all %}'{{ tag.name }}'{% if not forloop.last %}, {% endif %}{% endfor %}]);
+        let currentTags = new Set([
+            {% for tag in event.tags.all %}
+                '{{ tag.name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]);
 
         function openTagModal() {
             document.getElementById('tagModal').style.display = 'block';
@@ -1017,16 +1021,14 @@
         }
 
         function saveTagChanges() {
-            // Add new tags from Select2
+            // Get new tags from Select2
             const newTagsSelect = $('#newTags').select2('data');
+            
+            // Add new tags while preserving existing ones
             newTagsSelect.forEach(tag => currentTags.add(tag.text));
             
-            // Update hidden input with all tags
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'tags';
-            hiddenInput.value = Array.from(currentTags).join(',');
-            document.querySelector('form').appendChild(hiddenInput);
+            // Update the display
+            updateTagDisplay();
             
             closeTagModal();
         }
@@ -1098,10 +1100,25 @@
     });
 
     document.querySelector('form').addEventListener('submit', function(e) {
+        // Add this before form submission
+        if (currentTags.size > 0) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'tags';
+            hiddenInput.value = Array.from(currentTags).join(',');
+            this.appendChild(hiddenInput);
+        }
+        
         console.log('Form submission:');
+        console.log('Tags:', Array.from(currentTags));
         console.log('location_type:', document.getElementById('location_type').value);
         console.log('location:', document.getElementById('address').value);
         console.log('meeting_link:', document.getElementById('link').value);
+    });
+
+    // Add this after currentTags initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTagDisplay();  // Show existing tags on page load
     });
     </script>
     {% endblock extra_scripts %}

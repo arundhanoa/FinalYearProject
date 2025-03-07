@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 
 urlpatterns = [
-    path('', views.landing, name='landing'),  # This makes signup the landing page
+    path('', views.landing, name='landing'),  # If you want signup as landing page
     path('home/', views.homepage, name='homepage'),  # Keep your existing homepage
     path('about/', views.about, name='about'),
     path('login/', views.login_view, name='login'),
@@ -38,6 +38,9 @@ urlpatterns = [
     path('created/upcoming/', views.all_created_upcoming, name='all_created_upcoming'),
     path('event/<int:event_id>/add-announcement/', views.add_announcement, name='add_announcement'),
     path('recommendations/', include('recommendations.urls', namespace='recommendations')),
+    path('event/<int:event_id>/join/', views.join_event, name='join_event'),
+    path('event/<int:event_id>/express-interest/', views.express_interest, name='express_interest'),
+    path('event/<int:event_id>/leave/', views.leave_event, name='leave_event'),
 ]
 
 if settings.DEBUG:

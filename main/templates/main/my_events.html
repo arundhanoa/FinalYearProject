@@ -33,6 +33,9 @@
             width: auto;
             min-width: 150px;
             font-weight: bold;
+            position: relative;
+            border: none;
+            transition: all 0.3s ease;
         }
 
         .tab.active {
@@ -200,6 +203,48 @@
             display: flex;
             flex-direction: column;
         }
+
+        .notification-badge {
+            background-color: #e0301e;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        .tab:has(.notification-badge) {
+            background-color: #f0f0f0;
+            border: 2px solid #e0301e;
+        }
+
+        .announcement-card.unread {
+            border-left: 4px solid #e0301e;
+        }
+        
+        .unread-marker {
+            background-color: #e0301e;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 {% endblock %}
 
@@ -231,7 +276,12 @@
         <div class="tab-container">
             <div class="tab active" onclick="showTabContent('signed-up')">Signed Up For</div>
             <div class="tab" onclick="showTabContent('created')">Created</div>
-            <div class="tab" onclick="showTabContent('announcements')">Notifications</div>
+            <div class="tab" onclick="showTabContent('announcements')">
+                Notifications
+                {% if unread_announcements %}
+                    <span class="notification-badge">{{ unread_announcements|length }}</span>
+                {% endif %}
+            </div>
             <a href="{% url 'all_my_events' %}" class="view-all-btn">View All My Events</a>
         </div>
 
@@ -382,12 +432,15 @@
             <div class="announcements-container">
                 {% if relevant_announcements %}
                     {% for announcement in relevant_announcements %}
-                        <div class="announcement-card">
+                        <div class="announcement-card {% if not announcement.read %}unread{% endif %}">
                             <div class="announcement-header">
                                 <h3>{{ announcement.event.title }}</h3>
                                 <span class="announcement-meta">
                                     Posted by {{ announcement.created_by.username }} 
                                     on {{ announcement.created_at|date:"M d, Y H:i" }}
+                                    {% if not announcement.read %}
+                                        <span class="unread-marker">New</span>
+                                    {% endif %}
                                 </span>
                             </div>
                             <div class="announcement-content">
@@ -400,7 +453,7 @@
                     {% endfor %}
                 {% else %}
                     <div class="no-announcements">
-                        <p>No new announcements for your events.</p>
+                        <p>No announcements from the past week.</p>
                     </div>
                 {% endif %}
             </div>
@@ -428,6 +481,31 @@
 
             // Add 'active' class to the selected tab
             event.target.classList.add('active');
+
+            // If announcements tab is clicked
+            if (tabId === 'announcements') {
+                const notificationTab = document.querySelector('.tab:has(.notification-badge)');
+                if (notificationTab) {
+                    // Remove the red outline by removing border
+                    notificationTab.style.border = 'none';
+                    // Reset background color
+                    notificationTab.style.backgroundColor = 'lightgrey';
+                    
+                    // Remove the badge
+                    const badge = notificationTab.querySelector('.notification-badge');
+                    if (badge) {
+                        badge.remove();
+                    }
+                }
+                
+                // Make an AJAX call to mark announcements as read
+                fetch('?tab=announcements', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+            }
         }
     </script>
 {% endblock %}

@@ -4,7 +4,6 @@ Django settings for EventManagementHub project.
 
 from pathlib import Path
 import os
-from loginsights.main import LogInsightsLogger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -146,35 +145,36 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 3600  # 1 hour in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-connection_string = "https://insightsfyp.queue.core.windows.net/messages?sv=2024-11-04&se=2026-02-01T20%3A43%3A10Z&sp=a&sig=2cV05d9Q7bdkcYVFros3KncT%2B%2BvcFI4Tk7O5ID8OBfQ%3D"  # Replace with your connection string
-client_application_id = 6  # Replace with the given client application id
-secret = "1j704xkcsesJukLwXs0nmTAHRXFZM4YCsItBAdWWGXi7EEXitAGa8sYhjzigrLPyFqbm0Jw4VdgOvDDMAhpLx8D9uMbK40o5Iu1YnvrjOLEfLKvgwVgKgDAGmb2orl9f"  # Replace with the given secret
-
-config = {
-    "ConnectionString": connection_string,
-    "ClientApplicationId": client_application_id,
-    "Secret": secret
-}
-
-# Configure the logger
-LogInsightsLogger.configure(config)
-
+# Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'recommender_debug.log',
+            'filename': 'debug.log',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
-        'recommendations.services': {
+        '': {  # Root logger
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
+        },
+        'main': {  # Your app logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }

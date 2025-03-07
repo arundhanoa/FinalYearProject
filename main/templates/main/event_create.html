@@ -331,7 +331,33 @@
                             <label for="event-image">Upload Event Images</label>
                             <input type="file" id="event-image" name="images" multiple required onchange="updateImagePreview()">
                         </div>
+
+                         <!-- Event Title -->
+                         <div class="form-group">
+                            <label for="event-title">Event Title</label>
+                            <input type="text" id="event-title" name="title" placeholder="Enter event title" required oninput="updatePreviewTitle()">
+                        </div>
         
+                          <!-- Line of Service -->
+                          <div class="form-group">
+                            <label for="line-service">Line of Service</label>
+                            <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
+                                <option value="" disabled selected>Select line of service</option>
+                                <option value="All">All</option>
+                                <option value="Audit">Audit</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Tax">Tax</option>
+                                <option value="Advisory">Advisory</option>
+                                <option value="Assurance">Assurance</option>
+                            </select>
+                        </div>
+
+                         <!-- Event Capacity -->
+                         <div class="form-group">
+                            <label for="capacity">Event Capacity</label>
+                            <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
+                        </div>
+                        
                         <!-- Price Options -->
                         <div class="form-group">
                             <label>Price</label>
@@ -352,26 +378,6 @@
                                        oninput="updatePreviewPrice()">
                                 <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
-                        </div>
-        
-                        <!-- Event Capacity -->
-                        <div class="form-group">
-                            <label for="capacity">Event Capacity</label>
-                            <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
-                        </div>
-        
-                        <!-- Line of Service -->
-                        <div class="form-group">
-                            <label for="line-service">Line of Service</label>
-                            <select id="line-service" name="line_of_service" required onchange="updatePreviewLineService()">
-                                <option value="" disabled selected>Select line of service</option>
-                                <option value="All">All</option>
-                                <option value="Audit">Audit</option>
-                                <option value="Consulting">Consulting</option>
-                                <option value="Tax">Tax</option>
-                                <option value="Advisory">Advisory</option>
-                                <option value="Assurance">Assurance</option>
-                            </select>
                         </div>
                         
                         <!-- Event Type -->
@@ -396,12 +402,6 @@
                                 </div>
                             </div>
                             <input type="hidden" id="event-types" name="event_types" value="">
-                        </div>
-                        
-                        <!-- Event Title -->
-                        <div class="form-group">
-                            <label for="event-title">Event Title</label>
-                            <input type="text" id="event-title" name="title" placeholder="Enter event title" required oninput="updatePreviewTitle()">
                         </div>
         
                         <!-- Date and Time -->
@@ -507,16 +507,14 @@
                     </div>
                     <div class="preview-section">
 
+                        <!-- First Row: Event Title -->
+                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
 
-                        <!-- First Row: Line of Service and Capacity -->
+                        <!-- Second Row: Line of Service and Capacity -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
                             <span id="preview-line-service">Line of Service: N/A</span>
                             <span id="preview-capacity">Capacity: 0</span>
                         </div>
-
-                        <!-- Second Row: Event Title -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
-
             
                         <!-- Third Row: Price -->
                         <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">

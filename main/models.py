@@ -135,7 +135,11 @@ class EventSignUp(models.Model):
         on_delete=models.CASCADE,
         related_name='event_signups'
     )
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(
+        Event, 
+        on_delete=models.CASCADE,
+        related_name='event_signups'
+    )
     signup_date = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -228,6 +232,7 @@ class Announcement(models.Model):
         null=True, 
         blank=True
     )
+    read = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']
@@ -241,6 +246,9 @@ def handle_attendee_change(sender, instance, action, pk_set, **kwargs):
     if action == "remove":  # Someone unregistered
         event = instance
         if not event.is_full():  # Check if event now has space
+            # Import here to avoid circular import
+            from recommendations.models import EventInterest
+            
             # Get all users interested in this event
             interested_users = EventInterest.objects.filter(event=event)
             

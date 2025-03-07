@@ -176,4 +176,5 @@ def debug_similarities(request, event_id):
         return render(request, 'recommendations/debug_similarities.html', context)
         
     except Event.DoesNotExist:
-        return JsonResponse({'error': 'Event not found'}, status=404) 
+        return JsonResponse({'error': 'Event not found'}, status=404)
+

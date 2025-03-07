@@ -39,6 +39,7 @@ class EventInterest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+    notified = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'event')

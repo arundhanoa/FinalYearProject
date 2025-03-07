@@ -1,0 +1,19 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="notifications-container">
+    <h2>My Notifications</h2>
+    
+    {% for announcement in announcements %}
+        <div class="notification-item {% if not announcement.read %}unread{% endif %}">
+            <span class="notification-badge">{{ announcement.event.title }}</span>
+            <p>{{ announcement.content }}</p>
+            <span class="timestamp">{{ announcement.created_at|date:"M d, Y H:i" }}</span>
+            <a href="{% url 'event_view' announcement.event.id %}" class="view-event">View Event</a>
+        </div>
+    {% empty %}
+        <p>No notifications yet.</p>
+    {% endfor %}
+</div>
+{% endblock %} 
