@@ -5,114 +5,195 @@
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .top-section {
-            background-color: #e0301e;
-            color: #ffffff;
-            text-align: center;
-            font-size: 2rem;
-            padding: 3.125rem 1.25rem;
-            font-family: 'Inter', sans-serif;
+        /* Page Container */
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1280px;
+            margin: 20px auto;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
         }
 
+        /* Header Section */
+        .page-header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            text-align: center;
+            padding: 2rem 1.5rem;
+            margin-bottom: 0;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Tab Navigation */
         .tab-container {
             display: flex;
-            justify-content: center;
             align-items: center;
-            margin-top: 1.25rem;
-            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            background-color: var(--white);
+            padding: 0 20px;
+            gap: 10px;
         }
 
         .tab {
-            padding: 0.625rem 1.25rem;
+            padding: 15px 20px;
             cursor: pointer;
-            background-color: lightgrey;
-            border-radius: 0.5rem;
-            margin: 0 0.5rem;
-            width: auto;
-            min-width: 150px;
-            font-weight: bold;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
             position: relative;
-            border: none;
+            color: var(--text-color);
             transition: all 0.3s ease;
         }
 
         .tab.active {
-            background-color: darkgrey;
-            color: white;
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
         }
 
         .tab-content {
             display: none;
+            padding: 20px;
         }
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
 
-        .main-section {
-            margin-top: 1.25rem;
-            text-align: center;
-        }
-
+        /* Event Grid */
         .event-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 20px;
+            grid-template-columns: repeat(6, 1fr); /* Fixed 5 columns */
+            gap: 15px; /* Reduced gap between cards */
+            margin-bottom: 30px;
+            padding: 0 20px;
+            max-width: 1800px;
+            margin-left: 20px;
+            margin-right: auto;
         }
 
+        /* Event Card Styles */
         .event-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 420px; /* Increased height */
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 350px;
+            border: 1px solid var(--border-color);
             text-decoration: none;
-            color: inherit;
-            background-color: #f5f5f5;
-            padding: 1.25rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            color: var(--text-color);
+            width: 350px; /* Increased width */
         }
 
         .event-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: var(--text-color);
         }
 
-        .view-all-btn {
-            padding: 0.625rem 1.25rem;
-            background-color: #ff7f00;
-            color: white;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            margin-left: 0.5rem;
+        .event-image-container {
+            position: relative;
+            height: 200px; /* Increased height for images */
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .event-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .event-details {
+            padding: 20px; /* Increased padding */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-organizer {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .event-title {
+            font-size: 18px; /* Increased font size */
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .event-date {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--background-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+            width: fit-content;
+            margin-bottom: 10px;
+        }
+
+        .date-day {
             font-weight: bold;
-            transition: background-color 0.3s ease;
+            font-size: 14px;
         }
 
-        .view-all-btn:hover {
-            background-color: #e67300;
-            color: white;
-            text-decoration: none;
+        .date-month {
+            font-size: 12px;
         }
 
+        .event-location {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        /* Section Headers */
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-color);
         }
 
         .view-all-btn {
-            padding: 0.5rem 1rem;
-            background-color: #ff7f00;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
             color: white;
+            border-radius: 4px;
             text-decoration: none;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
+            font-weight: 500;
+            font-size: 14px;
             transition: background-color 0.3s;
         }
 
@@ -122,18 +203,23 @@
             text-decoration: none;
         }
 
+        /* Announcements Styles */
         .announcements-container {
-            padding: 20px;
             max-width: 800px;
             margin: 0 auto;
         }
 
         .announcement-card {
-            background: white;
+            background: var(--white);
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .announcement-card.unread {
+            border-left: 4px solid var(--secondary-color);
         }
 
         .announcement-header {
@@ -142,74 +228,57 @@
 
         .announcement-header h3 {
             margin: 0;
-            color: #333;
+            color: var(--text-color);
+            font-size: 18px;
+            font-weight: 600;
         }
 
         .announcement-meta {
-            font-size: 0.9em;
+            font-size: 13px;
             color: #666;
+            margin-top: 5px;
         }
 
         .announcement-content {
             margin-bottom: 15px;
             line-height: 1.5;
+            font-size: 14px;
         }
 
         .view-event-btn {
             display: inline-block;
             padding: 8px 16px;
-            background-color: #e0301e;
+            background-color: var(--secondary-color);
             color: white;
             text-decoration: none;
             border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
         }
 
         .view-event-btn:hover {
-            background-color: #c62828;
+            background-color: #c32c1c;
             color: white;
+            text-decoration: none;
         }
 
         .no-announcements {
             text-align: center;
             padding: 40px;
             color: #666;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
         }
 
-        .event-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 10px 0;
-        }
-
-        .tag {
-            background: #ff7f00;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin: 2px;
-            transition: background-color 0.2s;
-        }
-
-        .tag:hover {
-            background: #e67300;
-        }
-
-        .event-details {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
+        /* Notification Badge */
         .notification-badge {
-            background-color: #e0301e;
+            background-color: var(--secondary-color);
             color: white;
             padding: 2px 6px;
             border-radius: 10px;
-            font-size: 0.8em;
+            font-size: 12px;
             position: absolute;
             top: -8px;
             right: -8px;
@@ -222,28 +291,78 @@
             animation: pulse 2s infinite;
         }
 
-        .tab:has(.notification-badge) {
-            background-color: #f0f0f0;
-            border: 2px solid #e0301e;
-        }
-
-        .announcement-card.unread {
-            border-left: 4px solid #e0301e;
-        }
-        
         .unread-marker {
-            background-color: #e0301e;
+            background-color: var(--secondary-color);
             color: white;
             padding: 2px 6px;
             border-radius: 10px;
-            font-size: 0.8em;
+            font-size: 12px;
             margin-left: 8px;
+        }
+
+        /* Preview rows styling */
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .preview-row strong {
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1800px) {
+            .event-grid {
+                grid-template-columns: repeat(4, 320px);
+                max-width: 1340px;
+            }
+        }
+        
+        @media (max-width: 1400px) {
+            .event-grid {
+                grid-template-columns: repeat(3, 320px);
+                max-width: 1000px;
+            }
+        }
+        
+        @media (max-width: 1050px) {
+            .event-grid {
+                grid-template-columns: repeat(2, 320px);
+                max-width: 670px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .event-grid {
+                grid-template-columns: 320px;
+                max-width: 340px;
+                margin-left: auto;
+                margin-right: auto;
+            }
         }
 
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
+        }
+
+        /* Empty state message styling */
+        .no-items-message {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin: 20px 0;
+            box-shadow: var(--card-shadow);
+            width: 100%;
         }
     </style>
 {% endblock %}
@@ -282,7 +401,7 @@
                     <span class="notification-badge">{{ unread_announcements|length }}</span>
                 {% endif %}
             </div>
-            <a href="{% url 'all_my_events' %}" class="view-all-btn">View All My Events</a>
+            <a href="{% url 'all_my_events' %}" class="view-all-btn" style="margin-left: auto;">View All My Events</a>
         </div>
 
         <!-- Tab Content: Signed up for -->
@@ -294,7 +413,7 @@
                 </div>
                 <div class="event-grid">
                     {% if signed_up_past %}
-                        {% for event in signed_up_past %}
+                        {% for event in signed_up_past|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
@@ -316,7 +435,9 @@
                             </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No past events found</div>
+                        <div class="no-items-message">
+                            <p>No past events found</p>
+                        </div>
                     {% endif %}
                 </div>
             </section>
@@ -328,7 +449,7 @@
                 </div>
                 <div class="event-grid">
                     {% if signed_up_upcoming %}
-                        {% for event in signed_up_upcoming %}
+                        {% for event in signed_up_upcoming|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
@@ -350,7 +471,9 @@
                             </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No upcoming events found</div>
+                        <div class="no-items-message">
+                            <p>No upcoming events found</p>
+                        </div>
                     {% endif %}
                 </div>
             </section>
@@ -365,7 +488,7 @@
                 </div>
                 <div class="event-grid">
                     {% if created_past %}
-                        {% for event in created_past %}
+                        {% for event in created_past|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
@@ -387,7 +510,9 @@
                             </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No past events found</div>
+                        <div class="no-items-message">
+                            <p>No past events found</p>
+                        </div>
                     {% endif %}
                 </div>
             </section>
@@ -399,7 +524,7 @@
                 </div>
                 <div class="event-grid">
                     {% if created_upcoming %}
-                        {% for event in created_upcoming %}
+                        {% for event in created_upcoming|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
                                 {% with first_image=event.event_images.first %}
                                     {% if first_image %}
@@ -421,7 +546,9 @@
                             </a>
                         {% endfor %}
                     {% else %}
-                        <div class="event-card">No upcoming events found</div>
+                        <div class="no-items-message">
+                            <p>No upcoming events found</p>
+                        </div>
                     {% endif %}
                 </div>
             </section>
@@ -482,11 +609,11 @@
             // Add 'active' class to the selected tab
             event.target.classList.add('active');
 
-            // If announcements tab is clicked
+            // If announcements tab is clicked, mark notifications as read
             if (tabId === 'announcements') {
                 const notificationTab = document.querySelector('.tab:has(.notification-badge)');
                 if (notificationTab) {
-                    // Remove the red outline by removing border
+                    // Remove the red border by removing border
                     notificationTab.style.border = 'none';
                     // Reset background color
                     notificationTab.style.backgroundColor = 'lightgrey';

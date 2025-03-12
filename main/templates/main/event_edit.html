@@ -270,6 +270,58 @@
         .duration-inputs input[type="number"] {
             appearance: textfield;
         }
+
+        .tag-item {
+            transition: all 0.2s ease;
+        }
+        
+        .tag-item:hover {
+            background-color: #e9ecef !important;
+            transform: translateX(5px);
+        }
+        
+        .remove-tag:hover {
+            color: #c82333 !important;
+        }
+        
+        #searchResults {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .search-result-item.new-tag {
+            color: #28a745;
+        }
+        
+        .search-result-item.new-tag i {
+            margin-right: 5px;
+        }
+        
+        #suggestedTags .tag-suggestion {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        #suggestedTags .tag-suggestion:hover {
+            background-color: #ff7f00;
+            color: white;
+        }
     </style>
 {% endblock extra_head %}
 
@@ -336,20 +388,22 @@
                                         data-price="free" onclick="selectPrice('Free')">Free</button>
                                 <button type="button" class="price-btn {% if event.price_type == 'self-funded' %}selected{% endif %}" 
                                         data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
-                                <button type="button" class="price-btn {% if event.price_type == 'paid-for' %}selected{% endif %}" 
-                                        data-price="paid-for" onclick="selectPrice('Paid for')">Paid for</button>
                             </div>
                             <div id="cost-input" class="form-group {% if event.price_type == 'free' %}hidden{% endif %}">
                                 <label for="cost">Cost (numbers only)</label>
-                                £ <input type="number" 
-                                       step="0.01" 
-                                       class="form-control" 
-                                       id="cost" 
-                                       name="cost"
-                                       placeholder="8.00"
-                                       pattern="[0-9]*\.?[0-9]*"
-                                       value="{{ event.cost|default:'' }}"
-                                       oninput="updatePreviewPrice()">
+                                <div class="input-group" style="display: flex; align-items: center;">
+                                    <span style="padding: 0 10px 0 0;">£</span>
+                                    <input type="number" 
+                                           style="flex: 1;"
+                                           step="0.01" 
+                                           class="form-control" 
+                                           id="cost" 
+                                           name="cost"
+                                           placeholder="8.00"
+                                           pattern="[0-9]*\.?[0-9]*"
+                                           value="{{ event.cost|default:'' }}"
+                                           oninput="updatePreviewPrice()">
+                                </div>
                                 <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
                         </div>
@@ -492,35 +546,50 @@
                             </button>
                         </div>
 
-                        <!-- Add the modal HTML right after the form-group div, but before the form closing tag -->
+                        <!-- Tag Edit Modal -->
                         <div id="tagModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
-                            <div class="modal-content" style="background-color: #fff; margin: 10% auto; padding: 20px; width: 80%; max-width: 800px; border-radius: 8px;">
-                                <div class="modal-header">
-                                    <h2>Edit Event Tags</h2>
-                                    <span class="close" onclick="closeTagModal()" style="cursor: pointer; float: right; font-size: 24px;">&times;</span>
+                            <div class="modal-content" style="background-color: #fff; margin: 5% auto; padding: 20px; width: 90%; max-width: 1000px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                                    <h2 style="margin: 0;">Edit Event Tags</h2>
+                                    <span class="close" onclick="closeTagModal()" style="cursor: pointer; font-size: 24px;">&times;</span>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="tags-container" style="display: flex; gap: 20px;">
-                                        <div class="existing-tags-section" style="flex: 1;">
-                                            <h3>Existing Tags</h3>
-                                            <div id="existingTags" class="tag-list">
-                                                {% for tag in event.tags.all %}
-                                                <div class="tag-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; margin: 5px 0; background-color: #f0f0f0; border-radius: 4px;">
-                                                    <span>{{ tag.name }}</span>
-                                                    <button onclick="removeTag('{{ tag.name }}')" class="remove-tag" style="background: none; border: none; color: #ff0000; cursor: pointer;">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-                                                {% endfor %}
+                                <div class="modal-body" style="display: flex; gap: 30px; min-height: 400px;">
+                                    <!-- Left side: Existing tags -->
+                                    <div style="flex: 1; border-right: 1px solid #eee; padding-right: 20px;">
+                                        <h3 style="margin-bottom: 15px;">Current Tags</h3>
+                                        <div id="existingTags" class="tag-list" style="max-height: 300px; overflow-y: auto;">
+                                            {% for tag in event.tags.all %}
+                                            <div class="tag-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; margin: 5px 0; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #e9ecef;">
+                                                <span style="font-size: 14px;">{{ tag.name }}</span>
+                                                <button onclick="removeTag('{{ tag.name }}')" class="remove-tag" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px;">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Right side: Search and add new tags -->
+                                    <div style="flex: 1;">
+                                        <h3 style="margin-bottom: 15px;">Add Tags</h3>
+                                        <div style="margin-bottom: 20px;">
+                                            <input type="text" id="tagSearch" placeholder="Search for tags..." style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; margin-bottom: 10px;">
+                                            <div id="searchResults" style="max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 4px; display: none;">
+                                                <!-- Search results will be populated here -->
                                             </div>
                                         </div>
-                                        <div class="add-tags-section" style="flex: 1;">
-                                            <h3>Add More Tags</h3>
-                                            <select id="newTags" class="select2-tags" multiple style="width: 100%"></select>
+                                        <div style="margin-top: 20px;">
+                                            <h4 style="margin-bottom: 10px;">Suggested Tags</h4>
+                                            <div id="suggestedTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                                <!-- Suggested tags will be populated here -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="modal-footer" style="margin-top: 20px; text-align: right;">
+                                <div class="modal-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; text-align: right;">
+                                    <button onclick="closeTagModal()" class="cancel-btn" style="background-color: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                                        Cancel
+                                    </button>
                                     <button onclick="saveTagChanges()" class="save-btn" style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
                                         Save Changes
                                     </button>
@@ -927,93 +996,97 @@
 
         function openTagModal() {
             document.getElementById('tagModal').style.display = 'block';
-            initializeSelect2();
+            document.getElementById('tagSearch').focus();
+            loadSuggestedTags();
         }
 
         function closeTagModal() {
             document.getElementById('tagModal').style.display = 'none';
         }
 
-        function initializeSelect2() {
-            $('#newTags').select2({
-                tags: true,
-                tokenSeparators: [','],
-                ajax: {
-                    url: '{% url "get_tags" %}',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            term: params.term || ''  // Send the search term to the server
-                        };
-                    },
-                    processResults: function(data) {
-                        // Add the search term as the first option if it doesn't exist
-                        const searchTerm = $('.select2-search__field').val().toLowerCase();
-                        
-                        // Filter the data based on the search term
-                        let filteredData = data;
-                        if (searchTerm) {
-                            filteredData = data.filter(item => 
-                                item.toLowerCase().includes(searchTerm)
-                            );
-                        }
+        function loadSuggestedTags() {
+            fetch('{% url "get_tags" %}')
+                .then(response => response.json())
+                .then(tags => {
+                    const suggestedContainer = document.getElementById('suggestedTags');
+                    suggestedContainer.innerHTML = '';
+                    
+                    // Filter out already selected tags
+                    const availableTags = tags.filter(tag => !currentTags.has(tag));
+                    
+                    // Show up to 10 suggested tags
+                    availableTags.slice(0, 10).forEach(tag => {
+                        const tagElement = document.createElement('div');
+                        tagElement.className = 'tag-suggestion';
+                        tagElement.textContent = tag;
+                        tagElement.onclick = () => addTag(tag);
+                        suggestedContainer.appendChild(tagElement);
+                    });
+                });
+        }
 
-                        // Filter out tags that are already selected
-                        filteredData = filteredData.filter(item => !currentTags.has(item));
-
-                        // Map the filtered data to Select2 format
-                        let results = filteredData.map(item => ({
-                            id: item,
-                            text: item,
-                            existing: true
-                        }));
-
-                        // Add the search term as a new tag option if it doesn't exist
-                        const exactMatch = results.some(item => 
-                            item.text.toLowerCase() === searchTerm
-                        );
-
-                        if (searchTerm && !exactMatch) {
-                            results.unshift({
-                                id: searchTerm,
-                                text: searchTerm,
-                                newTag: true
-                            });
-                        }
-
-                        return { results };
+        function handleTagSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (searchTerm.length < 2) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+            
+            fetch('{% url "get_tags" %}')
+                .then(response => response.json())
+                .then(tags => {
+                    resultsContainer.innerHTML = '';
+                    
+                    // Filter tags based on search term
+                    const matchingTags = tags.filter(tag => 
+                        tag.toLowerCase().includes(searchTerm) && !currentTags.has(tag)
+                    );
+                    
+                    // Add option to create new tag if it doesn't exist in all tags
+                    if (searchTerm && !tags.some(tag => tag.toLowerCase() === searchTerm.toLowerCase())) {
+                        const newTagItem = document.createElement('div');
+                        newTagItem.className = 'search-result-item new-tag';
+                        newTagItem.innerHTML = `<i class="fas fa-plus-circle"></i>Create new tag: "${searchTerm}"`;
+                        newTagItem.onclick = () => addTag(searchTerm);
+                        resultsContainer.appendChild(newTagItem);
                     }
-                },
-                templateResult: function(data) {
-                    if (data.newTag) {
-                        return $(`<span>
-                            <i class="fas fa-plus-circle" style="color: #28a745; margin-right: 5px;"></i>
-                            Create new tag: "${data.text}"
-                        </span>`);
-                    }
-                    return data.text;
-                },
-                language: {
-                    noResults: function() {
-                        const searchTerm = $('.select2-search__field').val();
-                        return `No matches found. Press Enter to create "${searchTerm}" as a new tag`;
-                    }
-                }
-            });
+                    
+                    // Add matching existing tags
+                    matchingTags.forEach(tag => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        resultItem.textContent = tag;
+                        resultItem.onclick = () => addTag(tag);
+                        resultsContainer.appendChild(resultItem);
+                    });
+                    
+                    // Show/hide results container based on matches or new tag option
+                    resultsContainer.style.display = (matchingTags.length > 0 || !tags.includes(searchTerm)) ? 'block' : 'none';
+                });
+        }
+
+        function addTag(tagName) {
+            currentTags.add(tagName);
+            updateTagDisplay();
+            document.getElementById('tagSearch').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            loadSuggestedTags(); // Refresh suggested tags after adding a new one
         }
 
         function removeTag(tagName) {
             currentTags.delete(tagName);
             updateTagDisplay();
+            loadSuggestedTags(); // Refresh suggested tags after removing one
         }
 
         function updateTagDisplay() {
             const container = document.getElementById('existingTags');
             container.innerHTML = Array.from(currentTags).map(tag => `
-                <div class="tag-item">
-                    <span>${tag}</span>
-                    <button onclick="removeTag('${tag}')" class="remove-tag">
+                <div class="tag-item" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; margin: 5px 0; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #e9ecef;">
+                    <span style="font-size: 14px;">${tag}</span>
+                    <button onclick="removeTag('${tag}')" class="remove-tag" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px;">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1021,19 +1094,27 @@
         }
 
         function saveTagChanges() {
-            // Get new tags from Select2
-            const newTagsSelect = $('#newTags').select2('data');
-            
-            // Add new tags while preserving existing ones
-            newTagsSelect.forEach(tag => currentTags.add(tag.text));
-            
-            // Update the display
-            updateTagDisplay();
-            
             closeTagModal();
         }
 
-        // Add click outside to close modal
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('tagSearch');
+            searchInput.addEventListener('input', handleTagSearch);
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(event) {
+                const searchResults = document.getElementById('searchResults');
+                if (!event.target.closest('#tagSearch') && !event.target.closest('#searchResults')) {
+                    searchResults.style.display = 'none';
+                }
+            });
+            
+            // Initialize tag display
+            updateTagDisplay();
+        });
+
+        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('tagModal');
             if (event.target === modal) {

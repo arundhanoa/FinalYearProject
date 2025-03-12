@@ -1,21 +1,103 @@
 {% load static %}
-<div class="navbar">
-    <a href="{% url 'homepage' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a>
-    <a href="{% url 'event_create' %}" class="{% if request.path == '/event_create/' %}active{% endif %}">Create Event</a>
-    <a href="{% url 'myevents' %}" class="{% if request.path == '/myevents/' %}active{% endif %}">My Events</a>
-    <a href="{% url 'about' %}" class="{% if request.path == '/about/' %}active{% endif %}">About</a>
-    <a href="{% url 'all_events' %}" class="{% if request.path == '/all-events/' %}active{% endif %}">All Events</a>
-    <a href="{% url 'recommendations:recommended_events' %}" class="{% if request.path == '/recommendations/' %}active{% endif %}">Recommended</a>
-    
-    <div class="dropdown">
-        <button class="dropbtn">My Account </button>
-        <div class="dropdown-content">
-            <a href="{% url 'profile' %}">Profile</a>
-            <a href="{% url 'settings' %}">Settings</a>
-            <a href="{% url 'logout' %}" class="logout-button">Logout</a>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+    <div class="container">
+        <!-- Brand -->
+        <a class="navbar-brand" href="{% url 'landing' %}">
+            <span style="font-weight: 700; color: #333; font-size: 24px;">EVENT<span style="color: #ff7f00;">EASE</span></span>
+        </a>
+        
+
+        <!-- Toggle button for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse flex-grow-0" id="navbarNavDropdown">
+            <ul class="navbar-nav align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'all_events' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'recommendations:recommended_events' %}">For you</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'my_events' %}">My Events</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'about' %}">About</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.first_name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'event_create' %}" class="btn btn-primary create-btn">
+                            <i class="fas fa-plus me-1"></i> Create Event
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'signup' %}">Register</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'login' %}" class="btn btn-primary create-btn">
+                            <i class="fas fa-plus me-1"></i> Create Event
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
     </div>
-</div>
+</nav>
+
+<style>
+    .navbar {
+        padding: 12px 0;
+    }
+    
+    .create-btn {
+        background-color: #ff7f00;
+        border-color: #ff7f00;
+        color: white;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 4px;
+    }
+    
+    .create-btn:hover {
+        background-color: #e67300;
+        border-color: #e67300;
+    }
+    
+    .dropdown-item:active {
+        background-color: #ff7f00;
+    }
+
+    .contact-info a {
+        font-size: 14px;
+        transition: color 0.2s;
+    }
+    
+    .contact-info a:hover {
+        color: #ff7f00 !important;
+    }
+</style>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 
 

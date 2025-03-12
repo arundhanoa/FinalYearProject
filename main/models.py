@@ -29,8 +29,7 @@ class Event(models.Model):
     
     PRICE_CHOICES = [
         ('free', 'Free'),
-        ('self-funded', 'Self-funded'),  # This one needs cost field
-        ('paid-for', 'Paid For')  # This one should not show cost field
+        ('self-funded', 'Self-funded'),
     ]
     
     LINE_OF_SERVICE_CHOICES = [
@@ -221,16 +220,16 @@ class CustomUser(AbstractUser):
         ]
 
 class Announcement(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='announcements')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     for_user = models.ForeignKey(
-        CustomUser, 
+        settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='personal_announcements',
         null=True, 
-        blank=True
+        blank=True,
+        related_name='personal_announcements'
     )
     read = models.BooleanField(default=False)
 
@@ -238,7 +237,7 @@ class Announcement(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Announcement for {self.event.title} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.event.title} - {self.created_at.strftime('%Y-%m-%d')}"
 
 @receiver(m2m_changed, sender=Event.attendees.through)
 def handle_attendee_change(sender, instance, action, pk_set, **kwargs):

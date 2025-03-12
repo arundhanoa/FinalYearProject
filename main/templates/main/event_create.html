@@ -269,7 +269,7 @@
         .duration-inputs input[type="number"] {
             appearance: textfield;
         }
-</style>
+    </style>
 {% endblock extra_head %}
 
 {% block content %}
@@ -364,18 +364,21 @@
                             <div class="button-group">
                                 <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
                                 <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
-                                <button type="button" class="price-btn" data-price="paid-for" onclick="selectPrice('Paid for')">Paid for</button>
                             </div>
                             <div id="cost-input" class="form-group hidden">
                                 <label for="cost">Cost (numbers only)</label>
-                                £ <input type="number" 
-                                       step="0.01" 
-                                       class="form-control" 
-                                       id="cost" 
-                                       name="cost" 
-                                       placeholder="8.00"
-                                       pattern="[0-9]*\.?[0-9]*"
-                                       oninput="updatePreviewPrice()">
+                                <div class="input-group" style="display: flex; align-items: center;">
+                                    <span style="padding: 0 10px 0 0;">£</span>
+                                    <input type="number" 
+                                           style="flex: 1;"
+                                           step="0.01" 
+                                           class="form-control" 
+                                           id="cost" 
+                                           name="cost" 
+                                           placeholder="8.00"
+                                           pattern="[0-9]*\.?[0-9]*"
+                                           oninput="updatePreviewPrice()">
+                                </div>
                                 <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
                         </div>
@@ -461,7 +464,6 @@
                             <div id="address-input" class="form-group hidden">
                                 <label for="address">Address</label>
                                 <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
-                                <div id="map"></div>
                             </div>
                             <input type="hidden" id="location_type" name="location_type" value="">
                         </div>
@@ -474,13 +476,24 @@
 
                         <!-- Tags Input -->
                         <div class="form-group">
-                            <label for="event-tags">Tags</label>
-                            <select name="tags[]" id="tags" multiple="multiple" class="select2-tags" style="width: 100%">
-                                {% for tag in existing_tags %}
-                                    <option value="{{ tag.name }}">{{ tag.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <small class="form-text text-muted">Type to search existing tags or press Enter to create new ones</small>
+                            <label for="tags">Tags</label>
+                            <div class="tag-search-container">
+                                <input type="text" id="tagSearch" placeholder="Search for tags..." style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; margin-bottom: 10px;">
+                                <div id="searchResults" style="max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 4px; display: none;">
+                                    <!-- Search results will be populated here -->
+                                </div>
+                                <div id="selectedTags" style="margin: 10px 0;">
+                                    <!-- Selected tags will be displayed here -->
+                                </div>
+                                <div style="margin-top: 20px;">
+                                    <h4 style="margin-bottom: 10px;">Suggested Tags</h4>
+                                    <div id="suggestedTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <!-- Suggested tags will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Hidden input to store selected tags -->
+                            <input type="hidden" name="tags" id="selectedTagsInput">
                         </div>
 
                         <!-- Add submit button -->
@@ -797,75 +810,156 @@
             }
         }
 
-        // Document Ready Handlers
-        $(document).ready(function() {
-            $('.select2-tags').select2({
-                tags: true,
-                tokenSeparators: [','],
-                ajax: {
-                    url: '{% url "get_tags" %}',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            term: params.term || ''  // Send the search term to the server
-                        };
-                    },
-                    processResults: function(data) {
-                        // Add the search term as the first option if it doesn't exist
-                        const searchTerm = $('.select2-search__field').val().toLowerCase();
+        // Add these new functions for tag management
+        let currentTags = new Set();
+
+        function loadSuggestedTags() {
+            fetch('{% url "get_tags" %}')
+                .then(response => response.json())
+                .then(tags => {
+                    const suggestedContainer = document.getElementById('suggestedTags');
+                    suggestedContainer.innerHTML = '';
+                    
+                    // Filter out already selected tags
+                    const availableTags = tags.filter(tag => !currentTags.has(tag));
+                    
+                    // Show up to 10 suggested tags
+                    availableTags.slice(0, 10).forEach(tag => {
+                        const tagElement = document.createElement('div');
+                        tagElement.className = 'tag-suggestion';
+                        tagElement.style.cssText = `
+                            background-color: #e9ecef;
+                            color: #495057;
+                            padding: 5px 10px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        `;
+                        tagElement.textContent = tag;
+                        tagElement.onclick = () => addTag(tag);
                         
-                        // Filter the data based on the search term
-                        let filteredData = data;
-                        if (searchTerm) {
-                            filteredData = data.filter(item => 
-                                item.toLowerCase().includes(searchTerm)
-                            );
-                        }
+                        // Add hover effect
+                        tagElement.onmouseover = () => {
+                            tagElement.style.backgroundColor = '#ff7f00';
+                            tagElement.style.color = 'white';
+                        };
+                        tagElement.onmouseout = () => {
+                            tagElement.style.backgroundColor = '#e9ecef';
+                            tagElement.style.color = '#495057';
+                        };
+                        
+                        suggestedContainer.appendChild(tagElement);
+                    });
+                });
+        }
 
-                        // Map the filtered data to Select2 format
-                        let results = filteredData.map(item => ({
-                            id: item,
-                            text: item,
-                            existing: true
-                        }));
-
-                        // Add the search term as a new tag option if it doesn't exist
-                        const exactMatch = results.some(item => 
-                            item.text.toLowerCase() === searchTerm
-                        );
-
-                        if (searchTerm && !exactMatch) {
-                            results.unshift({
-                                id: searchTerm,
-                                text: searchTerm,
-                                newTag: true
-                            });
-                        }
-
-                        return { results };
+        function handleTagSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (searchTerm.length < 2) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+            
+            fetch('{% url "get_tags" %}')
+                .then(response => response.json())
+                .then(tags => {
+                    resultsContainer.innerHTML = '';
+                    
+                    // Filter tags based on search term
+                    const matchingTags = tags.filter(tag => 
+                        tag.toLowerCase().includes(searchTerm) && !currentTags.has(tag)
+                    );
+                    
+                    // Add option to create new tag if it doesn't exist
+                    if (searchTerm && !tags.some(tag => tag.toLowerCase() === searchTerm.toLowerCase())) {
+                        const newTagItem = document.createElement('div');
+                        newTagItem.className = 'search-result-item new-tag';
+                        newTagItem.innerHTML = `<i class="fas fa-plus-circle"></i> Create new tag: "${searchTerm}"`;
+                        newTagItem.style.cssText = `
+                            padding: 8px 12px;
+                            cursor: pointer;
+                            border-bottom: 1px solid #eee;
+                            color: #28a745;
+                        `;
+                        newTagItem.onclick = () => addTag(searchTerm);
+                        resultsContainer.appendChild(newTagItem);
                     }
-                },
-                templateResult: function(data) {
-                    if (data.newTag) {
-                        return $(`<span>
-                            <i class="fas fa-plus-circle" style="color: #28a745; margin-right: 5px;"></i>
-                            Create new tag: "${data.text}"
-                        </span>`);
-                    }
-                    return data.text;
-                },
-                language: {
-                    noResults: function() {
-                        const searchTerm = $('.select2-search__field').val();
-                        return `No matches found. Press Enter to create "${searchTerm}" as a new tag`;
-                    }
+                    
+                    // Add matching existing tags
+                    matchingTags.forEach(tag => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'search-result-item';
+                        resultItem.textContent = tag;
+                        resultItem.style.cssText = `
+                            padding: 8px 12px;
+                            cursor: pointer;
+                            border-bottom: 1px solid #eee;
+                        `;
+                        resultItem.onclick = () => addTag(tag);
+                        
+                        // Add hover effect
+                        resultItem.onmouseover = () => {
+                            resultItem.style.backgroundColor = '#f8f9fa';
+                        };
+                        resultItem.onmouseout = () => {
+                            resultItem.style.backgroundColor = 'transparent';
+                        };
+                        
+                        resultsContainer.appendChild(resultItem);
+                    });
+                    
+                    resultsContainer.style.display = (matchingTags.length > 0 || !tags.includes(searchTerm)) ? 'block' : 'none';
+                });
+        }
+
+        function addTag(tagName) {
+            if (!currentTags.has(tagName)) {
+                currentTags.add(tagName);
+                updateTagDisplay();
+                document.getElementById('tagSearch').value = '';
+                document.getElementById('searchResults').style.display = 'none';
+                loadSuggestedTags();
+            }
+        }
+
+        function removeTag(tagName) {
+            currentTags.delete(tagName);
+            updateTagDisplay();
+            loadSuggestedTags();
+        }
+
+        function updateTagDisplay() {
+            const container = document.getElementById('selectedTags');
+            container.innerHTML = Array.from(currentTags).map(tag => `
+                <div class="tag-item" style="display: inline-flex; align-items: center; background-color: #ff7f00; color: white; padding: 5px 10px; margin: 2px; border-radius: 4px;">
+                    <span style="margin-right: 5px;">${tag}</span>
+                    <button onclick="removeTag('${tag}')" style="background: none; border: none; color: white; cursor: pointer; padding: 0 5px;">×</button>
+                </div>
+            `).join('');
+            
+            // Update hidden input with selected tags
+            document.getElementById('selectedTagsInput').value = Array.from(currentTags).join(',');
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('tagSearch');
+            searchInput.addEventListener('input', handleTagSearch);
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(event) {
+                const searchResults = document.getElementById('searchResults');
+                if (!event.target.closest('#tagSearch') && !event.target.closest('#searchResults')) {
+                    searchResults.style.display = 'none';
                 }
-            }).on('select2:select', function(e) {
-                // No need to modify the text after selection since we're using templateResult
             });
+            
+            // Load initial suggested tags
+            loadSuggestedTags();
         });
-        
+   
     // Form Reset Handler
     document.addEventListener('DOMContentLoaded', function() {
         {% if messages %}

@@ -61,13 +61,13 @@
         }
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr) 300px;
+            grid-template-columns: repeat(3, 0.4fr) 600px;
             gap: 20px;
-            padding: 20px;
+            padding: 15px;
         }
         .info-section {
             background: white;
-            padding: 30px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow: hidden;
@@ -82,6 +82,8 @@
             overflow-y: auto;
             max-height: calc(100vh - 300px);
             margin-top: 10px;
+            width: 100%;
+            min-width: 450px;
         }
         .announcement-form {
             margin-top: 15px;
@@ -209,6 +211,42 @@
             margin-bottom: 5px;
             display: inline-block;
         }
+        .register-btn {
+            display: block;
+            width: 100%;
+            font-size: 0.9em;
+            text-align: center;
+            background: #e0301e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+        .unregister-btn {
+            display: block;
+            width: 100%;
+            font-size: 0.9em;
+            text-align: center;
+            background: #666;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+        .register-btn:hover {
+            background: #c62828;
+        }
+        .unregister-btn:hover {
+            background: #555;
+        }
     </style>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -216,6 +254,7 @@
 {% endblock %}
 
 {% block content %}
+    {% csrf_token %}
     {% include 'main/navbar.html' %}
     <header>
         <h1>{{ event.name }}</h1>
@@ -254,7 +293,8 @@
                     <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
                     <p><strong>Capacity:</strong> {{ event.capacity }} people</p>
                     <p><strong>Line of Service:</strong> {{ event.line_of_service }}</p>
-                    <p><strong>Event Type:</strong> {{ event.location_type }}</p>
+                    <p><strong>Event Type:</strong> {{ event.event_type }}</p>
+                    <p><strong>Location Type:</strong> {{ event.get_location_type_display }}</p>
                 </div>
 
                 <div class="info-section">
@@ -305,37 +345,68 @@
                         </div>
 
                         <div class="action-buttons-container">
-                            {% if user == event.creator %}
-                                <a href="{% url 'event_edit' event.id %}" class="signup-button">
-                                    Edit Event
-                                </a>
-                            {% endif %}
-                            
-                            {% if is_registered %}
-                                <form action="{% url 'leave_event' event.id %}" method="POST" class="signup-form">
-                                    {% csrf_token %}
-                                    <button type="submit" class="signup-button signed-up">
-                                        Unregister from Event
-                                    </button>
-                                </form>
-                            {% else %}
-                                {% if event.is_full %}
-                                    <div class="event-full">
-                                        <p>This event is full ({{ attendee_count }}/{{ event.capacity }})</p>
-                                        <form method="post" action="{% url 'express_interest' event.id %}" class="interest-form">
+                            {% if event.date < current_date %}
+                                <!-- Past Event -->
+                                {% if user == event.creator %}
+                                    <!-- No buttons for creator on past events -->
+                                {% else %}
+                                    {% if is_registered %}
+                                        <!-- Show feedback button for past events user attended -->
+                                        <button type="button" class="feedback-btn" style="
+                                            background-color: #4CAF50; 
+                                            color: white; 
+                                            padding: 10px 20px; 
+                                            border-radius: 5px; 
+                                            border: none; 
+                                            cursor: pointer;
+                                            width: 100%;
+                                            margin-top: 10px;
+                                            font-weight: 500;
+                                        ">
+                                            Provide Event Feedback
+                                        </button>
+                                    {% else %}
+                                        <!-- Show interest button only if user didn't attend -->
+                                        <form method="post" action="{% url 'event_signup' event.id %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="interest-button">
-                                                I would've liked to sign up for this event
+                                            <button type="submit" class="interest-btn" style="background-color: #ff6b35; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">
+                                                I Would Have Been Interested
                                             </button>
                                         </form>
-                                    </div>
-                                {% else %}
-                                    <form method="POST" action="{% url 'event_signup' event.id %}" class="signup-form">
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <!-- Upcoming Event -->
+                                {% if user == event.creator %}
+                                    <a href="{% url 'event_edit' event.id %}" class="signup-button">
+                                        Edit Event
+                                    </a>
+                                {% endif %}
+                                {% if is_registered %}
+                                    <form method="post" action="{% url 'event_signup' event.id %}">
                                         {% csrf_token %}
-                                        <button type="submit" class="signup-button">
-                                            Sign Up for Event
-                                        </button>
+                                        <input type="hidden" name="unregister" value="true">
+                                        <button type="submit" class="unregister-btn">Unregister</button>
                                     </form>
+                                {% else %}
+                                    {% if event.is_full %}
+                                        <button 
+                                            type="button"
+                                            onclick="recordInterest({{ event.id }})"
+                                            class="register-btn"
+                                            id="interestButton"
+                                        >
+                                            I'm Interested in This Event
+                                        </button>
+                                        <div id="interestMessage" style="display: none; color: #4CAF50; text-align: center; margin-top: 10px; font-weight: 500;">
+                                            Interest Recorded! We'll notify you when a spot becomes available.
+                                        </div>
+                                    {% else %}
+                                        <form method="post" action="{% url 'event_signup' event.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="register-btn">Sign Up</button>
+                                        </form>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                             
@@ -415,6 +486,35 @@
             
             slides[slideIndex-1].style.display = "block";
             dots[slideIndex-1].className += " active";
+        }
+
+        function recordInterest(eventId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch(`/express-interest/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    interaction_type: 'interest',
+                    weight: 2.0
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    const button = document.getElementById('interestButton');
+                    const messageDiv = document.getElementById('interestMessage');
+                    button.style.backgroundColor = '#666'; // Gray out the button
+                    button.disabled = true;
+                    messageDiv.style.display = 'block'; // Show the success message
+                } else {
+                    console.error('Failed to record interest');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     </script>
 {% endblock %}

@@ -23,7 +23,7 @@ def recommended_events(request):
         
         # Compute new similarities and get recommendations
         recommender.content_based.compute_event_similarities()
-        recommended = recommender.get_recommendations(request.user, limit=6)
+        recommended = recommender.get_recommendations(request.user, limit=9)
         
         # Get similar events based on recent interaction
         recent_interaction = UserEventInteraction.objects.filter(

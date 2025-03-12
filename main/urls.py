@@ -8,13 +8,13 @@ from django.contrib import admin
 
 urlpatterns = [
     path('', views.landing, name='landing'),  # If you want signup as landing page
-    path('home/', views.homepage, name='homepage'),  # Keep your existing homepage
+    path('home/', views.all_events, name='all_events'),
     path('about/', views.about, name='about'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('event_create/', views.event_create, name='event_create'),  # Changed from whatever it was before
     path('event_view/<int:event_id>/', views.event_view, name='event_view'),
-    path('myevents/', views.my_events, name='myevents'),
+    path('myevents/', views.my_events, name='my_events'),
     path('all-my-events/', views.all_my_events, name='all_my_events'),
     path('networking/', views.networking, name='networking'),
     path('profile/', views.profile, name='profile'),
@@ -25,7 +25,6 @@ urlpatterns = [
     path('teambuilding/', views.teambuilding, name='teambuilding'),
     path('volunteering/', views.volunteering, name='volunteering'),
     path('help/', views.help_view, name='help'),  # Added path for help
-    path('all-events/', views.all_events, name='all_events'),
     path('event/<int:event_id>/', views.event_detail, name='event_detail'),  # You'll need this for tshe redirect
     path('api/tags/', views.get_tags, name='get_tags'),
     path('event_signup/<int:event_id>/', views.event_signup, name='event_signup'),
@@ -39,7 +38,7 @@ urlpatterns = [
     path('event/<int:event_id>/add-announcement/', views.add_announcement, name='add_announcement'),
     path('recommendations/', include('recommendations.urls', namespace='recommendations')),
     path('event/<int:event_id>/join/', views.join_event, name='join_event'),
-    path('event/<int:event_id>/express-interest/', views.express_interest, name='express_interest'),
+    path('express-interest/<int:event_id>/', views.express_interest, name='express_interest'),
     path('event/<int:event_id>/leave/', views.leave_event, name='leave_event'),
 ]
 
