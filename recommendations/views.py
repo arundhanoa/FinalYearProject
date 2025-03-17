@@ -99,7 +99,7 @@ def record_event_interest(request, event_id):
             user=request.user,
             event=event,
             interaction_type='interest',
-            weight=3  # Similar weight to viewing
+            weight=6  # Similar weight to viewing
         )
         
         return JsonResponse({'status': 'success'})

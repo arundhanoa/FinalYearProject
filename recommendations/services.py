@@ -71,7 +71,6 @@ class ContentBasedRecommender:
         # Compute cosine similarity
         similarity_matrix = cosine_similarity(tfidf_matrix)
         
-        # Clear existing similarities
         EventSimilarity.objects.all().delete()
         
         # Store new similarities (only store if similarity > 0.1 to save space)
@@ -186,7 +185,6 @@ class ContentBasedRecommender:
             time__gte=current_time.time() if F('date')==current_time.date() else '00:00'
         )
         
-        # First filter by service line
         if user.line_of_service != 'All':
             # Try to get exact matches first
             exact_matches = query.filter(line_of_service=user.line_of_service)
@@ -200,9 +198,7 @@ class ContentBasedRecommender:
         query = query.annotate(
             match_score=ExpressionWrapper(
                 Case(
-                    # Much higher weight for exact service match
                     When(line_of_service=user.line_of_service, then=10.0),
-                    # Lower weight for 'All' events
                     When(line_of_service='All', then=3.0),
                     default=0.0,
                     output_field=FloatField(),
@@ -234,8 +230,7 @@ class ContentBasedRecommender:
 
 class CollaborativeRecommender:
     def __init__(self):
-        self.min_interactions = 3  # Minimum interactions needed for reliable recommendations
-        
+        self.min_interactions = 3  
     def _create_user_event_matrix(self):
         """Create a user-event interaction matrix"""
         # Get all interactions
@@ -310,10 +305,9 @@ class CollaborativeRecommender:
         if weight is None:
             # Define default weights for different interaction types
             weights = {
-                'view': 1,
-                'signup': 5,
-                'attend': 10,
-                'rate': 3,
+                'view': 2,
+                'signup': 8,
+                'rate': 5,
             }
             weight = weights.get(interaction_type, 1)
             

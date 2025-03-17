@@ -4,19 +4,23 @@
 {% block title %}Landing Page{% endblock %}
 
 {% block content %}
-<header>
-    <nav>
-        <ul>
-            <li><a href="{% url 'login' %}">Login</a></li>
-            <li><a href="{% url 'signup' %}">Register</a></li>
-        </ul>
-    </nav>
-</header>
+<div class="container text-center py-5">
+    <!-- Main text now appears first -->
+    <main class="mb-4">
+        <h1 class="display-4 mb-3">Welcome to Event Ease</h1>
+        <p class="lead mb-5">Get started by logging in or registering.</p>
+    </main>
 
-<main>
-    <h1>Welcome to the Event Management System</h1>
-    <p>Get started by logging in or registering.</p>
-</main>
+    <!-- Login/Register buttons now appear below the main text -->
+    <header class="mb-4">
+        <nav>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'login' %}" class="btn btn-primary px-4 py-2">Login</a>
+                <a href="{% url 'signup' %}" class="btn btn-secondary px-4 py-2">Register</a>
+            </div>
+        </nav>
+    </header>
+</div>
 
 <footer>
     <p>&copy; 2024 Event Management System</p>

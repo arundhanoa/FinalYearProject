@@ -45,4 +45,5 @@ class EventInterest(models.Model):
         unique_together = ('user', 'event')
         indexes = [
             models.Index(fields=['user', 'event']),
-        ] 
+        ]
+

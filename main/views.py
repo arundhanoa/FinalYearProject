@@ -115,10 +115,13 @@ def all_events(request):
     if price_type_filter:
         events = events.filter(price_type=price_type_filter)
     
-    # Apply tag filters (multiple tags supported)
-    for tag in tag_filters:
-        if tag:
-            events = events.filter(tags__name=tag)
+    # Apply tag filters (OR condition)
+    if tag_filters:
+        tag_query = Q()
+        for tag in tag_filters:
+            if tag:
+                tag_query |= Q(tags__name=tag)
+        events = events.filter(tag_query).distinct()
     
     # Filter by capacity range
     if capacity_range:
@@ -650,11 +653,15 @@ def event_create(request):
             weight=5.0
         )
         
-        # Save tags
-        tags = request.POST.getlist('tags[]')
-        for tag_name in tags:
-            tag, created = Tag.objects.get_or_create(name=tag_name.strip())
-            event.tags.add(tag)
+        # Save tags - FIXED: Handle comma-separated string instead of list
+        tags_string = request.POST.get('tags', '')
+        if tags_string:
+            tags_list = [tag.strip() for tag in tags_string.split(',') if tag.strip()]
+            print(f"Processing tags: {tags_list}")  # Debug print
+            for tag_name in tags_list:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                event.tags.add(tag)
+                print(f"Added tag: {tag_name} (created: {created})")  # Debug print
 
         # Handle images
         if 'images' in request.FILES:
@@ -969,9 +976,19 @@ def event_delete(request, event_id):
 @login_required
 @csrf_protect
 def add_announcement(request, event_id):
+    """
+    Allows event creators to post general announcements to all event attendees.
+    
+    This function implements the following design principles:
+    - Security: Only event creators can post announcements (permission check)
+    - Validation: Ensures announcement content is not empty
+    - Error handling: Comprehensive logging and user feedback
+    - Atomic operation: Creates announcement in a single database operation
+    """
     event = get_object_or_404(Event, id=event_id)
     
-    # Check if the user is the event creator
+    # Security check: Only allow the event creator to post announcements
+    # This prevents unauthorized users from posting to events they don't own
     if request.user != event.creator:
         logger.error({
             "message": "Unauthorized announcement attempt",
@@ -983,14 +1000,18 @@ def add_announcement(request, event_id):
     
     if request.method == 'POST':
         content = request.POST.get('content')
+        # Validate announcement content is not empty
         if content:
             try:
+                # Create the announcement - this will be visible to all event attendees
+                # Note: This creates a general announcement (for_user=None) visible to everyone
                 announcement = Announcement.objects.create(
                     event=event,
                     content=content,
                     created_by=request.user
                 )
                 
+                # Comprehensive logging for tracking and debugging
                 logger.info({
                     "message": "New announcement created",
                     "event_id": event_id,
@@ -1005,6 +1026,7 @@ def add_announcement(request, event_id):
                 
                 messages.success(request, "Announcement posted successfully!")
             except Exception as e:
+                # Exception handling with detailed error logging
                 logger.error({
                     "message": f"Error creating announcement: {str(e)}",
                     "event_id": event_id,
@@ -1019,29 +1041,45 @@ def add_announcement(request, event_id):
 
 @login_required
 def join_event(request, event_id):
+    """
+    Handles user registration for events with capacity checks.
+    
+    This function combines several key operations:
+    - Registration validation (prevent duplicate registrations)
+    - Capacity enforcement (prevent over-booking)
+    - Data consistency (uses transaction to ensure all operations succeed or fail together)
+    - Recommendation system integration (records signup interaction for future recommendations)
+    """
     event = get_object_or_404(Event, id=event_id)
     
-    # Check if user already registered
+    # Prevent duplicate registrations
+    # This avoids database errors and ensures clean UX
     if EventSignUp.objects.filter(user=request.user, event=event).exists():
         messages.info(request, "You are already registered for this event.")
         return redirect('event_view', event_id=event_id)
     
-    # Check capacity
+    # Enforce event capacity limits
+    # This prevents overbooking and maintains event integrity
     if event.current_participants >= event.capacity:
         messages.error(request, "This event has reached its capacity.")
         return redirect('event_view', event_id=event_id)
     
-    # Create registration within atomic transaction
+    # Use database transaction to ensure all operations succeed or fail together
+    # This maintains data consistency across related models
     with transaction.atomic():
+        # Create the registration record
         EventSignUp.objects.create(
             user=request.user,
             event=event,
             signup_date=timezone.now()
         )
+        # Add user to the event's attendees
         event.attendees.add(request.user)
         event.save()
         
-        # Create interaction record for recommendation system
+        # Record this interaction for the recommendation system
+        # This integration allows the system to learn user preferences
+        # Signup is weighted highly (5.0) as it indicates strong interest
         UserEventInteraction.objects.update_or_create(
             user=request.user,
             event=event,
@@ -1054,23 +1092,34 @@ def join_event(request, event_id):
 @login_required
 @csrf_protect
 def express_interest(request, event_id):
-    """Allow users to express interest in an event without signing up."""
+    """
+    Allow users to express interest in an event without signing up.
+    
+    Key features:
+    - Lightweight alternative to registration ("soft commitment")
+    - Notification system integration (notifies event creator)
+    - Recommendation system integration (helps personalize recommendations)
+    - Ajax-compatible (returns JSON response for frontend integration)
+    """
     if request.method == 'POST':
         try:
             event = get_object_or_404(Event, id=event_id)
             user = request.user
             
-            # Create or update user-event interaction
+            # Record the interest in the recommendation system
+            # Uses update_or_create to avoid duplicates if user expresses interest multiple times
+            # Weight of 2.0 indicates moderate interest (stronger than a view, weaker than signup)
             interaction, created = UserEventInteraction.objects.update_or_create(
                 user=user,
                 event=event,
                 defaults={
                     'interaction_type': 'interest',
-                    'weight': 2.0
+                    'weight': 6.0
                 }
             )
             
-            # Create notification for event creator
+            # Notify the event creator - helps organizers gauge interest levels
+            # This creates a targeted announcement (personal notification)
             notification_message = f"{user.first_name} {user.last_name} expressed interest in your event '{event.title}'"
             Announcement.objects.create(
                 event=event,
@@ -1079,6 +1128,7 @@ def express_interest(request, event_id):
                 for_user=event.creator
             )
             
+            # Log the interest for analytics and debugging
             logger.info({
                 "message": "Interest recorded",
                 "user": user.username,
@@ -1087,9 +1137,11 @@ def express_interest(request, event_id):
                 "interaction_created": created
             })
             
+            # Return JSON for AJAX requests
             return JsonResponse({'status': 'success'})
             
         except Exception as e:
+            # Comprehensive error handling
             logger.error({
                 "message": "Error recording interest",
                 "user": request.user.username,
@@ -1104,36 +1156,47 @@ def express_interest(request, event_id):
 @csrf_protect
 @never_cache
 def leave_event(request, event_id):
-    """Allow users to leave/unregister from an event they previously signed up for."""
+    """
+    Allow users to leave/unregister from an event they previously signed up for.
+    
+    Key features:
+    - Data consistency (uses transaction for related operations)
+    - Spot availability notifications (alerts interested users)
+    - Recommendation system integration (removes signup interaction)
+    - Cache control (ensures page reflects current registration status)
+    """
     event = get_object_or_404(Event, id=event_id)
     user = request.user
     
-    # Check if the user is registered for this event
+    # Verify the user is actually registered
     signup = EventSignUp.objects.filter(user=user, event=event).first()
     
     if signup:
         try:
+            # Use transaction to ensure all database changes succeed or fail together
+            # This maintains referential integrity across models
             with transaction.atomic():
-                # Delete the signup record
+                # Clean up all registration records
                 signup.delete()
                 
-                # Remove user from attendees
+                # Remove from attendees M2M relationship
                 event.attendees.remove(user)
                 
-                # Delete interaction record
+                # Clean up recommendation system data
                 UserEventInteraction.objects.filter(
                     user=user,
                     event=event,
                     interaction_type='signup'
                 ).delete()
                 
-                # Find users who expressed interest in this event
+                # NOTIFICATION SYSTEM: Alert interested users about the newly available spot
+                # This is a key feature that connects the interest tracking and notification systems
                 interested_users = UserEventInteraction.objects.filter(
                     event=event,
                     interaction_type='interest'
                 ).select_related('user')
                 
-                # Create notifications for interested users
+                # Create personalized notifications for each interested user
                 for interaction in interested_users:
                     notification_message = f"A spot has opened up in '{event.title}' that you were interested in!"
                     Announcement.objects.create(
@@ -1144,7 +1207,7 @@ def leave_event(request, event_id):
                         read=False
                     )
                 
-                # Log the action
+                # Detailed logging for analytics and debugging
                 logger.info({
                     "message": "User left event",
                     "user_id": user.id,
@@ -1161,7 +1224,8 @@ def leave_event(request, event_id):
     else:
         messages.warning(request, "You are not registered for this event.")
     
-    # Redirect back to the event page
+    # Add cache control headers to ensure the browser always shows current status
+    # This prevents the user from seeing stale data
     response = redirect('event_view', event_id=event_id)
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return response

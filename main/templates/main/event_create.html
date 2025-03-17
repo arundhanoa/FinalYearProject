@@ -269,7 +269,7 @@
         .duration-inputs input[type="number"] {
             appearance: textfield;
         }
-    </style>
+</style>
 {% endblock extra_head %}
 
 {% block content %}
@@ -357,7 +357,7 @@
                             <label for="capacity">Event Capacity</label>
                             <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
                         </div>
-                        
+        
                         <!-- Price Options -->
                         <div class="form-group">
                             <label>Price</label>
@@ -369,15 +369,15 @@
                                 <label for="cost">Cost (numbers only)</label>
                                 <div class="input-group" style="display: flex; align-items: center;">
                                     <span style="padding: 0 10px 0 0;">£</span>
-                                    <input type="number" 
+                                <input type="number" 
                                            style="flex: 1;"
-                                           step="0.01" 
-                                           class="form-control" 
-                                           id="cost" 
-                                           name="cost" 
-                                           placeholder="8.00"
-                                           pattern="[0-9]*\.?[0-9]*"
-                                           oninput="updatePreviewPrice()">
+                                       step="0.01" 
+                                       class="form-control" 
+                                       id="cost" 
+                                       name="cost" 
+                                       placeholder="8.00"
+                                       pattern="[0-9]*\.?[0-9]*"
+                                       oninput="updatePreviewPrice()">
                                 </div>
                                 <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>

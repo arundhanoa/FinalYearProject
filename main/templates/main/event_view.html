@@ -339,7 +339,7 @@
                     
                     {% if user.is_authenticated %}
                         <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                            <p><small>Debug: Registration status - {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
+                            <p><small>Registration status: {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
                             <p><small>Current User: {{ current_user.username }}</small></p>
                             <p><small>Current Attendees: {{ attendees|join:", " }}</small></p>
                         </div>
@@ -399,7 +399,7 @@
                                             I'm Interested in This Event
                                         </button>
                                         <div id="interestMessage" style="display: none; color: #4CAF50; text-align: center; margin-top: 10px; font-weight: 500;">
-                                            Interest Recorded! We'll notify you when a spot becomes available.
+                                            Interest Recorded!
                                         </div>
                                     {% else %}
                                         <form method="post" action="{% url 'event_signup' event.id %}">
