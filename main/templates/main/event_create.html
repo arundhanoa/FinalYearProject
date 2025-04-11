@@ -9,11 +9,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
+        /* Standardized form styling */
+        :root {
+            --primary-color: #ff7f00;
+            --secondary-color: #e0301e;
+            --text-color: #333;
+            --border-color: #ddd;
+            --light-bg: #f8f8f8;
+            --white: #fff;
+            --success: #28a745;
+            --error: #dc3545;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            color: var(--text-color);
+        }
+
         /* Basic styling for layout */
         .alert {
             padding: 15px;
             margin-bottom: 20px;
-            border-radius: 4px;
+            border-radius: 6px;
         }
         
         .alert-success {
@@ -32,169 +50,140 @@
             display: none;
         }
     
-        .price-btn.selected,
-        .location-btn.selected {
-            background-color: #ff7f00;
-            color: white;
-        }
-    
-        .indicator.active {
-            background-color: #ff7f00;
-        }
-    
-        .indicator {
-            width: 10px;
-            height: 10px;
-            margin: 0 5px;
-            border-radius: 50%;
-            background-color: #ccc;
-            cursor: pointer;
-        }
-    
-        .preview-row {
-            display: block;
-            margin-bottom: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .row-flex {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Ensures the preview section is displayed in a column format */
-        .preview-section {
-            display: flex;
-            flex-direction: column;
-        }
-        
+        /* Container layout */
         .container {
-            display: flex;
-            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
-            gap: 2rem;
+            gap: 1.5rem;
         }
-        /* Left form container */
-        .form-container {
-            flex: 1;
-            background-color: #f8f8f8;
-            padding: 2rem;
+
+        /* Form containers */
+        .form-container-left, .form-container-center {
+            background-color: var(--white);
+            padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
-        /* Right preview container */
-        .preview-container {
-            flex: 1;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+        /* Form sections */
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        .preview-title {
-            font-size: 1.5rem;
+
+        .form-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
             margin-bottom: 1rem;
+            color: var(--primary-color);
         }
+
         /* Form styling */
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
+
         label {
-            font-weight: bold;
+            font-weight: 500;
             margin-bottom: 0.5rem;
             display: block;
+            font-size: 0.95rem;
         }
-        .button-group button {
-            padding: 0.75rem 1.5rem;
-            margin-right: 10px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: #e0e0e0;
-        }
-        .button-group button.selected {
-            background-color: #e0301e;
-            color: #ffffff;
-        }
-        .hidden {
-            display: none;
-        }
+
+        /* Standardized input styles */
         input[type="text"],
         input[type="date"],
+        input[type="time"],
+        input[type="number"],
         select,
         textarea {
             width: 100%;
             padding: 0.75rem;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--white);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        #event-image {
-            border: 2px solid #000;
-            padding: 1rem;
-            background-color: #f3f3f3;
-            border-radius: 4px;
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 127, 0, 0.15);
+            outline: none;
         }
-        /* Map styling */
-        #map {
-            width: 100%;
-            height: 250px;
-            margin-top: 1rem;
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
         }
-        /* Event preview styling */
-        .event-preview {
+
+        /* Button styling */
+        .button-group {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
-        .preview-image-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            background-color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+
+        .button-group button {
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: var(--light-bg);
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
         }
-        .preview-image-container img {
-            max-width: 100%;
-            max-height: 100%;
+
+        .button-group button:hover {
+            background-color: #e8e8e8;
         }
-        /* Image slider indicators */
-        .image-indicators {
-            position: absolute;
-            bottom: 10px;
-            display: flex;
-            gap: 5px;
+
+        .button-group button.selected {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
         }
-        .indicator {
-            width: 8px;
-            height: 8px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            opacity: 0.6;
+
+        /* File upload styling */
+        .file-upload {
+            border: 2px dashed var(--border-color);
+            padding: 1.2rem;
+            text-align: center;
+            border-radius: 6px;
+            background-color: var(--light-bg);
+            transition: all 0.2s;
+            cursor: pointer;
         }
-        .indicator.active {
-            opacity: 1;
+
+        .file-upload:hover {
+            border-color: var(--primary-color);
         }
-        .preview-section {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem;
-            border-top: 1px solid #ccc;
+
+        .file-upload label {
+            display: block;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
         }
-        .preview-item {
-            font-size: 1rem;
-            padding: 0.25rem 0;
-        }
+
+        /* Checkbox styling */
         .checkbox-group {
             display: flex;
+            flex-wrap: wrap;
             gap: 1rem;
-            margin-top: 0.5rem;
+            margin: 0.5rem 0;
         }
 
         .checkbox-item {
@@ -204,70 +193,159 @@
         }
 
         .checkbox-item input[type="checkbox"] {
-            width: auto;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         .checkbox-item label {
             margin: 0;
             font-weight: normal;
+            cursor: pointer;
         }
 
-        /* Tag Input Styling */
-        .select2-container--default .select2-selection--multiple {
-            border: 1px solid #ccc;
+        /* Tag styling */
+        .tag-container {
+            margin-top: 1rem;
+        }
+
+        .tag-item {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 4px 10px;
+            margin: 2px;
             border-radius: 4px;
-            padding: 0.5rem;
-            min-height: 45px;
+            font-size: 0.85rem;
         }
 
-        .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #ff7f00;
-            color: white;
+        .tag-item button {
+            background: none;
             border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            margin: 3px;
+            color: var(--white);
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 1rem;
         }
 
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        /* Submit button */
+        .submit-btn {
+            background-color: var(--primary-color);
             color: white;
-            margin-right: 5px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+            width: 100%;
         }
 
-        .select2-container--default .select2-results__option--highlighted[aria-selected] {
-            background-color: #ff7f00;
+        .submit-btn:hover {
+            background-color: #e67300;
         }
 
-        .select2-dropdown {
-            border: 1px solid #ccc;
+        /* Preview container styling */
+        .preview-container {
+            background-color: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .select2-search__field {
-            padding: 6px !important;
+        .preview-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .event-preview {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 396px;
+            height: 696px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        /* Duration inputs */
+        .duration-inputs {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .duration-inputs > div {
+            flex: 1;
+            display: flex;
+            align-items: center;
         }
 
         .duration-inputs input[type="number"] {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
+            width: 80px;
+        }
+
+        /* Tag suggestion styling */
+        .tag-search-container {
+            margin-top: 0.5rem;
+        }
+
+        #suggestedTags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+
+        #suggestedTags div {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            padding: 4px 10px;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .duration-inputs input[type="number"]:focus {
-            outline: none;
-            border-color: #ff7f00;
-            box-shadow: 0 0 5px rgba(255, 127, 0, 0.2);
+        #suggestedTags div:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
         }
 
-        /* Remove spinner buttons from number inputs */
-        .duration-inputs input[type="number"]::-webkit-inner-spin-button,
-        .duration-inputs input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* Responsive design for smaller screens */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .preview-container {
+                grid-column: 1 / 3;
+                margin-top: 1.5rem;
+            }
         }
 
-        .duration-inputs input[type="number"] {
-            appearance: textfield;
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-container {
+                grid-column: 1;
+            }
         }
 </style>
 {% endblock extra_head %}
@@ -307,10 +385,9 @@
 
     
     <main>
-        <div class="container" style="display: flex; justify-content: space-between;">
-            <!-- Left side: form inputs for creating an event -->
-            <div class="form-container" style="flex: 1; margin-right: 20px;">
-                <div class="form-container">
+        <div class="container">
+            <!-- Left pane: Basic info and event details -->
+            <div class="form-container-left">
                     {% if messages %}
                         {% for message in messages %}
                             <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
@@ -319,17 +396,29 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <h1>Create Event</h1>
+                <h1 style="margin-bottom: 1.5rem; color: var(--text-color);">Create Event</h1>
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
         
-                        <!-- Add these hidden inputs -->
+                    <!-- Hidden inputs -->
                         <input type="hidden" id="price_type" name="price_type" value="free">
+                        <input type="hidden" id="location_type" name="location_type" value="">
+                    <input type="hidden" id="event-types" name="event_types" value="">
+                    <input type="hidden" id="total-duration" name="duration" value="0">
+                    <input type="hidden" name="tags" id="selectedTagsInput">
+
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">Basic Information</h2>
         
                         <!-- Image Upload -->
                         <div class="form-group">
-                            <label for="event-image">Upload Event Images</label>
-                            <input type="file" id="event-image" name="images" multiple required onchange="updateImagePreview()">
+                            <label for="event-image">Event Images</label>
+                            <div class="file-upload">
+                                <input type="file" id="event-image" name="images" multiple required onchange="updateImagePreview()" style="display: none;">
+                                <label for="event-image">Click to upload images</label>
+                                <p style="margin: 0; font-size: 0.85rem; color: #666;">Upload one or more images for your event</p>
+                            </div>
                         </div>
 
                          <!-- Event Title -->
@@ -355,32 +444,35 @@
                          <!-- Event Capacity -->
                          <div class="form-group">
                             <label for="capacity">Event Capacity</label>
-                            <input type="number" id="capacity" name="capacity" placeholder="Enter event capacity" required oninput="updatePreviewCapacity()">
+                            <input type="number" id="capacity" name="capacity" placeholder="Maximum number of attendees" required oninput="updatePreviewCapacity()">
                         </div>
+                        </div>
+                    
+                    <!-- Event Details Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">Event Details</h2>
         
                         <!-- Price Options -->
                         <div class="form-group">
                             <label>Price</label>
                             <div class="button-group">
-                                <button type="button" class="price-btn" data-price="free" onclick="selectPrice('Free')">Free</button>
+                                <button type="button" class="price-btn selected" data-price="free" onclick="selectPrice('Free')">Free</button>
                                 <button type="button" class="price-btn" data-price="self-funded" onclick="selectPrice('Self-funded')">Self-funded</button>
                             </div>
                             <div id="cost-input" class="form-group hidden">
-                                <label for="cost">Cost (numbers only)</label>
-                                <div class="input-group" style="display: flex; align-items: center;">
+                                <label for="cost">Cost (£)</label>
+                                <div style="display: flex; align-items: center;">
                                     <span style="padding: 0 10px 0 0;">£</span>
                                 <input type="number" 
-                                           style="flex: 1;"
                                        step="0.01" 
-                                       class="form-control" 
                                        id="cost" 
                                        name="cost" 
                                        placeholder="8.00"
                                        pattern="[0-9]*\.?[0-9]*"
                                        oninput="updatePreviewPrice()">
-                                </div>
-                                <small class="form-text text-muted">Enter numbers only (e.g., 8.00). Do not include currency symbols.</small>
                             </div>
+                                <small style="display: block; font-size: 0.8rem; color: #666; margin-top: 0.25rem;">Enter numbers only (e.g., 8.00)</small>
+                        </div>
                         </div>
                         
                         <!-- Event Type -->
@@ -404,69 +496,83 @@
                                     <label for="type-networking">Networking</label>
                                 </div>
                             </div>
-                            <input type="hidden" id="event-types" name="event_types" value="">
+                        </div>
                         </div>
         
-                        <!-- Date and Time -->
-                        <div class="form-group">
+                    <div class="form-section">
+                        <h2 class="form-section-title">Date and Time</h2>
+                        
+                        <div class="form-group" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 150px;">
                             <label for="event-date">Date</label>
                             <input type="date" id="event-date" name="date" required onchange="updatePreviewDate()">
                         </div>
-                        <div class="form-group">
+                            <div style="flex: 1; min-width: 150px;">
                             <label for="event-time">Time</label>
                             <input type="time" id="event-time" name="time" required onchange="updatePreviewDate()">
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label>Expected Duration</label>
-                            <div class="duration-inputs" style="display: flex; gap: 10px; align-items: center;">
-                                <div>
+                            <div class="duration-inputs">
+                                <div style="display: flex; align-items: center;">
                                     <input type="number" 
                                            id="duration-hours" 
                                            name="duration_hours" 
                                            min="0" 
                                            max="24" 
                                            placeholder="0" 
-                                           style="width: 70px;"
                                            onchange="updateDuration()">
-                                    <label for="duration-hours">Hours</label>
+                                    <label for="duration-hours" style="margin-left: 8px;">Hours</label>
                                 </div>
-                                <div>
+                                <div style="display: flex; align-items: center;">
                                     <input type="number" 
                                            id="duration-minutes" 
                                            name="duration_minutes" 
                                            min="0" 
                                            max="59" 
                                            placeholder="0" 
-                                           style="width: 70px;"
                                            onchange="updateDuration()">
-                                    <label for="duration-minutes">Minutes</label>
+                                    <label for="duration-minutes" style="margin-left: 8px;">Minutes</label>
                                 </div>
-                                <!-- Hidden input to store total duration in minutes -->
-                                <input type="hidden" id="total-duration" name="duration" value="0">
                             </div>
                         </div>
-                        <!-- Location Options -->
+                    </div>
+            </div>
+            
+            <!-- Center pane: Date, time, location, description -->
+            <div class="form-container-center">
+                <!-- Date and Time Section -->
+                
+                <!-- Location Section -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Location</h2>
+                    
                         <div class="form-group">
-                            <label>Location</label>
+                        <label>Location Type</label>
                             <div class="button-group">
                                 <button type="button" class="location-btn" data-location="virtual" onclick="selectLocation('virtual')">Virtual</button>
                                 <button type="button" class="location-btn" data-location="in-person" onclick="selectLocation('in-person')">In-person</button>
                                 <button type="button" class="location-btn" data-location="hybrid" onclick="selectLocation('hybrid')">Hybrid</button>
                             </div>
                             
-                            <div id="meeting-link" class="form-group hidden">
+                        <div id="meeting-link" class="form-group hidden" style="margin-top: 1rem;">
                                 <label for="link">Meeting Link</label>
                                 <input type="text" id="link" name="meeting_link" placeholder="Enter virtual meeting link (include https://)" 
                                        oninput="updatePreviewLocation()">
-                                <small class="form-text text-muted">Please include https:// in your link</small>
+                            <small style="display: block; font-size: 0.8rem; color: #666; margin-top: 0.25rem;">Please include https:// in your link</small>
                             </div>
-                            <div id="address-input" class="form-group hidden">
+                        <div id="address-input" class="form-group hidden" style="margin-top: 1rem;">
                                 <label for="address">Address</label>
                                 <input type="text" id="address" name="location" placeholder="Enter address" oninput="updatePreviewLocation()">
                             </div>
-                            <input type="hidden" id="location_type" name="location_type" value="">
+                    </div>
                         </div>
+                
+                <!-- Description Section -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Description and Tags</h2>
         
                         <!-- Description -->
                         <div class="form-group">
@@ -476,83 +582,86 @@
 
                         <!-- Tags Input -->
                         <div class="form-group">
-                            <label for="tags">Tags</label>
-                            <div class="tag-search-container">
-                                <input type="text" id="tagSearch" placeholder="Search for tags..." style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; margin-bottom: 10px;">
-                                <div id="searchResults" style="max-height: 200px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 4px; display: none;">
-                                    <!-- Search results will be populated here -->
-                                </div>
-                                <div id="selectedTags" style="margin: 10px 0;">
-                                    <!-- Selected tags will be displayed here -->
-                                </div>
-                                <div style="margin-top: 20px;">
-                                    <h4 style="margin-bottom: 10px;">Suggested Tags</h4>
-                                    <div id="suggestedTags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                        <!-- Suggested tags will be populated here -->
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Hidden input to store selected tags -->
-                            <input type="hidden" name="tags" id="selectedTagsInput">
+                        <label for="tagSearch">Tags</label>
+                        <input type="text" id="tagSearch" placeholder="Search for tags..." style="margin-bottom: 10px;">
+                        <div id="searchResults" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; display: none;"></div>
+                        
+                        <div id="selectedTags" class="tag-container"></div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h4 style="font-size: 0.9rem; color: #666; margin: 0;">Suggested Tags</h4>
+                                <button id="view-all-tags" type="button" style="background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem; padding: 2px 8px; cursor: pointer; color: var(--primary-color);">View All Suggestions</button>
+                        </div>
+                            <div id="suggestedTags"></div>
+                            <div id="all-suggestions-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+                                <div style="background-color: white; margin: 10% auto; padding: 20px; width: 80%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                        <h3 style="margin: 0; color: var(--primary-color);">All Tag Suggestions</h3>
+                                        <button id="close-suggestions" type="button" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                                    <div id="suggestions-by-category" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+                        </div>
+                    </div>
+                        </div>
                         </div>
 
-                        <!-- Add submit button -->
-                        <div class="form-group">
-                            <button type="submit" class="submit-btn" style="background-color: #ff7f00; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-                                Create Event
-                            </button>
-                        </div>
+                <!-- Submit button -->
+                <button type="submit" class="submit-btn">Create Event</button>
                     </form>
-                </div>
+                        </div>
+
+            <!-- Right pane: Live preview of the event -->
+            <div class="preview-container">
+                <h2 class="preview-title" style="color: var(--text-color);">Event Preview</h2>
+                <div class="event-preview">
+                    <div class="preview-image-container" style="position: relative; width: 100%; height: 240px; background-color: #f5f5f5; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+                        <img id="preview-image" src="" alt="Event Image" style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+                        <div class="image-indicators" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 2;"></div>
+                        
+                        <!-- Event badges (price badge only) -->
+                        <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; z-index: 2;">
+                            <span id="preview-price-badge" style="background-color: var(--primary-color); color: white; padding: 5px 10px; border-radius: 5px; font-size: 14px; font-weight: 500; display: none;">Free</span>
             </div>
     
-            <!-- Right side: Live preview of the event card -->
-            <div class="preview-container" style="flex: 0.7;">
-                <h2 class="preview-title">Event Preview</h2>
-                <div class="event-preview" style="border: 2px solid #ccc; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">
-                    <div class="preview-image-container" style="text-align: center; background-color: white; padding: 10px; border-radius: 5px;">
-                        <img id="preview-image" src="" alt="Event Image" style="max-width: 100%; height: auto; border-radius: 5px;">
-                        <div class="image-indicators" style="text-align: center; margin-top: 10px;">
-                            <span class="indicator active"></span>
-                            <span class="indicator"></span>
-                            <!-- Additional indicators for each image will be generated dynamically -->
+                        <!-- Date overlay (top right) -->
+                        <div id="preview-date-overlay" style="position: absolute; top: 12px; right: 12px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 6px 10px; border-radius: 5px; font-size: 14px; font-weight: 600; z-index: 2; display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                            <span id="preview-date-day" style="font-size: 17px; font-weight: bold;">--</span>
+                            <span id="preview-date-month" style="font-size: 14px;">---</span>
                         </div>
-                    </div>
-                    <div class="preview-section">
-
-                        <!-- First Row: Event Title -->
-                        <div class="preview-row" style="border-bottom: 1px solid #ddd; padding: 10px 0;" id="preview-title">Title: Event Title</div>
-
-                        <!-- Second Row: Line of Service and Capacity -->
-                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                            <span id="preview-line-service">Line of Service: N/A</span>
-                            <span id="preview-capacity">Capacity: 0</span>
-                        </div>
-            
-                        <!-- Third Row: Price -->
-                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                            <span id="preview-price">Price: Free</span>
-                            <span id="preview-event-type">Type: N/A</span>
                             </div>
 
-                        <!-- Fourth Row: Date and Time -->
-                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                            <span id="preview-date">Date: N/A</span>
-                            <span id="preview-locationx">Location: N/A</span>
+                    <div style="padding: 15px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+                        <!-- Title -->
+                        <h3 id="preview-title" style="font-size: 21px; font-weight: 600; margin-bottom: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">Event Title</h3>
+                        
+                        <!-- Location -->
+                        <div id="preview-locationx" style="font-size: 17px; color: #666; margin-bottom: 14px;">Location: N/A</div>
+                        
+                        <!-- Description -->
+                        <span style="font-weight: 600; font-size: 17px; color: #444; margin-bottom: 4px; display: block;">Description:</span>
+                        <p id="preview-description" style="font-size: 18px; color: #555; margin: 0 0 14px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">Event description will appear here...</p>
+                        
+                        <!-- Event details rows -->
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 12px 0; font-size: 18px;">
+                            <div><strong>LoS:</strong> <span id="preview-line-service-value">N/A</span></div>
+                            <div><strong>Capacity:</strong> <span id="preview-capacity-value">0</span></div>
                         </div>
 
-                         <!-- Fourth Row: Date and Time -->
-                        <div class="preview-row" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 10px 0;">
-                            <span id="preview-time">Time: N/A</span>
-                            <span id="preview-duration">Duration: N/A</span>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 12px 0; font-size: 18px;">
+                            <div><strong>Price:</strong> <span id="preview-price-value">Free</span></div>
+                            <div><strong>Time:</strong> <span id="preview-time-value">--:--</span></div>
                         </div>
                         
-                        <!-- Fifth Row: Description -->
-                        <div class="preview-row" style="padding: 10px 0;" id="preview-description">Description: N/A</div>
+                        
+                        <!-- Tags -->
+                        <div id="preview-tags" style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; max-height: 108px; overflow: hidden;">
+                            <span style="color: #666; font-style: italic; font-size: 16px;">No tags selected</span>
                     </div>
                 </div>
             </div>
-            
+            </div>
         </div>
     </main>
 {% endblock content %}
@@ -562,15 +671,312 @@
         // Image Preview
         let currentImageIndex = 0;
         const images = [];
+        let currentTags = new Set();
+        let lastFieldValues = {
+            title: '',
+            lineOfService: '',
+            eventTypes: [],
+            description: '',
+            location: ''
+        };
+        
+        // Tag suggestions based on event details
+        const tagSuggestionMap = {
+            // Line of service based suggestions
+            "Audit": ["Audit", "Financial", "Accounting", "Compliance", "Risk Assessment"],
+            "Consulting": ["Consulting", "Strategy", "Digital", "Technology", "Innovation", "Business Transformation"],
+            "Tax": ["Tax", "Finance", "Legal", "Compliance", "Advisory", "Planning"],
+            "Advisory": ["Advisory", "Risk", "Strategy", "Business", "Consulting", "Management"],
+            "Assurance": ["Assurance", "Quality", "Standards", "Compliance", "Audit", "Certification"],
+            
+            // Event type based suggestions
+            "General": ["Meeting", "Workshop", "Training", "Conference", "Presentation", "Seminar"],
+            "Teambuilding": ["Team", "Teambuilding", "Fun", "Social", "Collaboration", "Offsite", "Retreat"],
+            "Volunteering": ["Volunteer", "Community", "Charity", "Social Impact", "CSR", "Outreach", "Nonprofit"],
+            "Networking": ["Network", "Professional", "Industry", "Career", "Connections", "Mixer", "Social"],
+            
+            // Location type suggestions
+            "virtual": ["Online", "Remote", "Digital", "Virtual", "Web", "Video"],
+            "in-person": ["Onsite", "In-person", "Physical", "Office", "Venue", "Local"],
+            "hybrid": ["Hybrid", "Flexible", "Mixed", "Remote-friendly"],
+            
+            // Title word suggestions - these will be matched against words in the title
+            "Workshop": ["Learning", "Hands-on", "Interactive", "Skills", "Practice", "Exercise"],
+            "Training": ["Learning", "Development", "Skills", "Professional", "Education", "Course"],
+            "Conference": ["Industry", "Keynote", "Speakers", "Presentation", "Talks", "Sessions"],
+            "Meeting": ["Discussion", "Planning", "Collaboration", "Update", "Sync"],
+            "Hackathon": ["Coding", "Innovation", "Technology", "Competition", "Challenge", "Development"],
+            "Social": ["Fun", "Networking", "Casual", "Team", "Get-together", "Meetup"],
+            "Charity": ["Fundraising", "Community", "Volunteer", "Giving", "Donation", "Nonprofit"],
+            "Digital": ["Technology", "Innovation", "Online", "Virtual", "Software", "Tech"],
+            "Leadership": ["Management", "Executive", "Strategy", "Development", "Direction", "Vision"],
+            "Game": ["Fun", "Team", "Competition", "Entertainment", "Interactive", "Activity"],
+            "Lunch": ["Food", "Casual", "Networking", "Social", "Midday", "Meal"],
+            "Dinner": ["Food", "Evening", "Networking", "Social", "Formal", "Meal"],
+            "Award": ["Recognition", "Achievement", "Celebration", "Ceremony", "Honor"],
+            "Panel": ["Discussion", "Experts", "Industry", "Speakers", "Forum", "Debate"],
+            "Webinar": ["Online", "Virtual", "Presentation", "Learning", "Remote"],
+            "Offsite": ["Retreat", "Team", "External", "Away", "Planning"],
+            "Launch": ["New", "Start", "Announcement", "Release", "Kickoff", "Beginning"],
+            "Celebration": ["Party", "Recognition", "Achievement", "Success", "Milestone"]
+        };
 
+        // Initialize the page when loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form with defaults
+            selectPrice('Free');
+            
+            // Set up tag search
+            const searchInput = document.getElementById('tagSearch');
+            searchInput.addEventListener('input', handleTagSearch);
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(event) {
+                const searchResults = document.getElementById('searchResults');
+                if (!event.target.closest('#tagSearch') && !event.target.closest('#searchResults')) {
+                    searchResults.style.display = 'none';
+                }
+            });
+            
+            // Set up smart tag suggestions based on form field completion
+            setupSmartTagSuggestions();
+            
+            // Initial tag suggestions
+            updateSmartTagSuggestions();
+            
+            // Setup view all tags button
+            document.getElementById('view-all-tags').addEventListener('click', showAllTagSuggestions);
+            document.getElementById('close-suggestions').addEventListener('click', closeAllTagSuggestions);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('all-suggestions-modal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+        
+        function setupSmartTagSuggestions() {
+            // Example of one of several field monitors in the full implementation
+            document.getElementById('event-title').addEventListener('blur', function() {
+                const newValue = this.value;
+                if (newValue !== lastFieldValues.title) {
+                    lastFieldValues.title = newValue;
+                    updateSmartTagSuggestions();
+                }
+            });
+            
+            // Line of service - already updates on change
+            document.getElementById('line-service').addEventListener('change', function() {
+                const newValue = this.value;
+                if (newValue !== lastFieldValues.lineOfService) {
+                    lastFieldValues.lineOfService = newValue;
+                    updateSmartTagSuggestions();
+                }
+            });
+            
+            // Event type changes
+            document.querySelectorAll('input[name="event_type"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const newEventTypes = [];
+                    document.querySelectorAll('input[name="event_type"]:checked').forEach(cb => {
+                        newEventTypes.push(cb.value);
+                    });
+                    
+                    // Check if event types have changed
+                    if (!arraysEqual(newEventTypes, lastFieldValues.eventTypes)) {
+                        lastFieldValues.eventTypes = [...newEventTypes];
+                        updateSmartTagSuggestions();
+                    }
+                });
+            });
+            
+            // Description - update on blur (field completion) instead of input
+            document.getElementById('event-description').addEventListener('blur', function() {
+                const newValue = this.value;
+                if (newValue !== lastFieldValues.description) {
+                    lastFieldValues.description = newValue;
+                    updateSmartTagSuggestions();
+                }
+            });
+            
+            // Location type changes
+            document.querySelectorAll('.location-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const locationType = this.getAttribute('data-location');
+                    if (locationType !== lastFieldValues.location) {
+                        lastFieldValues.location = locationType;
+                        // Location is handled in selectLocation function, but we'll update tags here too
+                        setTimeout(updateSmartTagSuggestions, 100);
+                    }
+                });
+            });
+        }
+        
+        // Helper function to compare arrays
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+        
+        function updateSmartTagSuggestions() {
+            // Get current form values
+            const title = document.getElementById('event-title').value.toLowerCase();
+            const lineOfService = document.getElementById('line-service').value;
+            const description = document.getElementById('event-description').value.toLowerCase();
+            const locationType = document.getElementById('location_type').value;
+            
+            // Get selected event types
+            const eventTypes = [];
+            document.querySelectorAll('input[name="event_type"]:checked').forEach(checkbox => {
+                eventTypes.push(checkbox.value);
+            });
+            
+            // Collect suggested tags based on input
+            const suggestedTags = new Set();
+            
+            // Add suggestions based on line of service
+            if (lineOfService && tagSuggestionMap[lineOfService]) {
+                tagSuggestionMap[lineOfService].forEach(tag => suggestedTags.add(tag));
+            }
+            
+            // Add suggestions based on event types
+            eventTypes.forEach(type => {
+                if (tagSuggestionMap[type]) {
+                    tagSuggestionMap[type].forEach(tag => suggestedTags.add(tag));
+                }
+            });
+            
+            // Add suggestions based on location type
+            if (locationType && tagSuggestionMap[locationType]) {
+                tagSuggestionMap[locationType].forEach(tag => suggestedTags.add(tag));
+            }
+            
+            // More sophisticated word matching from title
+            if (title) {
+                // Check for exact keyword matches
+                const titleWords = title.split(/\s+/);
+                titleWords.forEach(word => {
+                    if (word.length > 3) {
+                        const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
+                        if (tagSuggestionMap[capitalized]) {
+                            tagSuggestionMap[capitalized].forEach(tag => suggestedTags.add(tag));
+                        }
+                    }
+                });
+                
+                // Check for partial matches in longer title words
+                titleWords.filter(word => word.length > 5).forEach(word => {
+                    Object.keys(tagSuggestionMap).forEach(key => {
+                        if (key.toLowerCase().includes(word) || word.includes(key.toLowerCase())) {
+                            tagSuggestionMap[key].forEach(tag => suggestedTags.add(tag));
+                        }
+                    });
+                });
+            }
+            
+            // Check for keyword matches in description (more sophisticated)
+            if (description) {
+                // Common event-related keywords
+                const keyDescriptionWords = [
+                    "virtual", "online", "in-person", "hybrid", "free", "paid", 
+                    "workshop", "training", "seminar", "conference", "networking", 
+                    "social", "charity", "fundraising", "team", "professional",
+                    "meeting", "webinar", "session", "discussion", "presentation",
+                    "hackathon", "sprint", "certification", "course", "class",
+                    "roundtable", "panel", "forum", "summit", "symposium"
+                ];
+                
+                keyDescriptionWords.forEach(word => {
+                    if (description.includes(word)) {
+                        suggestedTags.add(word.charAt(0).toUpperCase() + word.slice(1));
+                    }
+                });
+                
+                // Check for phrases in description
+                const phrases = [
+                    "team building", "team-building", "professional development",
+                    "skill building", "skill-building", "hands on", "hands-on",
+                    "question and answer", "q&a", "question & answer",
+                    "learn and develop", "food provided", "refreshments provided"
+                ];
+                
+                phrases.forEach(phrase => {
+                    if (description.includes(phrase)) {
+                        // Convert phrase to tag (capitalize each word, remove spaces)
+                        const tag = phrase.split(/\s+/).map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join('');
+                        suggestedTags.add(tag);
+                    }
+                });
+            }
+            
+            // Remove tags that are already selected
+            const filteredSuggestions = Array.from(suggestedTags).filter(tag => !currentTags.has(tag));
+            
+            // Display updated suggestions (limit to 10, or 15 if there are lots of suggestions)
+            const limit = filteredSuggestions.length > 20 ? 15 : 10;
+            displayTagSuggestions(filteredSuggestions.slice(0, limit));
+            
+            // Update the suggestion status indicator
+            updateSuggestionStatus(filteredSuggestions.length);
+        }
+        
+        function updateSuggestionStatus(count) {
+            // Update the View All button text based on count
+            const viewAllButton = document.getElementById('view-all-tags');
+            if (viewAllButton) {
+                if (count > 0) {
+                    viewAllButton.textContent = `View All (${count}+)`;
+                } else {
+                    viewAllButton.textContent = 'View Suggestions';
+                }
+            }
+        }
+        
+        function displayTagSuggestions(suggestions) {
+            const container = document.getElementById('suggestedTags');
+            container.innerHTML = '';
+            
+            if (suggestions.length === 0) {
+                const noSuggestions = document.createElement('div');
+                noSuggestions.textContent = 'No suggestions available';
+                noSuggestions.style.color = '#666';
+                noSuggestions.style.fontStyle = 'italic';
+                container.appendChild(noSuggestions);
+                return;
+            }
+            
+            suggestions.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.textContent = tag;
+                tagElement.className = 'suggested-tag';
+                tagElement.onclick = () => addTag(tag);
+                container.appendChild(tagElement);
+            });
+        }
     
         function updateImagePreview() {
             const fileInput = document.getElementById("event-image");
             const indicatorContainer = document.querySelector(".image-indicators");
             const previewImage = document.getElementById("preview-image");
+            const previewContainer = document.querySelector(".preview-image-container");
     
             images.length = 0;
             indicatorContainer.innerHTML = '';
+
+            if (fileInput.files.length === 0) {
+                previewImage.src = "";
+                previewImage.alt = "No image selected";
+                previewContainer.style.justifyContent = "center";
+                previewContainer.style.alignItems = "center";
+                return;
+            }
     
             for (let i = 0; i < fileInput.files.length; i++) {
                 const file = fileInput.files[i];
@@ -578,6 +984,15 @@
     
                 const indicator = document.createElement("span");
                 indicator.classList.add("indicator");
+                indicator.style.width = "8px";
+                indicator.style.height = "8px";
+                indicator.style.background = i === 0 ? "var(--primary-color)" : "#ffffff";
+                indicator.style.borderRadius = "50%";
+                indicator.style.display = "inline-block";
+                indicator.style.margin = "0 3px";
+                indicator.style.cursor = "pointer";
+                indicator.style.opacity = i === 0 ? "1" : "0.6";
+                
                 indicator.onclick = () => {
                     currentImageIndex = i;
                     updatePreviewImage();
@@ -595,21 +1010,16 @@
             const previewImage = document.getElementById("preview-image");
             previewImage.src = images[currentImageIndex];
             document.querySelectorAll(".indicator").forEach((indicator, index) => {
-                indicator.classList.toggle("active", index === currentImageIndex);
+                indicator.style.background = index === currentImageIndex ? "var(--primary-color)" : "#ffffff";
+                indicator.style.opacity = index === currentImageIndex ? "1" : "0.6";
             });
         }
     
         function selectPrice(price) {
-            const priceType = price.toLowerCase().replace(/ /g, '-');  // Convert "Paid for" to "paid-for"
-            console.log('Price Type:', priceType);  // Debug log
-            console.log('Hidden Input Value:', document.getElementById("price_type").value);  // Debug log
+            const priceType = price.toLowerCase().replace(/ /g, '-');
             
             // Set the hidden input value
             document.getElementById("price_type").value = priceType;
-            
-            // Add more debug logs
-            console.log('After setting - Hidden Input Value:', document.getElementById("price_type").value);
-            console.log('Cost Input Value:', document.getElementById("cost").value);
             
             // Update preview and handle cost input visibility
             const costInput = document.getElementById("cost-input");
@@ -618,15 +1028,13 @@
             if (priceType === 'self-funded') {
                 costInput.classList.remove('hidden');
                 const costValue = document.getElementById("cost").value;
-                document.getElementById("preview-price").innerText = costValue ? 
-                    `Price: £${costValue}` : 
+                document.getElementById("preview-price-value").innerText = costValue ? 
+                    `£${costValue}` : 
                     'Price: Self-funded (cost required)';
             } else {
                 costInput.classList.add('hidden');
                 document.getElementById("cost").value = '';  // Clear cost value
-                document.getElementById("preview-price").innerText = priceType === 'free' ? 
-                    'Price: Free' : 
-                    'Price: Paid For';  // For paid-for events
+                document.getElementById("preview-price-value").innerText = 'Price: Free';
             }
             
             // Update button states
@@ -639,8 +1047,6 @@
         }
     
         function selectLocation(location) {
-            console.log('selectLocation called with:', location);
-            
             // Remove selected class from all buttons
             document.querySelectorAll('.location-btn').forEach(btn => {
                 btn.classList.remove('selected');
@@ -655,7 +1061,6 @@
             // Set the hidden input value
             const locationTypeInput = document.getElementById("location_type");
             locationTypeInput.value = location.toLowerCase();
-            console.log('Set location_type to:', locationTypeInput.value);
 
             const meetingLink = document.getElementById("meeting-link");
             const addressInput = document.getElementById("address-input");
@@ -676,27 +1081,61 @@
             
             // Update preview
             updatePreviewLocation();
+            
+            // Update stored location value for tag suggestions
+            lastFieldValues.location = location.toLowerCase();
+            
+            // Update tag suggestions based on location type
+            setTimeout(updateSmartTagSuggestions, 100);
         }
     
         function updatePreviewPrice() {
-            document.getElementById("preview-price").innerText = `Approximate Cost: £${document.getElementById("cost").value}`;
+            const priceType = document.getElementById("price_type").value;
+            const priceBadge = document.getElementById("preview-price-badge");
+            
+            if (priceType === 'free') {
+                document.getElementById("preview-price-value").innerText = "Free";
+                priceBadge.style.display = "inline-block";
+                priceBadge.innerText = "Free";
+            } else {
+                const cost = document.getElementById("cost").value || "?";
+                document.getElementById("preview-price-value").innerText = `£${cost}`;
+                priceBadge.style.display = "none";
+            }
         }
     
         function updatePreviewCapacity() {
-            document.getElementById("preview-capacity").innerText = `Capacity: ${document.getElementById("capacity").value}`;
+            const capacity = document.getElementById("capacity").value || "0";
+            document.getElementById("preview-capacity-value").innerText = capacity;
         }
     
         function updatePreviewLineService() {
-            document.getElementById("preview-line-service").innerText = `Line of Service: ${document.getElementById("line-service").value}`;
+            const lineOfService = document.getElementById("line-service").value || "N/A";
+            document.getElementById("preview-line-service-value").innerText = lineOfService;
+            
+            // Update tag suggestions when line of service changes
+            updateSmartTagSuggestions();
         }
     
         function updatePreviewTitle() {
-            document.getElementById("preview-title").innerText = `Title: ${document.getElementById("event-title").value}`;
+            const title = document.getElementById("event-title").value || "Event Title";
+            document.getElementById("preview-title").innerText = title;
         }
     
         function updatePreviewDate() {
-            document.getElementById("preview-date").innerText = `Date: ${document.getElementById("event-date").value}`;
-            document.getElementById("preview-time").innerText = `Time: ${document.getElementById("event-time").value}`;
+            const dateInput = document.getElementById("event-date");
+            const timeInput = document.getElementById("event-time");
+            
+            if (dateInput.value) {
+                const dateObj = new Date(dateInput.value);
+                const day = dateObj.getDate();
+                const month = dateObj.toLocaleString('default', { month: 'short' });
+                
+                document.getElementById("preview-date-day").innerText = day;
+                document.getElementById("preview-date-month").innerText = month;
+            }
+            
+            document.getElementById("preview-time-value").innerText = timeInput.value || "--:--";
         }
 
         function updateDuration() {
@@ -718,61 +1157,44 @@
             }
             if (!durationText) durationText = '0 minutes';
     
-            document.getElementById('preview-duration').innerText = `Duration: ${durationText}`;
-        }
-
-        // Add this to your document ready function or at the end of your scripts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize duration preview
-            updateDuration();
-        });
-
-        function updatePreviewDuration() {
-            document.getElementById("preview-duration").innerText = `Duration: ${document.getElementById("event-duration").value}`;
+            document.getElementById('preview-duration-value').innerText = durationText || 'N/A';
         }
     
         function updatePreviewLocation() {
             const locationType = document.getElementById("location_type").value;
-            const link = document.getElementById("link").value;
-            const address = document.getElementById("address").value;
             let locationText = '';
             
-            console.log('Updating preview with:', { locationType, link, address });
-            
             if (locationType === "virtual") {
-                locationText = link ? `Virtual` : 'Virtual';
+                locationText = 'Virtual';
             } else if (locationType === "in-person") {
-                locationText = address ? `In-person` : 'In-person';
+                locationText = 'In-person';
             } else if (locationType === "hybrid") {
-                const parts = [];
-                if (address) parts.push(address);
-                if (link) parts.push(link);
-                locationText = parts.length > 0 ? `Hybrid` : 'Hybrid';
+                locationText = 'Hybrid';
+            } else {
+                locationText = 'N/A';
             }
             
-            // Make sure we're updating the correct element
+            // Update preview
             const previewLocation = document.getElementById("preview-locationx");
             if (previewLocation) {
                 previewLocation.innerText = `Location: ${locationText}`;
-                console.log('Updated preview to:', locationText);
-            } else {
-                console.error('Could not find preview-locationx element');
             }
         }
     
         function updatePreviewDescription() {
-            document.getElementById("preview-description").innerText = `Description: ${document.getElementById("event-description").value}`;
+            // Truncate for preview if too long - increased limit for 2 lines
+            const description = document.getElementById("event-description").value;
+            const truncated = description.length > 220 ? description.substring(0, 217) + '...' : description;
+            document.getElementById("preview-description").innerText = truncated || 'Event description will appear here...';
         }
     
         function handleEventTypeChange(checkbox) {
-            console.log('handleEventTypeChange called'); // Debug line
-            
             const generalCheckbox = document.getElementById('type-general');
             const teambuilding = document.getElementById('type-teambuilding');
             const volunteering = document.getElementById('type-volunteering');
             const networking = document.getElementById('type-networking');
             const eventTypesInput = document.getElementById('event-types');
-            const previewEventType = document.getElementById('preview-event-type');
+            const previewEventType = document.getElementById('preview-event-type-value');
             
             if (checkbox.id === 'type-general' && checkbox.checked) {
                 // If General is checked, uncheck all others
@@ -806,50 +1228,32 @@
 
             // Update preview
             if (previewEventType) {
-                previewEventType.innerText = `Event Type: ${selectedTypes.length > 0 ? selectedTypes.join(', ') : 'N/A'}`;
+                previewEventType.innerText = selectedTypes.length > 0 ? selectedTypes.join(', ') : 'N/A';
             }
+            
+            // Update tag suggestions based on event type
+            updateSmartTagSuggestions();
         }
 
-        // Add these new functions for tag management
-        let currentTags = new Set();
-
+        // Tag management functions
         function loadSuggestedTags() {
             fetch('{% url "get_tags" %}')
                 .then(response => response.json())
                 .then(tags => {
+                    // Generate smart suggestions first
+                    updateSmartTagSuggestions();
+                    
+                    // If no smart suggestions, fall back to most popular tags
                     const suggestedContainer = document.getElementById('suggestedTags');
-                    suggestedContainer.innerHTML = '';
-                    
-                    // Filter out already selected tags
+                    if (suggestedContainer.children.length === 0) {
                     const availableTags = tags.filter(tag => !currentTags.has(tag));
-                    
-                    // Show up to 10 suggested tags
-                    availableTags.slice(0, 10).forEach(tag => {
-                        const tagElement = document.createElement('div');
-                        tagElement.className = 'tag-suggestion';
-                        tagElement.style.cssText = `
-                            background-color: #e9ecef;
-                            color: #495057;
-                            padding: 5px 10px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                        `;
-                        tagElement.textContent = tag;
-                        tagElement.onclick = () => addTag(tag);
-                        
-                        // Add hover effect
-                        tagElement.onmouseover = () => {
-                            tagElement.style.backgroundColor = '#ff7f00';
-                            tagElement.style.color = 'white';
-                        };
-                        tagElement.onmouseout = () => {
-                            tagElement.style.backgroundColor = '#e9ecef';
-                            tagElement.style.color = '#495057';
-                        };
-                        
-                        suggestedContainer.appendChild(tagElement);
-                    });
+                        displayTagSuggestions(availableTags.slice(0, 10));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching tags:', error);
+                    // Still update smart suggestions in case of API error
+                    updateSmartTagSuggestions();
                 });
         }
 
@@ -920,22 +1324,32 @@
                 updateTagDisplay();
                 document.getElementById('tagSearch').value = '';
                 document.getElementById('searchResults').style.display = 'none';
-                loadSuggestedTags();
+                
+                // Update tag suggestions
+                updateSmartTagSuggestions();
+                
+                // Update preview tags
+                updatePreviewTags();
             }
         }
 
         function removeTag(tagName) {
             currentTags.delete(tagName);
             updateTagDisplay();
-            loadSuggestedTags();
+            
+            // Update tag suggestions
+            updateSmartTagSuggestions();
+            
+            // Update preview tags
+            updatePreviewTags();
         }
 
         function updateTagDisplay() {
             const container = document.getElementById('selectedTags');
             container.innerHTML = Array.from(currentTags).map(tag => `
-                <div class="tag-item" style="display: inline-flex; align-items: center; background-color: #ff7f00; color: white; padding: 5px 10px; margin: 2px; border-radius: 4px;">
-                    <span style="margin-right: 5px;">${tag}</span>
-                    <button onclick="removeTag('${tag}')" style="background: none; border: none; color: white; cursor: pointer; padding: 0 5px;">×</button>
+                <div class="tag-item">
+                    <span>${tag}</span>
+                    <button onclick="removeTag('${tag}')" type="button">×</button>
                 </div>
             `).join('');
             
@@ -943,117 +1357,193 @@
             document.getElementById('selectedTagsInput').value = Array.from(currentTags).join(',');
         }
 
-        // Initialize event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('tagSearch');
-            searchInput.addEventListener('input', handleTagSearch);
+        function updatePreviewTags() {
+            const tagsPreview = document.getElementById('preview-tags');
+            if (!tagsPreview) return;
             
-            // Close search results when clicking outside
-            document.addEventListener('click', function(event) {
-                const searchResults = document.getElementById('searchResults');
-                if (!event.target.closest('#tagSearch') && !event.target.closest('#searchResults')) {
-                    searchResults.style.display = 'none';
+            tagsPreview.innerHTML = '';
+            
+            if (currentTags.size === 0) {
+                tagsPreview.innerHTML = '<span style="color: #666; font-style: italic; font-size: 16px;">No tags selected</span>';
+                return;
+            }
+            
+            Array.from(currentTags).forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.style.cssText = `
+                    background-color: var(--primary-color);
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    display: inline-block;
+                `;
+                tagElement.textContent = tag;
+                tagsPreview.appendChild(tagElement);
+            });
+        }
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Price validation
+            const priceType = document.getElementById("price_type").value;
+            const cost = document.getElementById("cost").value;
+            
+            if (priceType === 'self-funded' && !cost) {
+                e.preventDefault();
+                alert('Please enter a cost for self-funded events');
+                return;
+            }
+            
+            // Location validation
+            const locationType = document.getElementById("location_type").value;
+            if (!locationType) {
+                e.preventDefault();
+                alert('Please select a location type (Virtual, In-person, or Hybrid)');
+                return;
+            }
+            
+            // Event type validation
+            const eventTypes = document.getElementById("event-types").value;
+            if (!eventTypes) {
+                e.preventDefault();
+                alert('Please select at least one event type');
+                return;
+            }
+        });
+
+        function showAllTagSuggestions() {
+            // Get all possible suggestions organized by category
+            const allSuggestions = getAllTagSuggestions();
+            
+            // Display them in the modal
+            displayAllTagSuggestions(allSuggestions);
+            
+            // Show the modal
+            document.getElementById('all-suggestions-modal').style.display = 'block';
+        }
+
+        function closeAllTagSuggestions() {
+            document.getElementById('all-suggestions-modal').style.display = 'none';
+        }
+
+        function getAllTagSuggestions() {
+            // Get current form values
+            const lineOfService = document.getElementById('line-service').value;
+            const locationType = document.getElementById('location_type').value;
+            
+            // Get selected event types
+            const eventTypes = [];
+            document.querySelectorAll('input[name="event_type"]:checked').forEach(checkbox => {
+                eventTypes.push(checkbox.value);
+            });
+            
+            // Organize suggestions by category
+            const categories = {
+                'Based on Line of Service': [],
+                'Based on Event Type': [],
+                'Based on Location': [],
+                'Based on Title': [],
+                'Based on Description': [],
+                'Common Event Tags': [
+                    'Workshop', 'Training', 'Conference', 'Meeting', 'Webinar',
+                    'Seminar', 'Networking', 'Teambuilding', 'Volunteering',
+                    'Professional', 'Development', 'Learning', 'Skills',
+                    'Social', 'Fun', 'Community', 'Leadership'
+                ]
+            };
+            
+            // Add suggestions based on line of service
+            if (lineOfService && tagSuggestionMap[lineOfService]) {
+                categories['Based on Line of Service'] = tagSuggestionMap[lineOfService];
+            }
+            
+            // Add suggestions based on event types
+            eventTypes.forEach(type => {
+                if (tagSuggestionMap[type]) {
+                    categories['Based on Event Type'] = [
+                        ...categories['Based on Event Type'],
+                        ...tagSuggestionMap[type]
+                    ];
                 }
             });
             
-            // Load initial suggested tags
-            loadSuggestedTags();
-        });
-   
-    // Form Reset Handler
-    document.addEventListener('DOMContentLoaded', function() {
-        {% if messages %}
-            {% for message in messages %}
-                {% if message.tags == 'success' %}
-                    // Clear the form
-                    document.querySelector('form').reset();
-                    
-                    // Reset any preview elements
-                    document.getElementById('preview-title').innerText = 'Title: Event Title';
-                    document.getElementById('preview-description').innerText = 'Description: N/A';
-                    document.getElementById('preview-date').innerText = 'Date: N/A';
-                    document.getElementById('preview-time').innerText = 'Time: N/A';
-                    document.getElementById('preview-location').innerText = 'Location: N/A';
-                    document.getElementById('preview-capacity').innerText = 'Capacity: 0';
-                    document.getElementById('preview-line-service').innerText = 'Line of Service: N/A';
-                    document.getElementById('preview-price').innerText = 'Price: Free';
-                    document.getElementById('preview-event-type').innerText = "Type: N/A";
-                    
-                    // Reset image preview
-                    document.getElementById('preview-image').src = '';
-                    
-                    // Reset any selected buttons
-                    document.querySelectorAll('.price-btn, .location-btn').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    
-                    // Hide any conditional inputs
-                    document.getElementById('cost-input').classList.add('hidden');
-                    document.getElementById('meeting-link').classList.add('hidden');
-                    document.getElementById('address-input').classList.add('hidden');
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    });
-   
-    $(document).ready(function() {
-        $('#id_tags').select2({
-            tags: true,
-            tokenSeparators: [','],
-            ajax: {
-                url: '{% url "get_tags" %}',  // Create this URL
-                dataType: 'json',
-                delay: 250,
-                processResults: function (data) {
-                    return {
-                        results: data.map(function(item) {
-                            return {
-                                id: item,
-                                text: item
-                            };
-                        })
-                    };
-                },
-                cache: true
+            // Remove duplicates
+            categories['Based on Event Type'] = [...new Set(categories['Based on Event Type'])];
+            
+            // Add suggestions based on location type
+            if (locationType && tagSuggestionMap[locationType]) {
+                categories['Based on Location'] = tagSuggestionMap[locationType];
             }
-        });
-    });
-    
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const priceType = document.getElementById("price_type").value;
-        const cost = document.getElementById("cost").value;
-        
-        if (priceType === 'self-funded' && !cost) {
-            e.preventDefault();
-            alert('Please enter a cost for self-funded events');
-            return;
+            
+            // Filter out tags that are already selected
+            Object.keys(categories).forEach(category => {
+                categories[category] = categories[category].filter(tag => !currentTags.has(tag));
+            });
+            
+            return categories;
         }
-        
-        // Existing form submission code...
-        const formData = new FormData(this);
-        console.log('Form submission data:');
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
+
+        function displayAllTagSuggestions(categorizedSuggestions) {
+            const container = document.getElementById('suggestions-by-category');
+            container.innerHTML = '';
+            
+            // Create sections for each category
+            Object.keys(categorizedSuggestions).forEach(category => {
+                const suggestions = categorizedSuggestions[category];
+                
+                // Skip empty categories
+                if (suggestions.length === 0) return;
+                
+                // Create category section
+                const section = document.createElement('div');
+                section.style.marginBottom = '15px';
+                
+                // Add category title
+                const title = document.createElement('h4');
+                title.textContent = category;
+                title.style.cssText = 'font-size: 1rem; margin: 0 0 8px 0; padding-bottom: 4px; border-bottom: 1px solid #eee;';
+                section.appendChild(title);
+                
+                // Add tags
+                const tagsContainer = document.createElement('div');
+                tagsContainer.style.cssText = 'display: flex; flex-wrap: wrap; gap: 5px;';
+                
+                suggestions.forEach(tag => {
+                    const tagElement = document.createElement('div');
+                    tagElement.textContent = tag;
+                    tagElement.style.cssText = `
+                        background-color: var(--light-bg);
+                        color: var(--text-color);
+                        padding: 4px 10px;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    `;
+                    tagElement.onmouseover = () => {
+                        tagElement.style.backgroundColor = 'var(--primary-color)';
+                        tagElement.style.color = 'white';
+                    };
+                    tagElement.onmouseout = () => {
+                        tagElement.style.backgroundColor = 'var(--light-bg)';
+                        tagElement.style.color = 'var(--text-color)';
+                    };
+                    tagElement.onclick = () => {
+                        addTag(tag);
+                        closeAllTagSuggestions();
+                    };
+                    
+                    tagsContainer.appendChild(tagElement);
+                });
+                
+                section.appendChild(tagsContainer);
+                container.appendChild(section);
+            });
         }
-        console.log('location_type value:', document.getElementById('location_type').value);
-    });
-   
-    function handlePriceTypeChange(button) {
-        const costInput = document.getElementById('cost-input');
-        const priceType = button.value;
-        
-        // Only show cost input for self-funded events
-        if (priceType === 'self-funded') {
-            costInput.classList.remove('hidden');
-        } else {
-            costInput.classList.add('hidden');
-            // Clear cost value when not self-funded
-            document.getElementById('cost').value = '';
-        }
-        
-        updatePreviewPrice();
-    }
-   
     </script>
     
     {% endblock extra_scripts %}
+
+
+

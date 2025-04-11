@@ -3,12 +3,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from .models import EventSimilarity
 from main.models import Event, Tag
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, ExpressionWrapper, Case, When, FloatField, Sum
 from collections import defaultdict
 from datetime import datetime, timedelta
 from .models import UserEventInteraction
 from django.utils import timezone
-from django.db.models import F, ExpressionWrapper, Case, When, FloatField
 import logging
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
@@ -36,8 +35,7 @@ class ContentBasedRecommender:
             logger.debug("Returning 'high' cost range")
             return "high"
 
-    def _prepare_event_features(self, event):
-        """Combine event features into a single text string for vectorization"""
+    def prepare_event_features(self, event):
         # If line of service is 'All', include all possible services to match with any
         line_of_service = event.line_of_service
         if line_of_service == 'All':
@@ -63,7 +61,7 @@ class ContentBasedRecommender:
             return
         
         # Prepare text features for all events
-        event_features = [self._prepare_event_features(event) for event in events]
+        event_features = [self.prepare_event_features(event) for event in events]
         
         # Create TF-IDF matrix
         tfidf_matrix = self.vectorizer.fit_transform(event_features)
@@ -286,7 +284,7 @@ class CollaborativeRecommender:
             
         # Get events that similar users have interacted with
         current_time = timezone.now()
-        similar_user_events = (Event.objects.filter(
+        query = Event.objects.filter(
             usereventinteraction__user_id__in=similar_users,
             # Filter out expired events
             date__gte=current_time.date(),
@@ -294,9 +292,18 @@ class CollaborativeRecommender:
             time__gte=current_time.time() if F('date')==current_time.date() else '00:00'
         ).exclude(
             usereventinteraction__user=user
-        ).annotate(
+        )
+        
+        # Filter by line of service
+        if user.line_of_service != 'All':
+            query = query.filter(
+                Q(line_of_service=user.line_of_service) | 
+                Q(line_of_service='All')
+            )
+        
+        similar_user_events = query.annotate(
             interaction_count=Count('usereventinteraction')
-        ).order_by('-interaction_count')[:limit])
+        ).order_by('-interaction_count')[:limit]
         
         return list(similar_user_events)
     
@@ -325,27 +332,21 @@ class HybridRecommender:
         self.content_based = ContentBasedRecommender()
         self.collaborative = CollaborativeRecommender()
         
-        # Redistributed weights without duration and description
+        # Distributed weights of individual event components
         self.content_weights = {
-            'title_similarity': 0.20,     # Increased from 0.15
-            'tags_match': 0.20,           # Increased from 0.15
-            'price_match': 0.20,          # Increased from 0.15
-            'location_type_match': 0.15,  # Virtual/In-person preference
-            'line_of_service_match': 0.15,# Department alignment
-            'event_type_match': 0.10      # Event category
+            'title_similarity': 0.20,     
+            'tags_match': 0.20,           
+            'price_match': 0.20,         
+            'location_type_match': 0.15,  
+            'line_of_service_match': 0.15,
+            'event_type_match': 0.10      
         }
-        
-        # Verify content weights sum to 1.0
-        content_sum = sum(self.content_weights.values())
-        logger.debug(f"Content weights sum: {content_sum}")
-        if not 0.99 <= content_sum <= 1.01:
-            logger.error(f"Content weights don't sum to 1.0! Current sum: {content_sum}")
         
         # Keep overall weights the same
         self.overall_weights = {
-            'content': 0.5,      # 50% for content-based
-            'collaborative': 0.4, # 40% for collaborative
-            'popular': 0.1       # 10% for popularity
+            'content': 0.5,      
+            'collaborative': 0.4, 
+            'popularity': 0.1  
         }
         
         # Verify overall weights sum to 1.0
@@ -354,35 +355,61 @@ class HybridRecommender:
         if not 0.99 <= overall_sum <= 1.01:
             logger.error(f"Overall weights don't sum to 1.0! Current sum: {overall_sum}")
 
-    def _get_popular_events(self, limit=5):
+    def _get_popular_events(self, limit=5, user=None):
         """Get popular events based on interaction count and features"""
         current_time = timezone.now()
-        return Event.objects.filter(
+        query = Event.objects.filter(
             # Only upcoming events
             date__gte=current_time.date(),
             # For today's events, only show future ones
             time__gte=current_time.time() if F('date')==current_time.date() else '00:00'
-        ).annotate(
+        )
+        
+        # Filter by line of service if a user is provided
+        if user and user.line_of_service != 'All':
+            query = query.filter(
+                Q(line_of_service=user.line_of_service) | 
+                Q(line_of_service='All')
+            )
+        
+        # Get weighted interaction count - includes the weight of interactions
+        query = query.annotate(
             interaction_count=Count('usereventinteraction'),
+            weighted_interaction=Sum('usereventinteraction__weight'),
             # Add weights for different features
             weighted_score=ExpressionWrapper(
-                F('interaction_count') * 1.0 +
+                (F('weighted_interaction') * 1.0) + F('interaction_count') * 0.2 +
+                Case(
+                    # Significantly increase the weight for exact service match
+                    When(line_of_service=user.line_of_service if user else None, then=20.0),
+                    # All service is good but not as good as exact match
+                    When(line_of_service='All', then=2.0),
+                    default=0.0,
+                    output_field=FloatField(),
+                ) +
                 Case(
                     When(price_type='free', then=2.0),
                     When(price_type='self-funded', then=1.0),
                     default=0.0,
                 ) +
                 Case(
-                    When(duration__lte=120, then=1.0),  # Favor shorter events
+                    When(duration__lte=60, then=1.5),  # Favor shorter events even more
+                    When(duration__lte=120, then=1.0),
                     default=0.0,
                 ),
                 output_field=FloatField()
             )
         ).order_by('-weighted_score')[:limit]
-    
+        
+        return query
+
     def get_recommendations(self, user, limit=5):
         """Get hybrid recommendations considering all event features"""
         logger.debug(f"Getting recommendations for user {user.id}, limit {limit}")
+        
+        # Handle invalid limit
+        if limit <= 0:
+            return []
         
         # Get recommendations from each source
         content_recs = self.content_based.get_recommendations_for_user(user, limit=limit)
@@ -391,7 +418,7 @@ class HybridRecommender:
         collaborative_recs = self.collaborative.get_recommendations_for_user(user, limit=limit)
         logger.debug(f"Collaborative recommendations: {[e.id for e in collaborative_recs]}")
         
-        popular_recs = self._get_popular_events(limit=limit)
+        popular_recs = self._get_popular_events(limit=limit, user=user)
         logger.debug(f"Popular recommendations: {[e.id for e in popular_recs]}")
         
         event_scores = {}
@@ -445,7 +472,7 @@ class HybridRecommender:
         
         # Add popularity recommendations
         for i, event in enumerate(popular_recs):
-            score = self.overall_weights['popular'] * (limit - i) / limit
+            score = self.overall_weights['popularity'] * (limit - i) / limit
             previous_score = event_scores.get(event, 0)
             event_scores[event] = previous_score + score
             logger.debug(f"\nPopularity event {event.id}:")
@@ -493,3 +520,7 @@ class HybridRecommender:
             }
             
         return scores
+
+
+
+

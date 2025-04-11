@@ -249,6 +249,420 @@ class RecommendationSystemTest(TestCase):
         self.assertTrue(len(recommendations) > 0, 
             "Should return recommendations with large dataset")
 
+    def test_component_weighting(self):
+        """Test how different components are weighted in the hybrid algorithm"""
+        test_user = self.users[0]  # Audit service user
+        
+        # Create test events that are optimal for different recommender components
+        
+        # 1. An event perfect for content-based (matching user preferences)
+        content_optimal = Event.objects.create(
+            title='Content Optimal Event',
+            description='Perfect match for content-based recommender',
+            date=timezone.now().date() + timedelta(days=10),
+            time=timezone.now().time(),
+            line_of_service=test_user.line_of_service,  # Exact service match
+            location_type='virtual',  # Preferred location
+            price_type='free',        # Preferred price
+            creator=self.users[1],
+            duration=60,              # Short duration
+            cost=0
+        )
+        # Add tags that match user preferences (based on previous interactions)
+        for tag in self.tags[:4]:
+            content_optimal.tags.add(tag)
+        
+        # 2. An event optimal for collaborative filtering
+        collab_optimal = Event.objects.create(
+            title='Collaborative Optimal Event',
+            description='Perfect for collaborative filtering',
+            date=timezone.now().date() + timedelta(days=15),
+            time=timezone.now().time(),
+            line_of_service=test_user.line_of_service,
+            location_type='hybrid',
+            price_type='paid-for',
+            creator=self.users[2],
+            duration=120,
+            cost=50
+        )
+        collab_optimal.tags.add(*self.tags[5:8])  # Different tags
+        
+        # Make similar users interact with this event
+        # Create similar users (similar profile to test_user)
+        similar_users = []
+        for i in range(3):
+            similar_user = get_user_model().objects.create_user(
+                username=f'similar_user_{i}',
+                password='testpass123',
+                line_of_service=test_user.line_of_service,
+                work_email=f'similar_{i}@test.com',
+                workday_id=f'SIM{i}',
+                job_title=test_user.job_title,
+                home_office=test_user.home_office
+            )
+            similar_users.append(similar_user)
+        
+        # Have both test_user and similar users interact with some common events
+        common_events = []
+        for i in range(5):
+            event = Event.objects.create(
+                title=f'Common Event {i}',
+                description=f'Event {i} for establishing similarity',
+                date=timezone.now().date() + timedelta(days=i+20),
+                time=timezone.now().time(),
+                line_of_service=test_user.line_of_service,
+                location_type='virtual',
+                price_type='free',
+                creator=self.users[1],
+                duration=60,
+                cost=0
+            )
+            common_events.append(event)
+            # Test user interactions
+            UserEventInteraction.objects.create(
+                user=test_user,
+                event=event,
+                interaction_type='view',
+                weight=1.0
+            )
+            UserEventInteraction.objects.create(
+                user=test_user,
+                event=event,
+                interaction_type='signup',
+                weight=1.0
+            )
+            
+            # Similar users interactions
+            for user in similar_users:
+                UserEventInteraction.objects.create(
+                    user=user,
+                    event=event,
+                    interaction_type='view',
+                    weight=1.0
+                )
+                UserEventInteraction.objects.create(
+                    user=user,
+                    event=event,
+                    interaction_type='signup',
+                    weight=1.0
+                )
+        
+        # Now have similar users interact with collab_optimal (but not test_user)
+        for user in similar_users:
+            UserEventInteraction.objects.create(
+                user=user,
+                event=collab_optimal,
+                interaction_type='view',
+                weight=1.0
+            )
+            UserEventInteraction.objects.create(
+                user=user,
+                event=collab_optimal,
+                interaction_type='signup',
+                weight=1.0
+            )
+        
+        # 3. An event optimal for popularity-based recommender
+        popular_optimal = Event.objects.create(
+            title='Popular Optimal Event',
+            description='Highly popular event',
+            date=timezone.now().date() + timedelta(days=30),
+            time=timezone.now().time(),
+            line_of_service='All',              # Not exact match but acceptable
+            location_type='in-person',
+            price_type='self-funded',
+            creator=self.users[3],
+            duration=180,
+            cost=25
+        )
+        popular_optimal.tags.add(*self.tags[9:12])  # Different tags
+        
+        # Make it very popular with many interactions
+        for _ in range(40):  # High number of interactions
+            random_user = random.choice(self.users)
+            UserEventInteraction.objects.create(
+                user=random_user,
+                event=popular_optimal,
+                interaction_type=random.choice(['view', 'signup']),
+                weight=1.0
+            )
+        
+        # Get recommendations with various component weightings
+        recommender_default = HybridRecommender()  # Default weights
+        
+        # Custom recommender with higher content weight
+        recommender_content = HybridRecommender()
+        recommender_content.overall_weights = {
+            'content': 0.6,
+            'collaborative': 0.2,
+            'popularity': 0.2
+        }
+        
+        # Custom recommender with higher collaborative weight
+        recommender_collab = HybridRecommender()
+        recommender_collab.overall_weights = {
+            'content': 0.2,
+            'collaborative': 0.6,
+            'popularity': 0.2
+        }
+        
+        # Custom recommender with higher popularity weight
+        recommender_popular = HybridRecommender()
+        recommender_popular.overall_weights = {
+            'content': 0.2,
+            'collaborative': 0.2,
+            'popularity': 0.6
+        }
+        
+        # Get recommendations with different weights
+        recs_default = recommender_default.get_recommendations(test_user, limit=10)
+        recs_content = recommender_content.get_recommendations(test_user, limit=10)
+        recs_collab = recommender_collab.get_recommendations(test_user, limit=10)
+        recs_popular = recommender_popular.get_recommendations(test_user, limit=10)
+        
+        # Analyze results
+        print("\n=== Component Weighting Test Results ===")
+        
+        # Check content-optimal event ranking in each set
+        if content_optimal in recs_default:
+            print(f"Content-optimal event rank in default: {recs_default.index(content_optimal) + 1}")
+        if content_optimal in recs_content:
+            print(f"Content-optimal event rank in content-weighted: {recs_content.index(content_optimal) + 1}")
+        if content_optimal in recs_collab:
+            print(f"Content-optimal event rank in collab-weighted: {recs_collab.index(content_optimal) + 1}")
+        if content_optimal in recs_popular:
+            print(f"Content-optimal event rank in popularity-weighted: {recs_popular.index(content_optimal) + 1}")
+        
+        # Check collaborative-optimal event ranking in each set
+        if collab_optimal in recs_default:
+            print(f"Collab-optimal event rank in default: {recs_default.index(collab_optimal) + 1}")
+        if collab_optimal in recs_content:
+            print(f"Collab-optimal event rank in content-weighted: {recs_content.index(collab_optimal) + 1}")
+        if collab_optimal in recs_collab:
+            print(f"Collab-optimal event rank in collab-weighted: {recs_collab.index(collab_optimal) + 1}")
+        if collab_optimal in recs_popular:
+            print(f"Collab-optimal event rank in popularity-weighted: {recs_popular.index(collab_optimal) + 1}")
+        
+        # Check popularity-optimal event ranking in each set
+        if popular_optimal in recs_default:
+            print(f"Popular-optimal event rank in default: {recs_default.index(popular_optimal) + 1}")
+        if popular_optimal in recs_content:
+            print(f"Popular-optimal event rank in content-weighted: {recs_content.index(popular_optimal) + 1}")
+        if popular_optimal in recs_collab:
+            print(f"Popular-optimal event rank in collab-weighted: {recs_collab.index(popular_optimal) + 1}")
+        if popular_optimal in recs_popular:
+            print(f"Popular-optimal event rank in popularity-weighted: {recs_popular.index(popular_optimal) + 1}")
+            
+        # Verify component influence with assertions
+        # Content-optimal should rank higher in content-weighted recommendations
+        if content_optimal in recs_content and content_optimal in recs_popular:
+            self.assertLessEqual(
+                recs_content.index(content_optimal),
+                recs_popular.index(content_optimal),
+                "Content-optimal event should rank higher with content weighting"
+            )
+            
+        # Collaborative-optimal should rank higher in collab-weighted recommendations
+        if collab_optimal in recs_collab and collab_optimal in recs_content:
+            self.assertLessEqual(
+                recs_collab.index(collab_optimal),
+                recs_content.index(collab_optimal),
+                "Collaborative-optimal event should rank higher with collaborative weighting"
+            )
+            
+        # Popular-optimal should rank higher in popularity-weighted recommendations
+        if popular_optimal in recs_popular and popular_optimal in recs_content:
+            self.assertLessEqual(
+                recs_popular.index(popular_optimal),
+                recs_content.index(popular_optimal),
+                "Popular-optimal event should rank higher with popularity weighting"
+            )
+        
+    def test_matching_algorithm(self):
+        """Test the complete matching algorithm with various scenarios"""
+        test_user = self.users[0]  # Audit service user
+        
+        # 1. Create events with various matching characteristics
+        # Perfect service match, good tag match
+        exact_service_match = Event.objects.create(
+            title='Exact Service Match Event',
+            description='Event matching user service exactly',
+            date=timezone.now().date() + timedelta(days=10),
+            time=timezone.now().time(),
+            line_of_service=test_user.line_of_service,  # Exact match
+            location_type='virtual',
+            price_type='free',
+            creator=self.users[1],
+            duration=60,
+            cost=0
+        )
+        exact_service_match.tags.add(*self.tags[:4])  # Add first 4 tags
+        
+        # All service, many tags in common
+        all_service_many_tags = Event.objects.create(
+            title='All Service Many Tags Event',
+            description='All service event with many matching tags',
+            date=timezone.now().date() + timedelta(days=12),
+            time=timezone.now().time(),
+            line_of_service='All',  # All service
+            location_type='virtual',
+            price_type='free',
+            creator=self.users[1],
+            duration=90,
+            cost=0
+        )
+        all_service_many_tags.tags.add(*self.tags[:6])  # Add first 6 tags
+        
+        # All service, few tags, more popular
+        all_service_popular = Event.objects.create(
+            title='All Service Popular Event',
+            description='Popular event with All service',
+            date=timezone.now().date() + timedelta(days=15),
+            time=timezone.now().time(),
+            line_of_service='All',  # All service
+            location_type='hybrid',
+            price_type='paid-for',
+            creator=self.users[2],
+            duration=120,
+            cost=50
+        )
+        all_service_popular.tags.add(*self.tags[6:8])  # Add only 2 tags
+        
+        # Wrong service, should be filtered out
+        wrong_service = Event.objects.create(
+            title='Wrong Service Event',
+            description='Event with wrong service',
+            date=timezone.now().date() + timedelta(days=20),
+            time=timezone.now().time(),
+            line_of_service='Tax' if test_user.line_of_service != 'Tax' else 'Consulting',  # Different service
+            location_type='virtual',
+            price_type='free',
+            creator=self.users[2],
+            duration=60,
+            cost=0
+        )
+        wrong_service.tags.add(*self.tags[:5])  # Good tag match but wrong service
+        
+        # 2. Create user interactions to simulate profile
+        # First, interact with some standard events to build history
+        for tag in self.tags[:3]:  # User has preference for first 3 tags
+            # Create and interact with events with these tags
+            for i in range(2):
+                event = Event.objects.create(
+                    title=f'Profile Building Event {tag.name} {i}',
+                    description=f'Event with {tag.name}',
+                    date=timezone.now().date() + timedelta(days=i+3),
+                    time=timezone.now().time(),
+                    line_of_service=test_user.line_of_service,
+                    location_type='virtual',
+                    price_type='free',
+                    creator=self.users[i+1],
+                    duration=60,
+                    cost=0
+                )
+                event.tags.add(tag)
+                
+                # Add strong interactions
+                UserEventInteraction.objects.create(
+                    user=test_user,
+                    event=event,
+                    interaction_type='view',
+                    weight=1.0
+                )
+                UserEventInteraction.objects.create(
+                    user=test_user,
+                    event=event,
+                    interaction_type='signup',
+                    weight=1.0
+                )
+        
+        # 3. Make the all_service_popular event actually popular
+        for _ in range(25):
+            UserEventInteraction.objects.create(
+                user=random.choice(self.users),
+                event=all_service_popular,
+                interaction_type=random.choice(['view', 'signup']),
+                weight=1.0
+            )
+        
+        # Add some interactions to exact_service_match but fewer
+        for _ in range(10):
+            UserEventInteraction.objects.create(
+                user=random.choice(self.users),
+                event=exact_service_match,
+                interaction_type=random.choice(['view', 'signup']),
+                weight=1.0
+            )
+            
+        # 4. Get recommendations and analyze results
+        recommender = HybridRecommender()
+        recommendations = recommender.get_recommendations(test_user, limit=10)
+        
+        # 5. Basic Validations
+        # Check that wrong service isn't included
+        self.assertNotIn(wrong_service, recommendations, 
+            "Events with non-matching service should be filtered out")
+        
+        # Check that exact service match is included in recommendations
+        self.assertIn(exact_service_match, recommendations, 
+            "Exact service match should be in recommendations")
+            
+        # Print ranking info
+        exact_idx = -1
+        popular_idx = -1
+        if exact_service_match in recommendations:
+            exact_idx = recommendations.index(exact_service_match)
+            print(f"\nExact service match is at position {exact_idx + 1}")
+        
+        if all_service_popular in recommendations:
+            popular_idx = recommendations.index(all_service_popular)
+            print(f"All service popular event is at position {popular_idx + 1}")
+        
+        # Count exact service matches in top recommendations
+        exact_matches_in_top5 = len([
+            e for e in recommendations[:5] 
+            if e.line_of_service == test_user.line_of_service
+        ])
+        
+        # Assert that at least 3 of top 5 recommendations match user's service
+        self.assertGreaterEqual(exact_matches_in_top5, 3,
+            f"Expected at least 3 exact service matches in top 5, got {exact_matches_in_top5}")
+            
+        # 6. Detailed analysis - Let's examine the algorithm's detailed scores
+        # Get event IDs for lookup
+        exact_id = exact_service_match.id
+        all_many_id = all_service_many_tags.id
+        all_popular_id = all_service_popular.id
+        
+        # Print detailed scores for analysis
+        print("\n=== Matching Algorithm Test Results ===")
+        print(f"User line of service: {test_user.line_of_service}")
+        
+        # Extract scores from events if available
+        for idx, event in enumerate(recommendations[:5]):
+            print(f"\nRank {idx+1}: {event.title} (ID: {event.id})")
+            print(f"Line of Service: {event.line_of_service}")
+            print(f"Tags: {', '.join(tag.name for tag in event.tags.all())}")
+            print(f"Popularity: {UserEventInteraction.objects.filter(event=event).count()} interactions")
+            
+            # This helps identify which component contributed most to this recommendation
+            if hasattr(event, 'score'):
+                print(f"Score: {event.score}")
+
+        # 7. Final assertions for provable success
+        # Verify at least some recommendations match user's line of service
+        service_matches = [e for e in recommendations if e.line_of_service == test_user.line_of_service]
+        self.assertTrue(len(service_matches) > 0, 
+            "Recommendations should include events matching user's line of service")
+        
+        # Verify the top recommendation is either an exact service match or has high tag overlap
+        top_event = recommendations[0]
+        self.assertTrue(
+            top_event.line_of_service == test_user.line_of_service or 
+            (top_event.line_of_service == 'All' and top_event.tags.count() >= 2),
+            "Top recommendation should either match service exactly or have good tag overlap"
+        )
+
     def test_specific_matching(self):
         """Test specific matching criteria"""
         test_user = self.users[0]

@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 import json
 import logging
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,13 @@ def recommended_events(request):
                 limit=3
             )
         
+        # Add today's date for past event detection
+        today = date.today()
+        
         context = {
             'recommended_events': recommended,
             'similar_events': similar_events,
+            'today': today,
         }
         
         logger.info(f"Generated recommendations for user {request.user.username}")

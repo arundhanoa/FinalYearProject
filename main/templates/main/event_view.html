@@ -1,251 +1,364 @@
 {% extends "main/base.html" %}
 {% load static %}
 
-{% block title %}Home{% endblock %}
+{% block title %}{{ event.title }}{% endblock %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <style>
-        .slideshow-container {
-            max-width: 1000px;
-            position: relative;
+        :root {
+            --primary-color: #ff7f00;
+            --secondary-color: #e0301e;
+            --text-color: #333;
+            --border-color: #ddd;
+            --light-bg: #f8f9fa;
+            --white: #fff;
+            --success: #28a745;
+            --error: #dc3545;
+            --font-family: 'Inter', sans-serif;
+            --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: var(--font-family);
+            color: var(--text-color);
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main container layout */
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* 2/3 for content, 1/3 for announcements */
+            max-width: 1400px;
             margin: 20px auto;
+            gap: 1.5rem;
+            padding: 0 1.5rem;
         }
-        .slide {
-            display: none;
+
+        /* Content container */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
+
+        /* Page title */
+        .page-title-container {
+            max-width: 1400px;
+            margin: 20px auto 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-color);
+            padding: 1.5rem;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            border-bottom: 3px solid var(--secondary-color);
+            position: relative;
+        }
+
+        .page-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Image slideshow */
+        .slideshow-container {
+            position: relative;
+            margin: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            background-color: var(--white);
+        }
+
         .slide img {
             width: 100%;
-            height: 500px;
+            height: 400px;
             object-fit: cover;
-            border-radius: 8px;
         }
+
         .prev, .next {
             cursor: pointer;
             position: absolute;
             top: 50%;
             width: auto;
-            padding: 16px;
+            padding: 12px;
             margin-top: -22px;
             color: white;
             font-weight: bold;
             font-size: 18px;
-            transition: 0.6s ease;
+            transition: 0.3s ease;
             border-radius: 0 3px 3px 0;
             user-select: none;
-            background-color: rgba(0,0,0,0.3);
+            background-color: rgba(0,0,0,0.4);
+            z-index: 10;
         }
+
         .next {
             right: 0;
             border-radius: 3px 0 0 3px;
         }
+
         .prev:hover, .next:hover {
             background-color: rgba(0,0,0,0.8);
         }
+
         .dots-container {
             text-align: center;
             padding: 10px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0,0,0,0.3);
         }
+
         .dot {
             cursor: pointer;
-            height: 12px;
-            width: 12px;
+            height: 10px;
+            width: 10px;
             margin: 0 4px;
             background-color: #bbb;
             border-radius: 50%;
             display: inline-block;
-            transition: background-color 0.6s ease;
+            transition: background-color 0.3s ease;
         }
+
         .active, .dot:hover {
-            background-color: #717171;
+            background-color: var(--primary-color);
         }
-        .info-grid {
+
+        /* Content sections */
+        .section-container {
             display: grid;
-            grid-template-columns: repeat(3, 0.4fr) 600px;
-            gap: 20px;
-            padding: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
+
         .info-section {
-            background: white;
-            padding: 15px;
+            background: var(--white);
+            padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
+            box-shadow: var(--card-shadow);
         }
+
+        .info-section.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            width: 140px;
+            color: var(--text-color);
+        }
+
+        .info-value {
+            flex: 1;
+        }
+
+        /* Announcements section */
         .announcements-section {
-            grid-column: 4;
-            grid-row: 1 / span 2;
-            background: white;
-            padding: 30px;
+            background: var(--white);
+            padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            max-height: calc(100vh - 300px);
-            margin-top: 10px;
-            width: 100%;
-            min-width: 450px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eaeaea;
+            max-height: calc(100vh - 150px);
+            height: auto;
+            min-height: auto;
         }
+
+        .announcements-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            color: #333;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.8rem;
+            text-align: center;
+            background-color: var(--white);
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            padding: 1rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .announcements-list {
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+            padding-right: 0.5rem;
+        }
+
+        .announcement-item {
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #eaeaea;
+            background-color: #f9f9f9;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .announcement-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+
+        .personal-announcement {
+            background-color: #f0f7ff;
+            border-left: 3px solid #1976d2;
+        }
+
+        .personal-badge {
+            background-color: #1976d2;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        .announcement-timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 5px;
+        }
+
         .announcement-form {
             margin-top: 15px;
         }
+
         .announcement-input {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             resize: vertical;
+            min-height: 80px;
         }
-        .announcement-item {
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border: 1px solid #eee;
-        }
-        .announcement-timestamp {
-            color: #666;
-            font-size: 0.8em;
-            display: block;
-            margin-top: 5px;
-        }
-        .info-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e0301e;
-            padding-bottom: 5px;
-        }
+
+        /* Tags styling */
         .tags-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
+            margin-top: 8px;
         }
+
         .tag {
-            background: #ff7f00;
+            background-color: var(--primary-color);
             color: white;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 0.85rem;
         }
-        .signup-button {
+
+        /* Buttons */
+        .action-button {
             display: block;
             width: 100%;
-            font-size: 0.9em;
             text-align: center;
-            background: #e0301e;
+            background: var(--secondary-color);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 10px 15px;
+            border-radius: 6px;
             cursor: pointer;
-            margin: 0;
-            box-sizing: border-box;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
             text-decoration: none;
+            transition: background-color 0.2s;
         }
-        .signup-button.signed-up {
-            background: #666;
+
+        .action-button:hover {
+            background-color: #c62828;
         }
-        .signup-button:hover {
-            background: #c62828;
+
+        .action-button.secondary {
+            background-color: #666;
         }
-        .signup-button.signed-up:hover {
-            background: #555;
+
+        .action-button.secondary:hover {
+            background-color: #555;
         }
+
+        .action-button.success {
+            background-color: var(--success);
+        }
+
+        .action-button.success:hover {
+            background-color: #218838;
+        }
+
+        /* Alerts */
         .alert {
+            padding: 12px;
             margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
+            border-radius: 6px;
         }
+
         .alert-success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .alert-error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        .event-details h1 {
-            padding: 0 20px;
-            margin: 20px 0;
-            width: 100%;
-            box-sizing: border-box;
-            word-wrap: break-word;
-        }
-        .action-buttons-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-        }
-        .signup-form {
-            width: 100%;
-        }
-        .event-full {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .interest-button {
-            background-color: #ff7f00;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .interest-button:hover {
-            background-color: #e67300;
-        }
-        .personal-announcement {
-            background-color: #fff3e0;
-            border-left: 3px solid #ff7f00;
-        }
-        .personal-badge {
-            background-color: #ff7f00;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.8em;
-            margin-bottom: 5px;
-            display: inline-block;
-        }
-        .register-btn {
-            display: block;
-            width: 100%;
-            font-size: 0.9em;
-            text-align: center;
-            background: #e0301e;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0;
-            box-sizing: border-box;
-            text-decoration: none;
-        }
-        .unregister-btn {
-            display: block;
-            width: 100%;
-            font-size: 0.9em;
-            text-align: center;
-            background: #666;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0;
-            box-sizing: border-box;
-            text-decoration: none;
-        }
-        .register-btn:hover {
-            background: #c62828;
-        }
-        .unregister-btn:hover {
-            background: #555;
+
+        /* Responsive design */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .announcements-section {
+                position: static;
+            }
         }
     </style>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -256,19 +369,23 @@
 {% block content %}
     {% csrf_token %}
     {% include 'main/navbar.html' %}
-    <header>
-        <h1>{{ event.name }}</h1>
-    </header>
+    
+    <div class="page-title-container">
+        <h1 class="page-title">{{ event.title }}</h1>
+    </div>
 
-    <main>
-        <div class="event-details">
-            <h1>{{ event.title }}</h1>
-
+    <div class="container">
+        <!-- Main content area -->
+        <div class="content-container">
             <!-- Slideshow container -->
             <div class="slideshow-container">
                 {% for image in event.event_images.all %}
                     <div class="slide">
                         <img src="{{ image.image.url }}" alt="Event image">
+                    </div>
+                {% empty %}
+                    <div class="slide">
+                        <img src="{% static 'images/default-event.jpg' %}" alt="Default event image">
                     </div>
                 {% endfor %}
 
@@ -284,67 +401,116 @@
                 </div>
             </div>
 
-            <!-- Event Information Grid -->
-            <div class="info-grid">
+            <!-- Event information sections -->
+            <div class="section-container">
+                <!-- Event Details -->
                 <div class="info-section">
-                    <h3>Event Details</h3>
-                    <p><strong>Date:</strong> {{ event.date }}</p>
-                    <p><strong>Time:</strong> {{ event.time }}</p>
-                    <p><strong>Duration:</strong> {{ event.get_duration_display }}</p>
-                    <p><strong>Capacity:</strong> {{ event.capacity }} people</p>
-                    <p><strong>Line of Service:</strong> {{ event.line_of_service }}</p>
-                    <p><strong>Event Type:</strong> {{ event.event_type }}</p>
-                    <p><strong>Location Type:</strong> {{ event.get_location_type_display }}</p>
+                    <h3 class="section-title">Event Details</h3>
+                    <div class="info-row">
+                        <div class="info-label">Date:</div>
+                        <div class="info-value">{{ event.date }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Time:</div>
+                        <div class="info-value">{{ event.time }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Duration:</div>
+                        <div class="info-value">{{ event.get_duration_display }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Capacity:</div>
+                        <div class="info-value">{{ event.capacity }} people</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Line of Service:</div>
+                        <div class="info-value">{{ event.line_of_service }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Event Type:</div>
+                        <div class="info-value">{{ event.event_type }}</div>
+                    </div>
                 </div>
 
+                <!-- Location Information -->
                 <div class="info-section">
-                    <h3>Location</h3>
-                    <p><strong>Type:</strong> {{ event.get_location_type_display }}</p>
+                    <h3 class="section-title">Location</h3>
+                    <div class="info-row">
+                        <div class="info-label">Type:</div>
+                        <div class="info-value">{{ event.get_location_type_display }}</div>
+                    </div>
+                    
                     {% if event.location_type == 'virtual' %}
-                        <p><strong>Meeting Link:</strong> <a href="{{ event.meeting_link }}" target="_blank">Join Meeting</a></p>
+                        <div class="info-row">
+                            <div class="info-label">Meeting Link:</div>
+                            <div class="info-value">
+                                <a href="{{ event.meeting_link }}" target="_blank" style="color: var(--primary-color);">Join Meeting</a>
+                            </div>
+                        </div>
                     {% elif event.location_type == 'in-person' %}
-                        <p><strong>Address:</strong> {{ event.location }}</p>
+                        <div class="info-row">
+                            <div class="info-label">Address:</div>
+                            <div class="info-value">{{ event.location }}</div>
+                        </div>
                     {% else %}
-                        <p><strong>Address:</strong> {{ event.location }}</p>
-                        <p><strong>Meeting Link:</strong> <a href="{{ event.meeting_link }}" target="_blank">Join Meeting</a></p>
+                        <div class="info-row">
+                            <div class="info-label">Address:</div>
+                            <div class="info-value">{{ event.location }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Meeting Link:</div>
+                            <div class="info-value">
+                                <a href="{{ event.meeting_link }}" target="_blank" style="color: var(--primary-color);">Join Meeting</a>
+                            </div>
+                        </div>
                     {% endif %}
-                </div>
-
-                <div class="info-section">
-                    <h3>Price Information</h3>
-                    <p><strong>Price Type:</strong> {{ event.price_type }}</p>
+                    
+                    <!-- Price Information -->
+                    <h3 class="section-title" style="margin-top: 1.5rem;">Price Information</h3>
+                    <div class="info-row">
+                        <div class="info-label">Price Type:</div>
+                        <div class="info-value">{{ event.get_price_type_display }}</div>
+                    </div>
                     {% if event.price_type != 'free' %}
-                        <p><strong>Cost:</strong> £{{ event.cost }}</p>
+                        <div class="info-row">
+                            <div class="info-label">Cost:</div>
+                            <div class="info-value">£{{ event.cost }}</div>
+                        </div>
                     {% endif %}
                 </div>
 
-                <div class="info-section">
-                    <h3>Description</h3>
-                    <p>{{ event.description }}</p>
+                <!-- Description -->
+                <div class="info-section full-width">
+                    <h3 class="section-title">Description</h3>
+                    <p style="line-height: 1.5; margin-top: 0.5rem;">{{ event.description }}</p>
                 </div>
 
+                <!-- Tags and Registration -->
                 <div class="info-section">
-                    <h3>Tags</h3>
+                    <h3 class="section-title">Tags</h3>
                     <div class="tags-container">
                         {% for tag in event.tags.all %}
                             <span class="tag">{{ tag.name }}</span>
+                        {% empty %}
+                            <span style="color: #666; font-style: italic;">No tags for this event</span>
                         {% endfor %}
-                    </div> 
+                    </div>
                 </div>
 
+                <!-- Event Status and Actions -->
                 <div class="info-section">
-                    <h3>Event Status</h3>
-                    <p><strong>Created by:</strong> {{ event.creator.username }}</p>
-                    <p><strong>No. of Attendees:</strong> {{ attendee_count }}</p>
+                    <h3 class="section-title">Event Status</h3>
+                    <div class="info-row">
+                        <div class="info-label">Created by:</div>
+                        <div class="info-value">{{ event.creator.username }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Attendees:</div>
+                        <div class="info-value">{{ attendee_count }}/{{ event.capacity }}</div>
+                    </div>
                     
                     {% if user.is_authenticated %}
-                        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                            <p><small>Registration status: {{ is_registered|yesno:"Registered,Not Registered" }}</small></p>
-                            <p><small>Current User: {{ current_user.username }}</small></p>
-                            <p><small>Current Attendees: {{ attendees|join:", " }}</small></p>
-                        </div>
-
-                        <div class="action-buttons-container">
+                        <div style="margin: 15px 0;">
                             {% if event.date < current_date %}
                                 <!-- Past Event -->
                                 {% if user == event.creator %}
@@ -352,24 +518,14 @@
                                 {% else %}
                                     {% if is_registered %}
                                         <!-- Show feedback button for past events user attended -->
-                                        <button type="button" class="feedback-btn" style="
-                                            background-color: #4CAF50; 
-                                            color: white; 
-                                            padding: 10px 20px; 
-                                            border-radius: 5px; 
-                                            border: none; 
-                                            cursor: pointer;
-                                            width: 100%;
-                                            margin-top: 10px;
-                                            font-weight: 500;
-                                        ">
+                                        <button type="button" class="action-button success">
                                             Provide Event Feedback
                                         </button>
                                     {% else %}
                                         <!-- Show interest button only if user didn't attend -->
                                         <form method="post" action="{% url 'event_signup' event.id %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="interest-btn" style="background-color: #ff6b35; color: white; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer;">
+                                            <button type="submit" class="action-button">
                                                 I Would Have Been Interested
                                             </button>
                                         </form>
@@ -378,7 +534,7 @@
                             {% else %}
                                 <!-- Upcoming Event -->
                                 {% if user == event.creator %}
-                                    <a href="{% url 'event_edit' event.id %}" class="signup-button">
+                                    <a href="{% url 'event_edit' event.id %}" class="action-button">
                                         Edit Event
                                     </a>
                                 {% endif %}
@@ -386,32 +542,32 @@
                                     <form method="post" action="{% url 'event_signup' event.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="unregister" value="true">
-                                        <button type="submit" class="unregister-btn">Unregister</button>
+                                        <button type="submit" class="action-button secondary">Unregister</button>
                                     </form>
                                 {% else %}
                                     {% if event.is_full %}
                                         <button 
                                             type="button"
                                             onclick="recordInterest({{ event.id }})"
-                                            class="register-btn"
+                                            class="action-button"
                                             id="interestButton"
                                         >
                                             I'm Interested in This Event
                                         </button>
-                                        <div id="interestMessage" style="display: none; color: #4CAF50; text-align: center; margin-top: 10px; font-weight: 500;">
+                                        <div id="interestMessage" style="display: none; color: var(--success); text-align: center; margin-top: 10px; font-weight: 500;">
                                             Interest Recorded!
                                         </div>
                                     {% else %}
                                         <form method="post" action="{% url 'event_signup' event.id %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="register-btn">Sign Up</button>
+                                            <button type="submit" class="action-button">Sign Up</button>
                                         </form>
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
                             
                             {% if messages %}
-                                <div class="messages mt-3">
+                                <div class="messages" style="margin-top: 15px;">
                                     {% for message in messages %}
                                         <div class="alert alert-{{ message.tags }}">
                                             {{ message }}
@@ -422,41 +578,37 @@
                         </div>
                     {% endif %}
                 </div>
-
-                <!-- New Announcements Section -->
-                <div class="announcements-section">
-                    <h3>Announcements</h3>
-                    <div class="announcements-list">
-                        {% for announcement in announcements %}
-                            <div class="announcement-item {% if announcement.for_user %}personal-announcement{% endif %}">
-                                {% if announcement.for_user %}
-                                    <span class="personal-badge">Just for you</span>
-                                {% endif %}
-                                <p>{{ announcement.content }}</p>
-                                <span class="announcement-timestamp">
-                                    {{ announcement.created_at|date:"M d, Y H:i" }}
-                                </span>
-                            </div>
-                        {% empty %}
-                            <p>No announcements yet.</p>
-                        {% endfor %}
-                    </div>
-                    
-                    {% if user == event.creator %}
-                        <form method="POST" action="{% url 'add_announcement' event.id %}" class="announcement-form">
-                            {% csrf_token %}
-                            <textarea name="content" class="announcement-input" placeholder="Write an announcement..." required></textarea>
-                            <button type="submit" class="signup-button">Post Announcement</button>
-                        </form>
-                    {% endif %}
-                </div>
             </div>
         </div>
-    </main>
 
-    <footer>
-        <p>&copy; 2024 Event Management System</p>
-    </footer>
+        <!-- Announcements sidebar -->
+        <div class="announcements-section">
+            <h3 class="announcements-title">Announcements</h3>
+            <div class="announcements-list">
+                {% for announcement in announcements %}
+                    <div class="announcement-item {% if announcement.for_user %}personal-announcement{% endif %}">
+                        {% if announcement.for_user %}
+                            <span class="personal-badge">Just for you</span>
+                        {% endif %}
+                        <p style="margin: 5px 0 10px 0;">{{ announcement.content }}</p>
+                        <span class="announcement-timestamp">
+                            {{ announcement.created_at|date:"M d, Y H:i" }}
+                        </span>
+                    </div>
+                {% empty %}
+                    <p style="color: #666; font-style: italic;">No announcements yet.</p>
+                {% endfor %}
+            </div>
+            
+            {% if user == event.creator %}
+                <form method="POST" action="{% url 'add_announcement' event.id %}" class="announcement-form">
+                    {% csrf_token %}
+                    <textarea name="content" class="announcement-input" placeholder="Write an announcement..." required></textarea>
+                    <button type="submit" class="action-button">Post Announcement</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
 
     <script>
         let slideIndex = 1;
@@ -484,8 +636,15 @@
                 dots[i].className = dots[i].className.replace(" active", "");
             }
             
-            slides[slideIndex-1].style.display = "block";
-            dots[slideIndex-1].className += " active";
+            // If there are slides, show the current one
+            if (slides.length > 0) {
+                slides[slideIndex-1].style.display = "block";
+                
+                // If there are dots, update the active one
+                if (dots.length > 0) {
+                    dots[slideIndex-1].className += " active";
+                }
+            }
         }
 
         function recordInterest(eventId) {
