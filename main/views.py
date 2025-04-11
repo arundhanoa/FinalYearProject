@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Event, Tag, EventImage, EventSignUp, Announcement
+from .models import Event, Tag, EventImage, EventSignUp, Announcement, LOCATION_CHOICES, PRICE_CHOICES
 from recommendations.models import UserEventInteraction
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -298,7 +298,7 @@ def homepage(request):
     
     return render(request, 'main/homepage.html', context)
 
-@cache_page(60 * 15)
+@never_cache
 def landing(request):
     return render(request, 'main/landing.html')
 
@@ -352,7 +352,7 @@ def login_view(request):
             messages.error(request, 'Please enter both first name and password.')
 
     logger.info("Rendering login template")
-    response = render(request, 'registration/login.html')
+    response = render(request, 'main/login.html')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     logger.info("=== Login View Completed ===")
     return response
@@ -538,9 +538,11 @@ def my_events(request):
 def networking(request):
     return render(request, 'main/networking.html')
 
+@never_cache
 def profile(request):
     return render(request, 'main/profile.html')
 
+@never_cache
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -550,6 +552,11 @@ def register(request):
             return redirect('login')
     return render(request, 'main/register.html', {'form': form})
 
+@never_cache
+def profile_update(request):
+    return render(request, 'main/profile_update.html')
+
+@never_cache
 def settings(request):
     return render(request, 'main/settings.html')
 
@@ -682,8 +689,8 @@ def event_create(request):
     
     context = {
         'existing_tags': existing_tags,
-        'location_choices': Event.LOCATION_CHOICES,
-        'price_choices': Event.PRICE_CHOICES,
+        'location_choices': LOCATION_CHOICES,
+        'price_choices': PRICE_CHOICES,
     }
     return render(request, 'main/event_create.html', context)
 
@@ -987,14 +994,9 @@ def add_announcement(request, event_id):
     """
     event = get_object_or_404(Event, id=event_id)
     
-    # Security check: Only allow the event creator to post announcements
-    # This prevents unauthorized users from posting to events they don't own
+    # Security-focused announcement creation
+    # Only event creators can post announcements to their events
     if request.user != event.creator:
-        logger.error({
-            "message": "Unauthorized announcement attempt",
-            "user": request.user.username,
-            "event_id": event_id
-        })
         messages.error(request, "Only the event creator can post announcements.")
         return redirect('event_view', event_id=event_id)
     
@@ -1003,8 +1005,7 @@ def add_announcement(request, event_id):
         # Validate announcement content is not empty
         if content:
             try:
-                # Create the announcement - this will be visible to all event attendees
-                # Note: This creates a general announcement (for_user=None) visible to everyone
+                # This creates a general announcement visible to everyone who has signed up
                 announcement = Announcement.objects.create(
                     event=event,
                     content=content,
@@ -1089,26 +1090,17 @@ def join_event(request, event_id):
     messages.success(request, f"Successfully registered for {event.title}.")
     return redirect('event_view', event_id=event_id)
 
+
+#Allows users to express interest in an event
 @login_required
 @csrf_protect
 def express_interest(request, event_id):
-    """
-    Allow users to express interest in an event without signing up.
-    
-    Key features:
-    - Lightweight alternative to registration ("soft commitment")
-    - Notification system integration (notifies event creator)
-    - Recommendation system integration (helps personalize recommendations)
-    - Ajax-compatible (returns JSON response for frontend integration)
-    """
     if request.method == 'POST':
         try:
             event = get_object_or_404(Event, id=event_id)
-            user = request.user
-            
-            # Record the interest in the recommendation system
-            # Uses update_or_create to avoid duplicates if user expresses interest multiple times
-            # Weight of 2.0 indicates moderate interest (stronger than a view, weaker than signup)
+            user = request.user            
+
+            # Recording user interest with appropriate weight for the recommendations (weaker than a view, stronger than a signup)
             interaction, created = UserEventInteraction.objects.update_or_create(
                 user=user,
                 event=event,
@@ -1118,8 +1110,7 @@ def express_interest(request, event_id):
                 }
             )
             
-            # Notify the event creator - helps organizers gauge interest levels
-            # This creates a targeted announcement (personal notification)
+            # Notify the event creator about user interest - helps organizers gauge interest levels if they want to increase capacity or reschedule
             notification_message = f"{user.first_name} {user.last_name} expressed interest in your event '{event.title}'"
             Announcement.objects.create(
                 event=event,
@@ -1128,7 +1119,6 @@ def express_interest(request, event_id):
                 for_user=event.creator
             )
             
-            # Log the interest for analytics and debugging
             logger.info({
                 "message": "Interest recorded",
                 "user": user.username,
@@ -1151,6 +1141,19 @@ def express_interest(request, event_id):
             return JsonResponse({'status': 'error', 'message': 'Failed to record interest'}, status=500)
             
     return JsonResponse({'status': 'error'}, status=400)
+
+
+
+# Before optimization: Multiple database hits for each event
+now = timezone.now()  # Define now at module level
+events = Event.objects.filter(date__gte=now.date())
+
+# After optimization: Single query with joins for related data
+events = Event.objects.filter(date__gte=now.date())\
+    .select_related('creator')\
+    .prefetch_related('attendees', 'tags')\
+    .annotate(attendee_count=Count('attendees', distinct=True))
+
 
 @login_required
 @csrf_protect
@@ -1190,13 +1193,13 @@ def leave_event(request, event_id):
                 ).delete()
                 
                 # NOTIFICATION SYSTEM: Alert interested users about the newly available spot
-                # This is a key feature that connects the interest tracking and notification systems
+
+                # Notifying interested users when a spot becomes available (by a user leaving the event)
                 interested_users = UserEventInteraction.objects.filter(
                     event=event,
                     interaction_type='interest'
                 ).select_related('user')
                 
-                # Create personalized notifications for each interested user
                 for interaction in interested_users:
                     notification_message = f"A spot has opened up in '{event.title}' that you were interested in!"
                     Announcement.objects.create(
@@ -1204,7 +1207,7 @@ def leave_event(request, event_id):
                         content=notification_message,
                         created_by=event.creator,
                         for_user=interaction.user,
-                        read=False
+                        read=False 
                     )
                 
                 # Detailed logging for analytics and debugging

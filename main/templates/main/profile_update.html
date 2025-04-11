@@ -1,0 +1,189 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .settings-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #e0301e;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .back-button:hover {
+            color: #e0301e;
+        }
+
+        .save-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e0301e;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .save-button:hover {
+            background-color: #c62828;
+        }
+
+        .buttons-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <a href="{% url 'all_events' %}" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
+    <main>
+        <h1>Update Profile</h1>
+        
+        <form method="post" class="settings-section">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" value="Arun" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" value="Dhanoa" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="arun.dhanoa@pwc.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" value="07801766465">
+                </div>
+
+                <div class="form-group">
+                    <label for="grade">Grade</label>
+                    <select id="grade" name="grade" required>
+                        <option value="Associate">Associate</option>
+                        <option value="Senior Associate" selected>Senior Associate</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Senior Manager">Senior Manager</option>
+                        <option value="Director">Director</option>
+                        <option value="Partner">Partner</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="los">Line of Service</label>
+                    <select id="los" name="los" required>
+                        <option value="Audit">Audit</option>
+                        <option value="Consulting">Consulting</option>
+                        <option value="Deals">Deals</option>
+                        <option value="Risk">Risk</option>
+                        <option value="Tax" selected>Tax</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="office">Home Office</label>
+                    <select id="office" name="office" required>
+                        <option value="London">London</option>
+                        <option value="Birmingham" selected>Birmingham</option>
+                        <option value="Manchester">Manchester</option>
+                        <option value="Leeds">Leeds</option>
+                        <option value="Bristol">Bristol</option>
+                        <option value="Glasgow">Glasgow</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="team">Team</label>
+                    <input type="text" id="team" name="team" value="Data & Analytics" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="line_manager">Line Manager</label>
+                    <input type="text" id="line_manager" name="line_manager" value="John Smith" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="career_coach">Career Coach</label>
+                    <input type="text" id="career_coach" name="career_coach" value="Jane Doe">
+                </div>
+            </div>
+
+            <div class="buttons-container">
+                <button type="submit" class="save-button">Save Changes</button>
+            </div>
+        </form>
+    </main>
+{% endblock %}

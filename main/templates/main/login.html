@@ -1,95 +1,218 @@
-{% extends "main/base.html" %}
+<!DOCTYPE html>
 {% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - PwC Event Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+    }
 
-{% block title %}Login{% endblock %}
+    /* Main Container */
+    .container {
+      display: flex;
+      height: 100vh;
+    }
 
-{% block content %}
-<div class="login-container">
-    <h2>Login</h2>
-    
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" name="username" id="username" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" id="password" required>
-        </div>
-        <button type="submit">Login</button>
-    </form>
-    
-    <div class="signup-link">
-        Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
-    </div>
-</div>
+    /* Left Panel */
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 80px;
+      position: relative;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
 
-<style>
+    .left-panel .logo {
+      width: 100px;
+      position: absolute;
+      top: 40px;
+      left: 60px;
+    }
+
     .login-container {
-        max-width: 400px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .login-container h1 {
+      font-size: 6rem;
+      font-weight: bold;
+      color: #2d2d2d;
+      margin-bottom: 60px;
+      line-height: 1.1;
+      text-align: center;
     }
 
     .form-group {
-        margin-bottom: 1rem;
+      width: 100%;
+      margin-bottom: 30px;
+      text-align: left;
     }
 
     .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
+      display: block;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #2d2d2d;
     }
 
     .form-group input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+      width: 100%;
+      padding: 15px;
+      font-size: 1.1rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      transition: border-color 0.2s;
     }
 
-    button {
-        width: 100%;
-        padding: 0.75rem;
-        background-color: #ff7f00;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+    .form-group input:focus {
+      outline: none;
+      border-color: #e0301e;
     }
 
-    button:hover {
-        background-color: #e67300;
+    .login-btn {
+      background-color: #e0301e;
+      color: #fff;
+      border: none;
+      padding: 20px;
+      font-size: 1.2rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 20px;
+      transition: background-color 0.2s;
     }
 
-    .signup-link {
-        text-align: center;
-        margin-top: 1rem;
+    .login-btn:hover {
+      background-color: #c62828;
+    }
+
+    .forgot-password {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .forgot-password a {
+      color: #2d2d2d;
+      text-decoration: underline;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .right-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    /* Messages */
+    .messages {
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 30px;
     }
 
     .alert {
-        padding: 0.75rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
     }
 
     .alert-error {
-        background-color: #ffebee;
-        color: #c62828;
-        border: 1px solid #ffcdd2;
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
     }
-</style>
-{% endblock %}
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .right-panel {
+        display: none;
+      }
+      .left-panel {
+        padding: 20px 30px;
+      }
+      .login-container h1 {
+        font-size: 3.5rem;
+        margin-top: 60px;
+      }
+      .left-panel .logo {
+        width: 80px;
+        top: 20px;
+        left: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <img src="{% static 'img/pwc-logo.png' %}" alt="PwC Logo" class="logo">
+      <div class="login-container">
+        <h1>Login</h1>
+        
+        {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="post" style="width: 100%;">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
+          </div>
+          <button type="submit" class="login-btn">Login</button>
+        </form>
+        
+        <div class="forgot-password">
+          <a href="#">Forgot your password?</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <img src="{% static 'img/LandingPagePhoto.jpg' %}" alt="Teamwork">
+    </div>
+  </div>
+</body>
+</html>

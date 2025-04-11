@@ -1,9 +1,51 @@
 # forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, Event
+from .models import CustomUser, Event, LOCATION_CHOICES, PRICE_CHOICES
+
+JOB_TITLE_CHOICES = [
+    ('', 'Select your job title'),
+    ('Associate', 'Associate'),
+    ('Senior Associate', 'Senior Associate'),
+    ('Manager', 'Manager'),
+    ('Senior Manager', 'Senior Manager'),
+    ('Director', 'Director'),
+    ('Partner', 'Partner'),
+    ('Consultant', 'Consultant'),
+    ('Senior Consultant', 'Senior Consultant'),
+    ('Principal Consultant', 'Principal Consultant'),
+]
+
+LINE_OF_SERVICE_CHOICES = [
+    ('', 'Select your line of service'),
+    ('Audit', 'Audit'),
+    ('Consulting', 'Consulting'),
+    ('Deals', 'Deals'),
+    ('Risk', 'Risk'),
+    ('Tax', 'Tax'),
+]
+
+OFFICE_CHOICES = [
+    ('', 'Select your home office'),
+    ('London', 'London'),
+    ('Birmingham', 'Birmingham'),
+    ('Manchester', 'Manchester'),
+    ('Leeds', 'Leeds'),
+    ('Bristol', 'Bristol'),
+    ('Glasgow', 'Glasgow'),
+]
 
 class CustomUserCreationForm(UserCreationForm):
+    first_name = forms.CharField(required=True)
+    last_name = forms.CharField(required=True)
+    other_names = forms.CharField(required=False)
+    team = forms.CharField(required=True)
+    career_coach = forms.CharField(required=False)
+    job_title = forms.ChoiceField(choices=JOB_TITLE_CHOICES, required=True)
+    line_of_service = forms.ChoiceField(choices=LINE_OF_SERVICE_CHOICES, required=True)
+    home_office = forms.ChoiceField(choices=OFFICE_CHOICES, required=True)
+    phone_number = forms.CharField(required=False)
+
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = [
@@ -27,9 +69,17 @@ class CustomUserCreationForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         if 'username' in self.fields:
             del self.fields['username']
+        
+        # Update field requirements
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+        self.fields['team'].required = True
+        self.fields['career_coach'].required = False
+        self.fields['phone_number'].required = False
+        self.fields['other_names'].required = False
 
+    #generate a unique username by appending numbers if necessary
     def generate_unique_username(self, base_username):
-        """Generate a unique username by appending a number if necessary."""
         username = base_username
         counter = 1
         
@@ -68,6 +118,6 @@ class EventForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date'}),
             'time': forms.TimeInput(attrs={'type': 'time'}),
             'tags': forms.CheckboxSelectMultiple(),
-            'location_type': forms.Select(choices=Event.LOCATION_CHOICES),
-            'price_type': forms.Select(choices=Event.PRICE_CHOICES),
+            'location_type': forms.Select(choices=LOCATION_CHOICES),
+            'price_type': forms.Select(choices=PRICE_CHOICES),
         }

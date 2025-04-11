@@ -42,7 +42,9 @@
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 20px;
             background-color: var(--white);
-            padding: 0 20px;
+            padding: 0;
+            max-width: 1280px;
+            margin: 0 auto;
             gap: 10px;
         }
 
@@ -78,9 +80,9 @@
         /* Event Grid */
         .event-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr); /* Fixed 5 columns */
-            gap: 15px; /* Reduced gap between cards */
-            margin-bottom: 30px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
             padding: 0 20px;
             max-width: 1800px;
             margin-left: 20px;
@@ -94,13 +96,14 @@
             overflow: hidden;
             box-shadow: var(--card-shadow);
             transition: transform 0.3s, box-shadow 0.3s;
-            height: 420px; /* Increased height */
+            height: 470px;
             display: flex;
             flex-direction: column;
             border: 1px solid var(--border-color);
             text-decoration: none;
             color: var(--text-color);
-            width: 350px; /* Increased width */
+            width: 300px;
+            position: relative;
         }
 
         .event-card:hover {
@@ -112,56 +115,99 @@
 
         .event-image-container {
             position: relative;
-            height: 200px; /* Increased height for images */
+            height: 140px;
             width: 100%;
             overflow: hidden;
+            background-color: #f5f5f5;
+            flex-shrink: 0;
         }
 
         .event-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
+        }
+
+        /* Add date overlay styling */
+        .event-date-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.2;
+        }
+
+        .date-day-overlay {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .date-month-overlay {
+            font-size: 12px;
+        }
+
+        /* Update event-description styling */
+        .event-description {
+            font-size: 13px;
+            color: #555;
+            margin: 6px 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+
+        .event-description-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #444;
+            margin-bottom: 2px;
+            display: block;
         }
 
         .event-details {
-            padding: 20px; /* Increased padding */
-            flex-grow: 1;
+            padding: 15px;
             display: flex;
             flex-direction: column;
+            height: 340px;
+            overflow: hidden;
+        }
+
+        .event-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            line-height: 1.2;
+            height: 38px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .event-date {
+            font-size: 14px;
+            margin-bottom: 6px;
+            height: 20px;
         }
 
         .event-organizer {
             font-size: 12px;
             color: #666;
             margin-bottom: 5px;
-        }
-
-        .event-title {
-            font-size: 18px; /* Increased font size */
-            font-weight: 600;
-            margin-bottom: 12px;
-            line-height: 1.3;
-        }
-
-        .event-date {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: var(--background-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-align: center;
-            width: fit-content;
-            margin-bottom: 10px;
-        }
-
-        .date-day {
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .date-month {
-            font-size: 12px;
         }
 
         .event-location {
@@ -317,31 +363,30 @@
         /* Responsive design */
         @media (max-width: 1800px) {
             .event-grid {
-                grid-template-columns: repeat(4, 320px);
-                max-width: 1340px;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                max-width: 1280px;
             }
         }
         
         @media (max-width: 1400px) {
             .event-grid {
-                grid-template-columns: repeat(3, 320px);
-                max-width: 1000px;
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 950px;
             }
         }
         
         @media (max-width: 1050px) {
             .event-grid {
-                grid-template-columns: repeat(2, 320px);
-                max-width: 670px;
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 630px;
             }
         }
 
         @media (max-width: 720px) {
             .event-grid {
-                grid-template-columns: 320px;
-                max-width: 340px;
-                margin-left: auto;
-                margin-right: auto;
+                grid-template-columns: 1fr;
+                max-width: 320px;
             }
         }
 
@@ -363,6 +408,36 @@
             margin: 20px 0;
             box-shadow: var(--card-shadow);
             width: 100%;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            height: 52px;
+            margin-top: auto;
+            overflow: hidden;
+        }
+
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 1px;
+            white-space: nowrap;
+            height: 20px;
+            line-height: 14px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Top Section */
+        .top-section {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
         }
     </style>
 {% endblock %}
@@ -406,41 +481,6 @@
 
         <!-- Tab Content: Signed up for -->
         <section id="signed-up" class="tab-content active">
-            <section class="popular-section main-section">
-                <div class="section-header">
-                    <h2>Past</h2>
-                    <a href="{% url 'all_signed_up_past' %}" class="view-all-btn">View All</a>
-                </div>
-                <div class="event-grid">
-                    {% if signed_up_past %}
-                        {% for event in signed_up_past|slice:":6" %}
-                            <a href="{% url 'event_view' event.id %}" class="event-card">
-                                {% with first_image=event.event_images.first %}
-                                    {% if first_image %}
-                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                    {% endif %}
-                                {% endwith %}
-                                <div class="event-details">
-                                    <h3>{{ event.title }}</h3>
-                                    <p>Date: {{ event.date }}</p>
-                                    <p>{{ event.description|truncatechars:100 }}</p>
-                                    
-                                    <!-- Add tags section -->
-                                    <div class="event-tags">
-                                        {% for tag in event.tags.all %}
-                                            <span class="tag">{{ tag.name }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    {% else %}
-                        <div class="no-items-message">
-                            <p>No past events found</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </section>
 
             <section class="discover-section main-section">
                 <div class="section-header">
@@ -451,17 +491,48 @@
                     {% if signed_up_upcoming %}
                         {% for event in signed_up_upcoming|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
-                                {% with first_image=event.event_images.first %}
-                                    {% if first_image %}
-                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                    {% endif %}
-                                {% endwith %}
-                                <div class="event-details">
-                                    <h3>{{ event.title }}</h3>
-                                    <p>Date: {{ event.date }}</p>
-                                    <p>{{ event.description|truncatechars:100 }}</p>
+                                <div class="event-image-container">
+                                    {% with first_image=event.event_images.first %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                        {% else %}
+                                            <img src="{% static 'images/default-event.jpg' %}" alt="Default Event" class="event-image">
+                                        {% endif %}
+                                    {% endwith %}
                                     
-                                    <!-- Add tags section -->
+                                    <div class="event-date-overlay">
+                                        <span class="date-day-overlay">{{ event.date|date:"d" }}</span>
+                                        <span class="date-month-overlay">{{ event.date|date:"M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="event-details">
+                                    {% if event.creator != request.user %}
+                                    <div class="event-organizer">{{ event.creator.first_name }} {{ event.creator.last_name }}</div>
+                                    {% endif %}
+                                    <h3 class="event-title">{{ event.title }}</h3>
+                                    
+                                    <div class="event-location">
+                                        {{ event.get_location_type_display }}
+                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                            {% if event.location %}
+                                            - {{ event.location }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <span class="event-description-label">Description:</span>
+                                    <p class="event-description">{{ event.description|truncatechars:120 }}</p>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>LoS:</strong> {{ event.line_of_service }}</div>
+                                        <div><strong>Capacity:</strong> {{ event.attendees.count }}/{{ event.capacity }}</div>
+                                    </div>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>Price:</strong> {{ event.get_price_type_display }}</div>
+                                        <div><strong>Time:</strong> {{ event.time }}</div>
+                                    </div>
+                                    
                                     <div class="event-tags">
                                         {% for tag in event.tags.all %}
                                             <span class="tag">{{ tag.name }}</span>
@@ -477,30 +548,58 @@
                     {% endif %}
                 </div>
             </section>
-        </section>
 
-        <!-- Tab Content: Created -->
-        <section id="created" class="tab-content">
             <section class="popular-section main-section">
                 <div class="section-header">
                     <h2>Past</h2>
-                    <a href="{% url 'all_created_past' %}" class="view-all-btn">View All</a>
+                    <a href="{% url 'all_signed_up_past' %}" class="view-all-btn">View All</a>
                 </div>
                 <div class="event-grid">
-                    {% if created_past %}
-                        {% for event in created_past|slice:":6" %}
+                    {% if signed_up_past %}
+                        {% for event in signed_up_past|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
-                                {% with first_image=event.event_images.first %}
-                                    {% if first_image %}
-                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                    {% endif %}
-                                {% endwith %}
-                                <div class="event-details">
-                                    <h3>{{ event.title }}</h3>
-                                    <p>Date: {{ event.date }}</p>
-                                    <p>{{ event.description|truncatechars:100 }}</p>
+                                <div class="event-image-container">
+                                    {% with first_image=event.event_images.first %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                        {% else %}
+                                            <img src="{% static 'images/default-event.jpg' %}" alt="Default Event" class="event-image">
+                                        {% endif %}
+                                    {% endwith %}
                                     
-                                    <!-- Add tags section -->
+                                    <div class="event-date-overlay">
+                                        <span class="date-day-overlay">{{ event.date|date:"d" }}</span>
+                                        <span class="date-month-overlay">{{ event.date|date:"M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="event-details">
+                                    {% if event.creator != request.user %}
+                                    <div class="event-organizer">{{ event.creator.first_name }} {{ event.creator.last_name }}</div>
+                                    {% endif %}
+                                    <h3 class="event-title">{{ event.title }}</h3>
+                                    
+                                    <div class="event-location">
+                                        {{ event.get_location_type_display }}
+                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                            {% if event.location %}
+                                            - {{ event.location }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <span class="event-description-label">Description:</span>
+                                    <p class="event-description">{{ event.description|truncatechars:120 }}</p>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>LoS:</strong> {{ event.line_of_service }}</div>
+                                        <div><strong>Capacity:</strong> {{ event.attendees.count }}/{{ event.capacity }}</div>
+                                    </div>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>Price:</strong> {{ event.get_price_type_display }}</div>
+                                        <div><strong>Time:</strong> {{ event.time }}</div>
+                                    </div>
+                                    
                                     <div class="event-tags">
                                         {% for tag in event.tags.all %}
                                             <span class="tag">{{ tag.name }}</span>
@@ -516,6 +615,10 @@
                     {% endif %}
                 </div>
             </section>
+        </section>
+
+        <!-- Tab Content: Created -->
+        <section id="created" class="tab-content">
 
             <section class="discover-section main-section">
                 <div class="section-header">
@@ -526,17 +629,45 @@
                     {% if created_upcoming %}
                         {% for event in created_upcoming|slice:":6" %}
                             <a href="{% url 'event_view' event.id %}" class="event-card">
-                                {% with first_image=event.event_images.first %}
-                                    {% if first_image %}
-                                        <img src="{{ first_image.image.url }}" alt="{{ event.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem;">
-                                    {% endif %}
-                                {% endwith %}
-                                <div class="event-details">
-                                    <h3>{{ event.title }}</h3>
-                                    <p>Date: {{ event.date }}</p>
-                                    <p>{{ event.description|truncatechars:100 }}</p>
+                                <div class="event-image-container">
+                                    {% with first_image=event.event_images.first %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                        {% else %}
+                                            <img src="{% static 'images/default-event.jpg' %}" alt="Default Event" class="event-image">
+                                        {% endif %}
+                                    {% endwith %}
                                     
-                                    <!-- Add tags section -->
+                                    <div class="event-date-overlay">
+                                        <span class="date-day-overlay">{{ event.date|date:"d" }}</span>
+                                        <span class="date-month-overlay">{{ event.date|date:"M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="event-details">
+                                    <h3 class="event-title">{{ event.title }}</h3>
+                                    
+                                    <div class="event-location">
+                                        {{ event.get_location_type_display }}
+                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                            {% if event.location %}
+                                            - {{ event.location }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <span class="event-description-label">Description:</span>
+                                    <p class="event-description">{{ event.description|truncatechars:120 }}</p>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>LoS:</strong> {{ event.line_of_service }}</div>
+                                        <div><strong>Capacity:</strong> {{ event.attendees.count }}/{{ event.capacity }}</div>
+                                    </div>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>Price:</strong> {{ event.get_price_type_display }}</div>
+                                        <div><strong>Time:</strong> {{ event.time }}</div>
+                                    </div>
+                                    
                                     <div class="event-tags">
                                         {% for tag in event.tags.all %}
                                             <span class="tag">{{ tag.name }}</span>
@@ -548,6 +679,70 @@
                     {% else %}
                         <div class="no-items-message">
                             <p>No upcoming events found</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="popular-section main-section">
+                <div class="section-header">
+                    <h2>Past</h2>
+                    <a href="{% url 'all_created_past' %}" class="view-all-btn">View All</a>
+                </div>
+                <div class="event-grid">
+                    {% if created_past %}
+                        {% for event in created_past|slice:":6" %}
+                            <a href="{% url 'event_view' event.id %}" class="event-card">
+                                <div class="event-image-container">
+                                    {% with first_image=event.event_images.first %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" alt="{{ event.title }}" class="event-image">
+                                        {% else %}
+                                            <img src="{% static 'images/default-event.jpg' %}" alt="Default Event" class="event-image">
+                                        {% endif %}
+                                    {% endwith %}
+                                    
+                                    <div class="event-date-overlay">
+                                        <span class="date-day-overlay">{{ event.date|date:"d" }}</span>
+                                        <span class="date-month-overlay">{{ event.date|date:"M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="event-details">
+                                    <h3 class="event-title">{{ event.title }}</h3>
+                                    
+                                    <div class="event-location">
+                                        {{ event.get_location_type_display }}
+                                        {% if event.location_type == 'in-person' or event.location_type == 'hybrid' %}
+                                            {% if event.location %}
+                                            - {{ event.location }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <span class="event-description-label">Description:</span>
+                                    <p class="event-description">{{ event.description|truncatechars:120 }}</p>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>LoS:</strong> {{ event.line_of_service }}</div>
+                                        <div><strong>Capacity:</strong> {{ event.attendees.count }}/{{ event.capacity }}</div>
+                                    </div>
+                                    
+                                    <div class="preview-row">
+                                        <div><strong>Price:</strong> {{ event.get_price_type_display }}</div>
+                                        <div><strong>Time:</strong> {{ event.time }}</div>
+                                    </div>
+                                    
+                                    <div class="event-tags">
+                                        {% for tag in event.tags.all %}
+                                            <span class="tag">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-items-message">
+                            <p>No past events found</p>
                         </div>
                     {% endif %}
                 </div>

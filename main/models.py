@@ -7,6 +7,29 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 
+# Define choices for models
+LOCATION_CHOICES = [
+    ('in-person', 'In Person'),
+    ('virtual', 'Virtual'),
+    ('hybrid', 'Hybrid'),
+]
+
+PRICE_CHOICES = [
+    ('free', 'Free'),
+    ('paid', 'Paid'),
+    ('self-funded', 'Self Funded'),
+    ('company-funded', 'Company Funded'),
+]
+
+LINE_OF_SERVICE_CHOICES = [
+    ('Audit', 'Audit'),
+    ('Tax', 'Tax'),
+    ('Consulting', 'Consulting'),
+    ('Advisory', 'Advisory'),
+    ('Assurance', 'Assurance'),
+    ('All', 'All'),
+]
+
 # Tag Model - Simple model to store event tags for categorization and filtering
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -18,34 +41,7 @@ class Tag(models.Model):
 # Contains all event details including title, description, date, time, location
 # Manages relationships with creators, attendees, and tags
 class Event(models.Model):
-    # Predefined choices for event categorization and settings
-    CATEGORY_CHOICES = [
-        ('TB', 'Teambuilding'),
-        ('VOL', 'Volunteering'),
-        ('NET', 'Networking'),
-    ]
-    
-    LOCATION_CHOICES = [
-        ('virtual', 'Virtual'),
-        ('in-person', 'In-Person'),
-        ('hybrid', 'Hybrid')
-    ]
-    
-    PRICE_CHOICES = [
-        ('free', 'Free'),
-        ('self-funded', 'Self-funded'),
-    ]
-    
-    LINE_OF_SERVICE_CHOICES = [
-        ('All', 'All'),
-        ('Audit', 'Audit'),
-        ('Consulting', 'Consulting'),
-        ('Tax', 'Tax'),
-        ('Advisory', 'Advisory'),
-        ('Assurance', 'Assurance'),
-    ]
-    
-    # Core event details with relationships to users and tags
+    # Event details with relationships to users and tags
     title = models.CharField(max_length=200)
     description = models.TextField()
     date = models.DateField()
@@ -54,27 +50,24 @@ class Event(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
     attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='events_attending', blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
-    
-    # Event configuration fields
-    location_type = models.CharField(
-        max_length=20, 
-        choices=LOCATION_CHOICES,
-        default='in-person'
-    )
-    price_type = models.CharField(
-        max_length=20, 
-        choices=PRICE_CHOICES,
-        default='self-funded'
-    )
+    location_type = models.CharField(max_length=20, choices=LOCATION_CHOICES,default='in-person')
+    price_type = models.CharField(max_length=20, choices=PRICE_CHOICES,default='self-funded')
     meeting_link = models.URLField(max_length=500, blank=True, null=True)
-    
-    # Additional event details
     cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     capacity = models.IntegerField(null=True, blank=True)
     line_of_service = models.CharField(max_length=50, choices=LINE_OF_SERVICE_CHOICES, null=True, blank=True)
     event_type = models.CharField(max_length=100, null=True, blank=True)
     duration = models.IntegerField(default=0, help_text="Duration in minutes")
     image = models.ImageField(upload_to='event_images/', null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['line_of_service']),
+            models.Index(fields=['location_type']),
+            # Compound index for common filtering patterns
+            models.Index(fields=['date', 'line_of_service']),
+        ]
     
     def __str__(self):
         return self.title

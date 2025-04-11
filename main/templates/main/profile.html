@@ -15,7 +15,7 @@
 
         .profile-section {
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
@@ -41,6 +41,7 @@
             color: #666;
             font-size: 0.9em;
             margin-bottom: 5px;
+            font-weight: 500;
         }
 
         .info-group p {
@@ -69,11 +70,12 @@
         .update-button {
             display: inline-block;
             margin-top: 20px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #e0301e;
             color: white;
             text-decoration: none;
             border-radius: 4px;
+            font-weight: 500;
             transition: background-color 0.3s;
         }
 
@@ -92,46 +94,56 @@
             <div class="profile-grid">
                 <div class="info-group">
                     <label>Full Name</label>
-                    <p>{{ user.first_name }} {{ user.last_name }}</p>
-                </div>
-
-                <div class="info-group">
-                    <label>Username</label>
-                    <p>{{ user.username }}</p>
+                    <p>Arun Dhanoa</p>
                 </div>
 
                 <div class="info-group">
                     <label>Email</label>
-                    <p>{{ user.email }}</p>
+                    <p>arun.dhanoa@pwc.com</p>
                 </div>
 
                 <div class="info-group">
                     <label>Phone Number</label>
-                    <p>{{ user.userprofile.phone_number }}</p>
-                </div>
-
-                <div class="info-group">
-                    <label>Line of Service</label>
-                    <p>{{ user.userprofile.line_of_service }}</p>
+                    <p>07801766465</p>
                 </div>
 
                 <div class="info-group">
                     <label>Grade</label>
-                    <p>{{ user.userprofile.grade }}</p>
+                    <p>Senior Associate</p>
                 </div>
 
                 <div class="info-group">
-                    <label>Office Location</label>
-                    <p>{{ user.userprofile.office_location }}</p>
+                    <label>Line of Service</label>
+                    <p>Tax</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Team</label>
+                    <p>Data & Analytics</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Home Office</label>
+                    <p>Birmingham</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Line Manager</label>
+                    <p>John Smith</p>
+                </div>
+
+                <div class="info-group">
+                    <label>Career Coach</label>
+                    <p>Jane Doe</p>
                 </div>
 
                 <div class="info-group">
                     <label>Member Since</label>
-                    <p>{{ user.date_joined|date:"F j, Y" }}</p>
+                    <p>January 1, 2024</p>
                 </div>
             </div>
         </div>
         
-        <a href="{% url 'settings' %}" class="update-button">Update Profile</a>
+        <a href="{% url 'profile_update' %}" class="update-button">Update Profile</a>
     </main>
 {% endblock %}

@@ -8,9 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         main {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+        }
+
+        .settings-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -18,45 +26,109 @@
             margin-bottom: 30px;
         }
 
-        form {
+        h2 {
+            color: #444;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 30px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            display: block;
+            color: #666;
+            font-size: 1em;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .setting-group p {
+            color: #888;
+            font-size: 0.9em;
+            margin: 5px 0 15px 0;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #e0301e;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Font Size Controls */
+        .font-size-controls {
             display: flex;
-            flex-direction: column;
+            align-items: center;
             gap: 15px;
         }
 
-        label {
-            font-weight: 500;
-            color: #444;
-            margin-bottom: 5px;
-        }
-
-        input {
-            padding: 10px;
+        .font-size-btn {
+            background: none;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #e0301e;
-            box-shadow: 0 0 0 2px rgba(224, 48, 30, 0.1);
-        }
-
-        button {
-            margin-top: 10px;
-            padding: 12px 20px;
-            background-color: #e0301e;
-            color: white;
-            border: none;
+            padding: 8px 15px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s;
+            font-size: 0.9em;
+            transition: all 0.3s;
         }
 
-        button:hover {
-            background-color: #c62828;
+        .font-size-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .font-size-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 500;
         }
 
         .back-button {
@@ -74,22 +146,90 @@
         .back-button:hover {
             color: #e0301e;
         }
+
+        .save-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e0301e;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 30px;
+        }
+
+        .save-button:hover {
+            background-color: #c62828;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
-    <a href="javascript:history.back()" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
+    <a href="{% url 'all_events' %}" class="back-button"><i class="fas fa-arrow-left"></i> Back</a>
     <main>
         <h1>Settings</h1>
-        <form action="{% url 'settings_update' %}" method="post">
-            {% csrf_token %}
-            <label for="email">Update Email:</label>
-            <input type="email" id="email" name="email">
-            
-            <label for="password">Update Password:</label>
-            <input type="password" id="password" name="password">
-            
-            <button type="submit">Update</button>
-        </form>
+        
+        <div class="settings-grid">
+            <div class="settings-section">
+                <h2>Display Preferences</h2>
+                
+                <div class="setting-group">
+                    <label for="dark-mode">Dark Mode</label>
+                    <p>Switch to dark theme to reduce eye strain in low-light environments</p>
+                    <label class="switch">
+                        <input type="checkbox" id="dark-mode">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <label>Font Size</label>
+                    <p>Adjust the text size for better readability</p>
+                    <div class="font-size-controls">
+                        <button class="font-size-btn" onclick="decreaseFontSize()">A-</button>
+                        <span class="font-size-display">100%</span>
+                        <button class="font-size-btn" onclick="increaseFontSize()">A+</button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="high-contrast">High Contrast</label>
+                    <p>Increase contrast between text and background for better visibility</p>
+                    <label class="switch">
+                        <input type="checkbox" id="high-contrast">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+        <button type="submit" class="save-button">Save Preferences</button>
     </main>
+
+    <script>
+        let currentFontSize = 100;
+        const fontSizeDisplay = document.querySelector('.font-size-display');
+
+        function increaseFontSize() {
+            if (currentFontSize < 150) {
+                currentFontSize += 10;
+                updateFontSize();
+            }
+        }
+
+        function decreaseFontSize() {
+            if (currentFontSize > 80) {
+                currentFontSize -= 10;
+                updateFontSize();
+            }
+        }
+
+        function updateFontSize() {
+            fontSizeDisplay.textContent = `${currentFontSize}%`;
+            document.documentElement.style.fontSize = `${currentFontSize}%`;
+        }
+    </script>
 {% endblock %}

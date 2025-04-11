@@ -12,8 +12,62 @@
         
         {% for field in form %}
         <div class="form-group">
-            {{ field.label_tag }}
-            {{ field }}
+            {% if field.name == "first_name" or field.name == "last_name" or field.name == "team" or field.field.required %}
+            <label for="{{ field.id_for_label }}">{{ field.label }} <span class="required">*</span></label>
+            {% else %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% endif %}
+
+            {% if field.name == "grade" %}
+                <select name="{{ field.name }}" id="{{ field.id_for_label }}" required>
+                    <option value="" disabled selected>Select your grade</option>
+                    <option value="Associate">Associate</option>
+                    <option value="Senior Associate">Senior Associate</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Senior Manager">Senior Manager</option>
+                    <option value="Director">Director</option>
+                    <option value="Partner">Partner</option>
+                </select>
+            {% elif field.name == "line_of_service" %}
+                <select name="{{ field.name }}" id="{{ field.id_for_label }}" required>
+                    <option value="" disabled selected>Select your line of service</option>
+                    <option value="Audit">Audit</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Deals">Deals</option>
+                    <option value="Risk">Risk</option>
+                    <option value="Tax">Tax</option>
+                </select>
+            {% elif field.name == "office" %}
+                <select name="{{ field.name }}" id="{{ field.id_for_label }}" required>
+                    <option value="" disabled selected>Select your home office</option>
+                    <option value="London">London</option>
+                    <option value="Birmingham">Birmingham</option>
+                    <option value="Manchester">Manchester</option>
+                    <option value="Leeds">Leeds</option>
+                    <option value="Bristol">Bristol</option>
+                    <option value="Glasgow">Glasgow</option>
+                </select>
+            {% elif field.name == "job_title" %}
+                <select name="{{ field.name }}" id="{{ field.id_for_label }}" required>
+                    <option value="" disabled selected>Select your job title</option>
+                    <option value="Associate">Associate</option>
+                    <option value="Senior Associate">Senior Associate</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Senior Manager">Senior Manager</option>
+                    <option value="Director">Director</option>
+                    <option value="Partner">Partner</option>
+                    <option value="Consultant">Consultant</option>
+                    <option value="Senior Consultant">Senior Consultant</option>
+                    <option value="Principal Consultant">Principal Consultant</option>
+                </select>
+            {% elif field.name == "first_name" or field.name == "last_name" or field.name == "team" %}
+                <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" required {% if field.value %}value="{{ field.value }}"{% endif %} class="form-control">
+            {% elif field.name == "career_coach" %}
+                <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" {% if field.value %}value="{{ field.value }}"{% endif %} class="form-control">
+            {% else %}
+                {{ field }}
+            {% endif %}
+
             {% if field.help_text %}
             <small class="help-text">{{ field.help_text }}</small>
             {% endif %}
@@ -54,15 +108,29 @@
     .form-group label {
         display: block;
         margin-bottom: 0.5rem;
-        font-weight: bold;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .required {
+        color: #e0301e;
+        margin-left: 4px;
     }
 
     .form-group input,
     .form-group select {
         width: 100%;
-        padding: 0.5rem;
+        padding: 12px;
         border: 1px solid #ddd;
         border-radius: 4px;
+        font-size: 1em;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #e0301e;
     }
 
     .help-text {
@@ -73,28 +141,42 @@
     }
 
     .error-text {
-        color: #dc3545;
+        color: #e0301e;
         font-size: 0.875rem;
         margin-top: 0.25rem;
     }
 
     .submit-button {
-        background-color: #ff7f00;
+        background-color: #e0301e;
         color: white;
-        padding: 0.75rem;
+        padding: 12px 24px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 1em;
+        font-weight: 500;
+        transition: background-color 0.3s;
+        margin-top: 1rem;
     }
 
     .submit-button:hover {
-        background-color: #e67300;
+        background-color: #c62828;
     }
 
     .login-link {
         text-align: center;
-        margin-top: 1rem;
+        margin-top: 1.5rem;
+        color: #666;
+    }
+
+    .login-link a {
+        color: #e0301e;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
     }
 </style>
 {% endblock %}
